@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: paas_postgres_dev
+    restart: always
+    environment:
+      POSTGRES_USER: paas_admin
+      POSTGRES_PASSWORD: paas_secret_password
+      POSTGRES_DB: paas_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - paas_dev_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: paas_pgadmin_dev
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@paas.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - paas_dev_network
+
+volumes:
+  postgres_dev_data:
+
+networks:
+  paas_dev_network:
+    driver: bridge

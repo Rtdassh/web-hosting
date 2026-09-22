@@ -1,0 +1,55 @@
+# ==============================================
+# Git Ignore para Monorepo Web Hosting PaaS
+# ==============================================
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+.venv/
+env/
+ENV/
+backend/venv/
+backend/.venv/
+backend/env/
+
+# Node / Frontend
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+
+# Entornos y Secretos (no versionar credenciales locales)
+.env
+.env.*
+*.env
+!*.env.example
+*.pem
+*.key
+
+# Almacenamiento local de instancias de usuarios (no versionar sitios subidos por usuarios)
+infra/host-storage/instances/*
+!infra/host-storage/instances/.gitkeep
+infra/host-storage/templates/*
+!infra/host-storage/templates/.gitkeep
+
+# Base de datos local (volúmenes de Docker / SQLite)
+postgres_data/
+postgres_dev_data/
+*.sqlite3
+
+# IDEs, editores y sistema operativo
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.log

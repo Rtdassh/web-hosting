@@ -1,0 +1,2 @@
+# Carpeta para almacenamiento persistente de instancias de usuarios:
+# /srv/hosting/instancias/<user_id>_<app_id>/
