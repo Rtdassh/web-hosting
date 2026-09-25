@@ -5,6 +5,7 @@ from app.core.security import verify_password, get_password_hash, create_access_
 from app.models.user import User, UserRole
 from app.models.plan import Plan, Subscription
 from app.schemas.user_schema import UserCreate, UserLogin, UserResponse, TokenResponse
+from app.core.security import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -60,3 +61,9 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": user
     }
+
+# <-- CORREGIDO: Fuera de login y alineado correctamente al router
+@router.get("/me", response_model=UserResponse)
+def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    """GET /api/v1/auth/me: Retorna el perfil y la información del usuario autenticado actual."""
+    return current_user
