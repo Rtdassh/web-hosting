@@ -25,13 +25,10 @@ export const ensureAuthenticated = async () => {
   return token;
 };
 
-// Interceptor para inyectar token JWT automáticamente
-apiClient.interceptors.request.use(async (config) => {
+// Interceptor para inyectar token JWT automáticamente si existe sesión
+apiClient.interceptors.request.use((config) => {
   if (!config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
-    let token = localStorage.getItem('paas_token');
-    if (!token) {
-      token = await ensureAuthenticated();
-    }
+    const token = localStorage.getItem('paas_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

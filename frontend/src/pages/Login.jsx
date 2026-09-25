@@ -134,7 +134,7 @@ export default function Login({ onRegister }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-[44px] rounded-[9px] bg-[#2563eb] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 transition-colors"
+                  className="w-full h-[44px] rounded-[9px] bg-[#2563eb] hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm shadow-blue-600/20"
                 >
                   {loading ? (
                     <>
@@ -144,6 +144,18 @@ export default function Login({ onRegister }) {
                   ) : (
                     'Iniciar sesión'
                   )}
+                </button>
+
+                {/* Atajo cuenta de prueba */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('dev@cloudpaas.local');
+                    setPassword('admin123');
+                  }}
+                  className="w-full h-[38px] text-[12px] font-medium text-[#2563eb] hover:text-blue-700 bg-blue-50/80 hover:bg-blue-50 rounded-[8px] border border-blue-100 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <span>⚡ Usar cuenta de prueba (dev@cloudpaas.local)</span>
                 </button>
               </form>
 
