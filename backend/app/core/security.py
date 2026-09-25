@@ -26,3 +26,49 @@ def create_access_token(subject: Union[str, Any], role: str, expires_delta: time
     }
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
+# Autenticación basada en Bearer token para FastAPI y Swagger UI
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
+from jose import JWTError
+from app.core.database import get_db
+from app.models.user import User, UserRole
+
+security_scheme = HTTPBearer(auto_error=True)
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """Valida el token JWT del encabezado Authorization: Bearer <token> y retorna el usuario."""
+    token = credentials.credentials
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token de acceso inválido o expirado.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
+            raise credentials_exception
+        user_id = int(user_id_str)
+    except (JWTError, ValueError):
+        raise credentials_exception
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise credentials_exception
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario inactivo.")
+    return user
+
+def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Verifica que el usuario actual tenga rol de Administrador."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operación restringida exclusivamente al Administrador."
+        )
+    return current_user
