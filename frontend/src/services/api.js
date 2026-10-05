@@ -77,6 +77,20 @@ export const instanceService = {
   destroyInstance: async (instanceId) => {
     const res = await apiClient.delete(`/instances/${instanceId}`);
     return res.data;
+  },
+  getMetrics: async (instanceId) => {
+    const res = await apiClient.get(`/instances/${instanceId}/metrics`);
+    return res.data;
+  },
+  getLogs: async (instanceId, tail = 100) => {
+    const res = await apiClient.get(`/instances/${instanceId}/logs`, {
+      params: { tail }
+    });
+    return res.data;
+  },
+  syncStatus: async (instanceId) => {
+    const res = await apiClient.post(`/instances/${instanceId}/sync`);
+    return res.data;
   }
 };
 

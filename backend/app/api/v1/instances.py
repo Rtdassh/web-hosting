@@ -1,9 +1,11 @@
 import os
 import uuid
 import shutil
-from typing import List
+import logging
+from datetime import datetime, timezone
+from typing import List, Optional
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.config import settings
@@ -11,10 +13,20 @@ from app.core.security import get_current_user
 from app.models.instance import Instance, InstanceStatus
 from app.models.user import User, UserRole
 from app.models.plan import Subscription
-from app.schemas.instance_schema import InstanceResponse, InstanceActionRequest
+from app.schemas.instance_schema import (
+    InstanceResponse,
+    InstanceActionRequest,
+    InstanceActionResponse,
+    InstanceLogsResponse,
+    InstanceMetricsResponse,
+    InstanceSyncResponse,
+    InstanceDestroyResponse
+)
 from app.services.artifact_service import artifact_service
 from app.services.docker_service import docker_service
 from app.services.port_service import port_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/instances", tags=["Instancias de Hosting (PaaS Core)"])
 
@@ -138,7 +150,7 @@ def deploy_instance(
 
     return db_instance
 
-@router.post("/{instance_id}/action")
+@router.post("/{instance_id}/action", response_model=InstanceActionResponse)
 def instance_action(
     instance_id: int,
     action_data: InstanceActionRequest,
@@ -160,7 +172,10 @@ def instance_action(
     if action == "stop":
         docker_service.stop_instance(instance.container_id)
         instance.status = InstanceStatus.STOPPED
-    elif action in ("start", "restart"):
+    elif action == "start":
+        docker_service.start_instance(instance.container_id)
+        instance.status = InstanceStatus.RUNNING
+    elif action == "restart":
         docker_service.restart_instance(instance.container_id)
         instance.status = InstanceStatus.RUNNING
     else:
@@ -170,15 +185,25 @@ def instance_action(
         )
 
     db.commit()
-    return {"message": f"Instancia {action} ejecutada exitosamente.", "status": instance.status}
+    db.refresh(instance)
 
-@router.delete("/{instance_id}")
+    # T3.4: Bitácora estructurada de auditoría de acciones
+    logger.info(
+        f"[ACTION_AUDIT] user_id={current_user.id} instance_id={instance.id} action={action} result=success"
+    )
+
+    return InstanceActionResponse(
+        message=f"Instancia {action} ejecutada exitosamente.",
+        status=instance.status
+    )
+
+@router.delete("/{instance_id}", response_model=InstanceDestroyResponse)
 def destroy_instance(
     instance_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """RF-17: Eliminación definitiva (Destroy) del contenedor, liberación del puerto y limpieza de disco."""
+    """RF-17: Eliminación definitiva (Destroy) del contenedor, liberación del puerto y limpieza segura de disco."""
     instance = db.query(Instance).filter(Instance.id == instance_id).first()
     if not instance:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instancia no encontrada.")
@@ -196,13 +221,143 @@ def destroy_instance(
     # 2. Liberar puerto asignado en la BD
     port_service.release_port(db, instance.assigned_port)
 
-    # 3. Limpiar almacenamiento en disco en el host
+    # 3. Limpiar almacenamiento en disco en el host de forma segura (T4.4)
     storage_path = instance.storage_path
-    if storage_path and Path(storage_path).exists():
-        shutil.rmtree(storage_path, ignore_errors=True)
+    if storage_path:
+        target_dir = Path(storage_path).resolve()
+        base_dir = settings.RESOLVED_STORAGE_PATH.resolve()
+        # Verificar confinamiento dentro del directorio base de instancias
+        if str(target_dir).startswith(str(base_dir)) and target_dir.exists():
+            shutil.rmtree(target_dir, ignore_errors=True)
+        else:
+            logger.warning(f"Intento de eliminar ruta fuera de almacenamiento permitido o inexistente: {target_dir}")
 
     # 4. Eliminar registro en BD
     db.delete(instance)
     db.commit()
 
-    return {"message": "Instancia destruida, puerto liberado y almacenamiento limpiado correctamente."}
+    # T3.4: Bitácora de auditoría
+    logger.info(
+        f"[ACTION_AUDIT] user_id={current_user.id} instance_id={instance_id} action=destroy result=success"
+    )
+
+    return InstanceDestroyResponse(
+        message="Instancia destruida, puerto liberado y almacenamiento limpiado correctamente.",
+        instance_id=instance_id
+    )
+
+@router.get("/{instance_id}/metrics", response_model=InstanceMetricsResponse)
+def get_instance_metrics(
+    instance_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """T3.1, RF-20: Obtiene métricas de CPU y Memoria en tiempo real desde la API de Docker."""
+    instance = db.query(Instance).filter(Instance.id == instance_id).first()
+    if not instance:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instancia no encontrada.")
+
+    if instance.user_id != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para consultar telemetría de esta instancia."
+        )
+
+    # Obtener límite de RAM del plan para cálculo relativo
+    sub = db.query(Subscription).filter(
+        Subscription.user_id == instance.user_id,
+        Subscription.status == "active"
+    ).first()
+    ram_limit_mb = float(sub.plan.max_ram_mb) if sub and sub.plan else 128.0
+
+    stats = docker_service.get_container_stats(instance.container_id, ram_limit_mb=ram_limit_mb)
+
+    # Mapear estado al enum InstanceStatus
+    reported_status = instance.status
+    if stats.get("status") == "stopped" and instance.status == InstanceStatus.RUNNING:
+        reported_status = InstanceStatus.STOPPED
+
+    return InstanceMetricsResponse(
+        instance_id=instance.id,
+        status=reported_status,
+        cpu_percent=stats.get("cpu_percent", 0.0),
+        memory_usage_mb=stats.get("memory_usage_mb", 0.0),
+        memory_limit_mb=stats.get("memory_limit_mb", ram_limit_mb),
+        memory_percent=stats.get("memory_percent", 0.0),
+        updated_at=datetime.now(timezone.utc)
+    )
+
+@router.get("/{instance_id}/logs", response_model=InstanceLogsResponse)
+def get_instance_logs(
+    instance_id: int,
+    tail: int = Query(default=100, ge=1, le=1000, description="Número de líneas finales a recuperar"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """T3.1, RF-21: Obtiene el buffer de logs de Nginx (stdout/stderr) para la consola web."""
+    instance = db.query(Instance).filter(Instance.id == instance_id).first()
+    if not instance:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instancia no encontrada.")
+
+    if instance.user_id != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para consultar logs de esta instancia."
+        )
+
+    lines = docker_service.get_container_logs(instance.container_id, tail=tail)
+
+    return InstanceLogsResponse(
+        instance_id=instance.id,
+        container_id=instance.container_id,
+        total_lines=len(lines),
+        lines=lines
+    )
+
+@router.post("/{instance_id}/sync", response_model=InstanceSyncResponse)
+def sync_instance_status(
+    instance_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """T3.3: Comprueba el estado real del contenedor en Docker Engine y sincroniza la BD."""
+    instance = db.query(Instance).filter(Instance.id == instance_id).first()
+    if not instance:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instancia no encontrada.")
+
+    if instance.user_id != current_user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para sincronizar esta instancia."
+        )
+
+    previous_status = instance.status
+    docker_status = docker_service.get_container_status(instance.container_id)
+
+    if docker_status == "running":
+        current_status = InstanceStatus.RUNNING
+    elif docker_status in ("exited", "stopped"):
+        current_status = InstanceStatus.STOPPED
+    elif docker_status == "not_found":
+        current_status = InstanceStatus.STOPPED
+    else:
+        current_status = previous_status
+
+    synced = False
+    if current_status != previous_status:
+        instance.status = current_status
+        db.commit()
+        db.refresh(instance)
+        synced = True
+
+    logger.info(
+        f"[ACTION_AUDIT] user_id={current_user.id} instance_id={instance.id} action=sync result=success previous={previous_status} current={instance.status}"
+    )
+
+    return InstanceSyncResponse(
+        instance_id=instance.id,
+        previous_status=previous_status,
+        current_status=instance.status,
+        synced=synced
+    )
+
