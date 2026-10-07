@@ -76,12 +76,13 @@ class PortService:
             db.commit()
 
     @staticmethod
-    def release_port(db: Session, port_number: int) -> None:
+    def release_port(db: Session, port_number: int, commit: bool = True) -> None:
         """Libera atómicamente el puerto en la base de datos."""
         port_record = db.query(PortAllocation).filter(PortAllocation.port_number == port_number).first()
         if port_record:
             port_record.is_allocated = False
             port_record.instance_id = None
-            db.commit()
+            if commit:
+                db.commit()
 
 port_service = PortService()
