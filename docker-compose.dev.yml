@@ -36,3 +36,6 @@ volumes:
 networks:
   paas_dev_network:
     driver: bridge
+  paas_instances_network:
+    name: paas_instances_network
+    driver: bridge

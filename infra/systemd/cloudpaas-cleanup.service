@@ -1,0 +1,15 @@
+[Unit]
+Description=CloudPaaS Docker Orphan Container and DB Reconciliation Service
+After=docker.service network.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/srv/hosting
+ExecStart=/bin/bash -c '/srv/hosting/web-hosting/infra/scripts/cron_cleanup_orphans.sh || /home/rtdash/Proyectos/Software/servidor_servicio/web-hosting/infra/scripts/cron_cleanup_orphans.sh'
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
