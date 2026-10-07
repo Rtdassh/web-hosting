@@ -1,0 +1,89 @@
+version: '3.8'
+
+# ==============================================================================
+# CloudPaaS Web Hosting - Orquestación de Infraestructura del Host (Rol 1)
+# Hito 50%: Aislamiento estricto de redes (RNF-04, RNF-07) y política de logs
+# ==============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: paas_postgres_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-paas_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-paas_secret_password}
+      POSTGRES_DB: ${POSTGRES_DB:-paas_db}
+    # Solo expuesto en localhost para mantenimiento o pgAdmin local, bloqueado externamente
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_infra_data:/var/lib/postgresql/data
+    networks:
+      - paas_backend_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-paas_admin} -d ${POSTGRES_DB:-paas_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: paas_backend_prod
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - PROJECT_NAME=CloudPaaS Web Hosting
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-paas_admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-paas_secret_password}
+      - POSTGRES_DB=${POSTGRES_DB:-paas_db}
+      - SECRET_KEY=${SECRET_KEY:-clave_secreta_super_segura_desarrollo_cambiar_luego}
+      - DOCKER_SOCKET_PATH=/var/run/docker.sock
+      - DOCKER_IMAGE_NAME=cloudpaas/nginx-hosting:latest
+      - DOCKER_NETWORK=paas_instances_network
+      - HOSTING_STORAGE_PATH=/srv/hosting/instancias
+      - HOST_PUBLIC_IP=${HOST_PUBLIC_IP:-100.112.65.75}
+      - PORT_RANGE_START=30001
+      - PORT_RANGE_END=30100
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/hosting/instancias:/srv/hosting/instancias
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - paas_backend_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  postgres_infra_data:
+
+# ==============================================================================
+# SEGREGACIÓN DE REDES (RNF-04, RNF-07)
+# paas_backend_network: Comunicación interna entre FastAPI y PostgreSQL.
+# paas_instances_network: Red puente dedicada y aislada para contenedores de clientes.
+# Los contenedores de clientes NUNCA tienen interfaz en paas_backend_network.
+# ==============================================================================
+networks:
+  paas_backend_network:
+    name: paas_backend_network
+    driver: bridge
+  paas_instances_network:
+    name: paas_instances_network
+    driver: bridge

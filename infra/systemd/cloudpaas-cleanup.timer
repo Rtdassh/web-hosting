@@ -1,0 +1,13 @@
+[Unit]
+Description=Timer para reconciliación y limpieza periódica de contenedores huérfanos CloudPaaS
+RefuseManualStart=no
+RefuseManualStop=no
+
+[Timer]
+# Ejecutar cada 15 minutos
+OnBootSec=5min
+OnUnitActiveSec=15min
+Unit=cloudpaas-cleanup.service
+
+[Install]
+WantedBy=timers.target

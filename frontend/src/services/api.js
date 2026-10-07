@@ -25,13 +25,10 @@ export const ensureAuthenticated = async () => {
   return token;
 };
 
-// Interceptor para inyectar token JWT automáticamente
-apiClient.interceptors.request.use(async (config) => {
+// Interceptor para inyectar token JWT automáticamente si existe sesión
+apiClient.interceptors.request.use((config) => {
   if (!config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
-    let token = localStorage.getItem('paas_token');
-    if (!token) {
-      token = await ensureAuthenticated();
-    }
+    const token = localStorage.getItem('paas_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -79,6 +76,20 @@ export const instanceService = {
   },
   destroyInstance: async (instanceId) => {
     const res = await apiClient.delete(`/instances/${instanceId}`);
+    return res.data;
+  },
+  getMetrics: async (instanceId) => {
+    const res = await apiClient.get(`/instances/${instanceId}/metrics`);
+    return res.data;
+  },
+  getLogs: async (instanceId, tail = 100) => {
+    const res = await apiClient.get(`/instances/${instanceId}/logs`, {
+      params: { tail }
+    });
+    return res.data;
+  },
+  syncStatus: async (instanceId) => {
+    const res = await apiClient.post(`/instances/${instanceId}/sync`);
     return res.data;
   }
 };
