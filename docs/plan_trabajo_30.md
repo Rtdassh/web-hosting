@@ -1,9 +1,6 @@
 # Plan de Trabajo y Organización del Equipo: Avance Funcional 1 (30%)
 **Proyecto:** Plataforma como Servicio (PaaS) – Web Hosting Service  
-**Curso:** Ingeniería de Software I – Universidad Rafael Landívar  
 **Hito Objetivo:** Avance Funcional 1 (30%) – *25 de septiembre de 2026*  
-**Equipo:** 4 Integrantes (Rubén Espinoza, Josué González, Juan Ángel Pastor, Juan Alejandro Medina)
-
 ---
 
 ## 1. Definición del Hito del 30% ("The Walking Skeleton")

@@ -6,8 +6,7 @@ Requires=docker.service
 [Service]
 Type=oneshot
 User=root
-WorkingDirectory=/srv/hosting
-ExecStart=/bin/bash -c '/srv/hosting/web-hosting/infra/scripts/cron_cleanup_orphans.sh || /home/rtdash/Proyectos/Software/servidor_servicio/web-hosting/infra/scripts/cron_cleanup_orphans.sh'
+ExecStart=/bin/bash -c '/home/juan/proyecto/web-hosting/infra/scripts/cron_cleanup_orphans.sh || /srv/hosting/web-hosting/infra/scripts/cron_cleanup_orphans.sh || /home/rtdash/Proyectos/Software/servidor_servicio/web-hosting/infra/scripts/cron_cleanup_orphans.sh'
 StandardOutput=journal
 StandardError=journal
 

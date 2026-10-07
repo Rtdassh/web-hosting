@@ -1,8 +1,8 @@
 # Plan de Trabajo y Organizacion del Equipo: Avance Funcional 2 (50%)
 **Proyecto:** Plataforma como Servicio (PaaS) – Web Hosting Service  
-**Curso:** Ingenieria de Software I – Universidad Rafael Landivar  
+
 **Hito Objetivo:** Avance Funcional 2 (50%) – 9 de octubre de 2026  
-**Equipo:** 4 Integrantes (Ruben Espinoza, Josue Gonzalez, Juan Angel Pastor, Juan Alejandro Medina)
+
 
 ---
 
