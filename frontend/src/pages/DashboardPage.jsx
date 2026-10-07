@@ -14,14 +14,22 @@ import {
   RotateCcw,
   Trash2,
   Loader2,
+  Terminal,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 import { instanceService } from '../services/api';
+import InstanceLogsModal from '../components/instances/InstanceLogsModal';
+import InstanceMetricsCard from '../components/instances/InstanceMetricsCard';
 
 export default function DashboardPage({ onDeployClick, refreshKey }) {
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState({});
+  const [selectedLogInstance, setSelectedLogInstance] = useState(null);
+  const [destroyConfirmInstance, setDestroyConfirmInstance] = useState(null);
+
 
   const fetchInstances = async () => {
     setLoading(true);
@@ -58,13 +66,23 @@ export default function DashboardPage({ onDeployClick, refreshKey }) {
     }
   };
 
-  const handleDestroy = async (id) => {
-    if (!window.confirm('¿Seguro que deseas eliminar esta instancia, liberar el puerto y limpiar su almacenamiento?')) {
-      return;
+  const handleSync = async (id) => {
+    setActionLoading((prev) => ({ ...prev, [id]: 'sync' }));
+    try {
+      await instanceService.syncStatus(id);
+      await fetchInstances();
+    } catch (err) {
+      alert('Error al sincronizar estado: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [id]: null }));
     }
+  };
+
+  const handleDestroy = async (id) => {
     setActionLoading((prev) => ({ ...prev, [id]: 'destroy' }));
     try {
       await instanceService.destroyInstance(id);
+      setDestroyConfirmInstance(null);
       await fetchInstances();
     } catch (err) {
       alert('Error al eliminar instancia: ' + (err.response?.data?.detail || err.message));
@@ -72,6 +90,7 @@ export default function DashboardPage({ onDeployClick, refreshKey }) {
       setActionLoading((prev) => ({ ...prev, [id]: null }));
     }
   };
+
 
   const formatDate = (date) => {
     if (!date) {
@@ -465,11 +484,35 @@ export default function DashboardPage({ onDeployClick, refreshKey }) {
                                 <span className="hidden sm:inline">Reiniciar</span>
                               </button>
 
+                              {/* Sincronización (T3.3) */}
+                              <button
+                                type="button"
+                                title="Sincronizar estado con Docker Engine"
+                                disabled={Boolean(actionLoading[inst.id])}
+                                onClick={() => handleSync(inst.id)}
+                                className="h-9 px-2.5 rounded-[8px] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-[12px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                              >
+                                <RefreshCw className={`w-3.5 h-3.5 ${actionLoading[inst.id] === 'sync' ? 'animate-spin' : ''}`} />
+                                <span className="hidden sm:inline">Sync</span>
+                              </button>
+
+                              {/* Visor de logs (T2.1, RF-21) */}
+                              <button
+                                type="button"
+                                title="Ver registros de acceso y errores de Nginx"
+                                onClick={() => setSelectedLogInstance(inst)}
+                                className="h-9 px-2.5 rounded-[8px] bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-medium flex items-center gap-1.5 transition-colors shadow-xs"
+                              >
+                                <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className="hidden sm:inline">Logs</span>
+                              </button>
+
+                              {/* Botón modal Destroy (T2.3, RF-17) */}
                               <button
                                 type="button"
                                 title="Eliminar y liberar recursos"
                                 disabled={Boolean(actionLoading[inst.id])}
-                                onClick={() => handleDestroy(inst.id)}
+                                onClick={() => setDestroyConfirmInstance(inst)}
                                 className="h-9 w-9 rounded-[8px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 flex items-center justify-center transition-colors disabled:opacity-50"
                               >
                                 {actionLoading[inst.id] === 'destroy' ? (
@@ -481,6 +524,9 @@ export default function DashboardPage({ onDeployClick, refreshKey }) {
                             </div>
 
                           </div>
+
+                          {/* Telemetría en tiempo real (T2.2, RF-20) */}
+                          <InstanceMetricsCard instanceId={inst.id} isRunning={isRunning} />
                         </article>
                       );
                     })}
@@ -493,6 +539,60 @@ export default function DashboardPage({ onDeployClick, refreshKey }) {
 
         </div>
       </div>
+
+      {/* Modal de logs en vivo (T2.1) */}
+      {selectedLogInstance && (
+        <InstanceLogsModal
+          instance={selectedLogInstance}
+          onClose={() => setSelectedLogInstance(null)}
+        />
+      )}
+
+      {/* Modal de confirmación destructiva Destroy (T2.3, RF-17) */}
+      {destroyConfirmInstance && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl border border-red-200 max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-800">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-slate-900">¿Eliminar sitio web definitivamente?</h3>
+                <p className="text-xs text-slate-500">Acción permanente e irreversible</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Estás a punto de destruir la instancia <strong className="text-slate-900 font-semibold">{destroyConfirmInstance.name}</strong>. Esta operación detendrá y eliminará el contenedor Docker, liberará el puerto TCP <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800 font-mono font-bold">{destroyConfirmInstance.assigned_port}</code> y purgará de forma segura los archivos en disco del host.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={Boolean(actionLoading[destroyConfirmInstance.id])}
+                onClick={() => setDestroyConfirmInstance(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(actionLoading[destroyConfirmInstance.id])}
+                onClick={() => handleDestroy(destroyConfirmInstance.id)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
+              >
+                {actionLoading[destroyConfirmInstance.id] === 'destroy' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                <span>Confirmar y Destruir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
+
   );
 }
