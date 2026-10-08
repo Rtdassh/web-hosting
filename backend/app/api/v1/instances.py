@@ -214,23 +214,48 @@ def destroy_instance(
             detail="No tienes permiso para eliminar esta instancia."
         )
 
-    # 1. Detener y remover contenedor Docker
+    # Validar la ruta antes de modificar Docker o la base de datos.
+    if not instance.storage_path:
+        raise HTTPException(
+            status_code=409,
+            detail="La instancia no tiene una ruta de almacenamiento válida."
+        )
+
+    target_dir = Path(instance.storage_path).resolve()
+    base_dir = settings.RESOLVED_STORAGE_PATH.resolve()
+
+    if target_dir == base_dir or not target_dir.is_relative_to(base_dir):
+        raise HTTPException(
+            status_code=409,
+            detail="La ruta de la instancia está fuera del almacenamiento permitido."
+        )
+
+    # 1. Eliminar el contenedor y comprobar el resultado.
     if instance.container_id:
-        docker_service.remove_instance(instance.container_id)
+        removed = docker_service.remove_instance(instance.container_id)
+        if not removed:
+            raise HTTPException(
+                status_code=503,
+                detail="No se pudo eliminar el contenedor de Docker."
+            )
 
-    # 2. Liberar puerto asignado en la BD
+    # 2. Eliminar únicamente la carpeta previamente validada.
+    try:
+        shutil.rmtree(target_dir)
+    except FileNotFoundError:
+        pass  # La carpeta ya fue eliminada.
+    except OSError as exc:
+        logger.exception(
+            "Error limpiando almacenamiento de la instancia %s",
+            instance.id
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo limpiar el almacenamiento. Reintentá la eliminación."
+        ) from exc
+
+    # 3. Liberar el puerto después de completar la limpieza.
     port_service.release_port(db, instance.assigned_port)
-
-    # 3. Limpiar almacenamiento en disco en el host de forma segura (T4.4)
-    storage_path = instance.storage_path
-    if storage_path:
-        target_dir = Path(storage_path).resolve()
-        base_dir = settings.RESOLVED_STORAGE_PATH.resolve()
-        # Verificar confinamiento dentro del directorio base de instancias
-        if str(target_dir).startswith(str(base_dir)) and target_dir.exists():
-            shutil.rmtree(target_dir, ignore_errors=True)
-        else:
-            logger.warning(f"Intento de eliminar ruta fuera de almacenamiento permitido o inexistente: {target_dir}")
 
     # 4. Eliminar registro en BD
     db.delete(instance)
