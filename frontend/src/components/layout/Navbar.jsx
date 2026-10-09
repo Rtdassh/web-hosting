@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Cloud,
   LogOut,
   X,
   AlertCircle,
+  ChevronDown,
 } from 'lucide-react';
+
 import { useAuth } from '../../context/AuthContext';
+import codropIsotipo from '../../assets/codrop-isotipo.png';
 
 export default function Navbar({ onLogout }) {
   const { user, logout } = useAuth();
@@ -13,126 +15,150 @@ export default function Navbar({ onLogout }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = () => {
-    // Primero indicamos a App.jsx que debe volver al Landing
     onLogout();
-
-    // Después eliminamos la sesión/JWT
     logout();
-
-    // Cerramos el modal
     setShowLogoutModal(false);
+  };
+
+  const getInitial = () => {
+    if (user?.full_name) {
+      return user.full_name.charAt(0).toUpperCase();
+    }
+
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+
+    return 'C';
   };
 
   return (
     <>
-      {/* Navbar */}
-      <header className="h-[72px] bg-white border-b border-[#e2e8f0] sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto h-full px-6 lg:px-12 flex items-center justify-between">
+      {/* =====================================================
+          NAVBAR
+      ====================================================== */}
+      <header className="h-[74px] bg-white border-b border-[#e2e8f0] sticky top-0 z-40">
+        <div className="max-w-[1380px] mx-auto h-full px-6 lg:px-12 flex items-center justify-between">
 
           {/* Marca */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#2563eb] flex items-center justify-center shadow-sm">
-              <Cloud className="w-5 h-5 text-white" />
-            </div>
+
+            <img
+              src={codropIsotipo}
+              alt="Codrop"
+              className="w-[70px] h-[46px] object-contain flex-shrink-0"
+            />
 
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[18px] font-semibold tracking-tight text-[#0f172a]">
-                  CloudPaaS
-                </span>
-
-                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-blue-50 text-[#2563eb] text-[10px] font-semibold">
-                  Web Hosting
-                </span>
+              <div className="text-[22px] leading-none font-bold tracking-[-0.025em]">
+                <span className="text-brand-500">Co</span>
+                <span className="text-navy-900">drop</span>
               </div>
 
-              <p className="hidden sm:block text-[11px] text-[#64748b]">
-                Panel de administración
+              <p className="mt-1 text-[10px] text-[#64748b]">
+                Panel de despliegues
               </p>
             </div>
+
           </div>
 
-          {/* Usuario + cerrar sesión */}
-          <div className="flex items-center gap-4">
+
+          {/* Usuario */}
+          <div className="flex items-center gap-3">
+
             {user && (
               <div className="hidden md:block text-right">
-                <p className="text-[13px] font-semibold text-[#0f172a]">
-                  {user.full_name}
+
+                <p className="text-[12px] font-semibold text-navy-900">
+                  {user.full_name || 'Usuario Codrop'}
                 </p>
 
-                <p className="text-[11px] text-[#64748b]">
+                <p className="mt-0.5 text-[10px] text-[#94a3b8]">
                   {user.email}
                 </p>
+
               </div>
             )}
+
 
             <button
               type="button"
               onClick={() => setShowLogoutModal(true)}
-              className="h-10 px-4 rounded-[9px] border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#64748b] hover:text-[#0f172a] text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors"
+              className="group h-[42px] pl-2 pr-3 rounded-[12px] border border-[#e2e8f0] bg-white hover:bg-[#f8fbfa] flex items-center gap-2.5 transition-colors"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Cerrar sesión</span>
+
+              <div className="w-8 h-8 rounded-[9px] bg-brand-50 border border-brand-100 flex items-center justify-center text-[12px] font-bold text-brand-700">
+                {getInitial()}
+              </div>
+
+              <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] group-hover:text-navy-900 transition-colors" />
+
             </button>
+
           </div>
         </div>
       </header>
 
-      {/* Modal de confirmación */}
+
+      {/* =====================================================
+          MODAL LOGOUT
+      ====================================================== */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
 
-          {/* Fondo oscuro */}
           <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-navy-900/40 backdrop-blur-[3px]"
             onClick={() => setShowLogoutModal(false)}
           />
 
-          {/* Ventana */}
-          <div className="relative w-full max-w-[430px] bg-white border border-[#e2e8f0] rounded-[18px] shadow-2xl p-7">
 
-            {/* Botón cerrar */}
+          <div className="relative w-full max-w-[430px] bg-white border border-[#e2e8f0] rounded-[22px] shadow-[0_30px_80px_rgba(23,40,56,0.18)] p-7">
+
             <button
               type="button"
               onClick={() => setShowLogoutModal(false)}
               aria-label="Cerrar"
-              className="absolute top-5 right-5 w-8 h-8 rounded-lg flex items-center justify-center text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100 transition-colors"
+              className="absolute top-5 right-5 w-8 h-8 rounded-lg flex items-center justify-center text-[#64748b] hover:text-navy-900 hover:bg-[#f1f5f4] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* Icono */}
-            <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-[#2563eb]" />
+
+            <div className="w-12 h-12 rounded-[14px] bg-brand-50 border border-brand-100 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-brand-600" />
             </div>
 
-            {/* Texto */}
-            <h2 className="mt-5 text-[21px] font-semibold tracking-tight text-[#0f172a]">
+
+            <h2 className="mt-5 text-[22px] font-bold tracking-[-0.02em] text-navy-900">
               ¿Cerrar sesión?
             </h2>
 
-            <p className="mt-2 text-[14px] leading-6 text-[#64748b]">
-              ¿Estás seguro de que deseas cerrar sesión en CloudPaaS?
+
+            <p className="mt-2 text-[13px] leading-6 text-[#64748b]">
+              Tu sesión actual en Codrop se cerrará y volverás a la página principal.
             </p>
 
-            {/* Acciones */}
+
             <div className="mt-7 flex items-center justify-end gap-3">
+
               <button
                 type="button"
                 onClick={() => setShowLogoutModal(false)}
-                className="h-10 px-4 rounded-[9px] bg-white border border-[#e2e8f0] hover:bg-slate-50 text-[#0f172a] text-[13px] font-semibold transition-colors"
+                className="h-10 px-4 rounded-[9px] bg-white border border-[#e2e8f0] hover:bg-[#f8faf9] text-navy-900 text-[13px] font-semibold transition-colors"
               >
                 Cancelar
               </button>
 
+
               <button
                 type="button"
                 onClick={handleLogout}
-                className="h-10 px-4 rounded-[9px] bg-[#2563eb] hover:bg-blue-700 text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors"
+                className="h-10 px-4 rounded-[9px] bg-brand-500 hover:bg-brand-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(40,181,134,0.18)] transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 Cerrar sesión
               </button>
+
             </div>
 
           </div>

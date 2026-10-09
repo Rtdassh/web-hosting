@@ -96,6 +96,26 @@ export default function PublicNavbar({
           </div>
         )}
 
+
+        {/* =====================================================
+            VERIFICATION
+        ====================================================== */}
+        {variant === 'verification' && (
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline text-[13px] text-[#64748b]">
+              ¿Ya verificaste tu correo?
+            </span>
+
+            <button
+              type="button"
+              onClick={onLogin}
+              className="text-[14px] font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              Iniciar sesión
+            </button>
+          </div>
+        )}
+
       </div>
     </header>
   );
