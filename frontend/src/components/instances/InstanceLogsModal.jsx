@@ -1,4 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
 import {
   Terminal,
   X,
@@ -7,207 +12,530 @@ import {
   Check,
   ArrowDown,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Server,
+  Activity,
 } from 'lucide-react';
+
 import { instanceService } from '../../services/api';
 
-export default function InstanceLogsModal({ instance, onClose }) {
+
+export default function InstanceLogsModal({
+  instance,
+  onClose,
+}) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [filterStream, setFilterStream] = useState('all'); // all, access, error
+  const [filterStream, setFilterStream] = useState('all');
+
   const logContainerRef = useRef(null);
+
+
+  /* =========================================================
+     FETCH
+  ========================================================= */
 
   const fetchLogs = async () => {
     if (!instance?.id) return;
+
     setLoading(true);
     setError('');
+
     try {
-      const data = await instanceService.getLogs(instance.id, 100);
+      const data = await instanceService.getLogs(
+        instance.id,
+        100
+      );
+
       setLogs(data.lines || []);
     } catch (err) {
       console.error('Error al obtener logs:', err);
-      setError(err.response?.data?.detail || 'No se pudieron recuperar los registros del contenedor.');
+
+      setError(
+        err.response?.data?.detail ||
+        'No se pudieron recuperar los registros del contenedor.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
+
   useEffect(() => {
     fetchLogs();
+
     const interval = setInterval(() => {
       if (instance?.status === 'running') {
         fetchLogs();
       }
     }, 5000);
+
     return () => clearInterval(interval);
   }, [instance?.id, instance?.status]);
 
+
   useEffect(() => {
-    if (autoScroll && logContainerRef.current) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    if (
+      autoScroll &&
+      logContainerRef.current
+    ) {
+      logContainerRef.current.scrollTop =
+        logContainerRef.current.scrollHeight;
     }
   }, [logs, autoScroll]);
 
+
+  /* =========================================================
+     COPY
+  ========================================================= */
+
   const handleCopy = () => {
     if (!logs.length) return;
-    navigator.clipboard.writeText(logs.join('\n'));
+
+    navigator.clipboard.writeText(
+      logs.join('\n')
+    );
+
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
+
+
+  /* =========================================================
+     FILTER
+  ========================================================= */
 
   const filteredLogs = logs.filter((line) => {
     if (filterStream === 'error') {
-      return line.toLowerCase().includes('[error]') || line.toLowerCase().includes('stderr') || line.includes(' 404 ') || line.includes(' 500 ');
+      return (
+        line.toLowerCase().includes('[error]') ||
+        line.toLowerCase().includes('stderr') ||
+        line.includes(' 404 ') ||
+        line.includes(' 500 ')
+      );
     }
+
     if (filterStream === 'access') {
-      return !line.toLowerCase().includes('[error]');
+      return !line
+        .toLowerCase()
+        .includes('[error]');
     }
+
     return true;
   });
 
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#0f172a] border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col h-[640px] overflow-hidden text-slate-200">
-        
-        {/* Header */}
-        <div className="px-5 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Terminal className="w-4 h-4" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+      {/* Fondo */}
+      <div
+        className="absolute inset-0 bg-navy-900/60 backdrop-blur-[4px]"
+        onClick={onClose}
+      />
+
+
+      {/* Modal */}
+      <div className="relative w-full max-w-[980px] h-[650px] max-h-[88vh] rounded-[22px] border border-[#263d49] bg-[#101d27] shadow-[0_35px_100px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
+
+
+        {/* =====================================================
+            HEADER
+        ====================================================== */}
+        <div className="px-5 sm:px-6 py-4 bg-[#172838] border-b border-white/10 flex items-center justify-between gap-4">
+
+
+          <div className="flex items-center gap-3 min-w-0">
+
+            <div className="w-10 h-10 rounded-[11px] bg-brand-500/10 border border-brand-500/20 flex items-center justify-center flex-shrink-0">
+
+              <Terminal className="w-4.5 h-4.5 text-brand-500" />
+
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white">Consola de Logs: {instance?.name}</h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                  Port: {instance?.assigned_port}
+
+
+            <div className="min-w-0">
+
+              <div className="flex items-center gap-2 flex-wrap">
+
+                <h3 className="text-[13px] sm:text-[14px] font-semibold text-white truncate">
+                  Logs · {instance?.name}
+                </h3>
+
+
+                <span className="px-2 py-0.5 rounded-[6px] bg-white/5 border border-white/10 text-[9px] font-mono text-[#9fb2bd]">
+                  PORT {instance?.assigned_port || '—'}
                 </span>
+
               </div>
-              <p className="text-[11px] text-slate-400 font-mono">
-                Container ID: {instance?.container_id ? instance.container_id.slice(0, 12) : 'N/A'}
-              </p>
+
+
+              <div className="mt-1 flex items-center gap-2">
+
+                <Server className="w-3 h-3 text-[#647f8d]" />
+
+                <p className="text-[10px] font-mono text-[#78909c] truncate">
+                  {instance?.container_id
+                    ? `Container ${instance.container_id.slice(0, 12)}`
+                    : 'Container ID no disponible'}
+                </p>
+
+              </div>
+
             </div>
+
           </div>
 
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+
+          <div className="flex items-center gap-3">
+
+            <div
+              className={`
+                hidden
+                sm:inline-flex
+                items-center
+                gap-2
+                px-2.5
+                py-1
+                rounded-full
+                border
+                ${
+                  instance?.status === 'running'
+                    ? 'bg-brand-500/10 border-brand-500/20 text-brand-500'
+                    : 'bg-white/5 border-white/10 text-slate-400'
+                }
+              `}
+            >
+
+              <Activity className="w-3 h-3" />
+
+              <span className="text-[9px] uppercase tracking-[0.12em] font-bold">
+                {instance?.status === 'running'
+                  ? 'En vivo'
+                  : 'Detenido'}
+              </span>
+
+            </div>
+
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#78909c] hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+          </div>
+
         </div>
 
-        {/* Action Toolbar */}
-        <div className="px-5 py-2.5 bg-slate-900/60 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-          {/* Stream Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
-            <button
+
+        {/* =====================================================
+            TOOLBAR
+        ====================================================== */}
+        <div className="px-5 sm:px-6 py-3 bg-[#13222e] border-b border-white/[0.07] flex flex-wrap items-center justify-between gap-3">
+
+
+          {/* Filtros */}
+          <div className="flex items-center gap-1 p-1 rounded-[9px] bg-[#0c1821] border border-white/[0.08]">
+
+            <FilterButton
+              active={filterStream === 'all'}
               onClick={() => setFilterStream('all')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
-                filterStream === 'all' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
             >
               Todos ({logs.length})
-            </button>
-            <button
+            </FilterButton>
+
+
+            <FilterButton
+              active={filterStream === 'access'}
               onClick={() => setFilterStream('access')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
-                filterStream === 'access' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
             >
-              Access Log
-            </button>
+              Access
+            </FilterButton>
+
+
             <button
+              type="button"
               onClick={() => setFilterStream('error')}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
-                filterStream === 'error' ? 'bg-red-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
+              className={`
+                h-7
+                px-3
+                rounded-[6px]
+                text-[10px]
+                font-semibold
+                transition-colors
+                ${
+                  filterStream === 'error'
+                    ? 'bg-rose-500 text-white'
+                    : 'text-[#78909c] hover:text-white hover:bg-white/5'
+                }
+              `}
             >
               Errores
             </button>
+
           </div>
 
-          {/* Controls */}
+
+          {/* Acciones */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setAutoScroll(!autoScroll)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-colors ${
-                autoScroll
-                  ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
-                  : 'bg-slate-800 border-slate-700 text-slate-400'
-              }`}
-              title="Alternar auto-scroll al recibir nuevas líneas"
-            >
-              <ArrowDown className="w-3 h-3" />
-              <span>Auto-scroll</span>
-            </button>
 
             <button
+              type="button"
+              onClick={() => setAutoScroll(!autoScroll)}
+              className={`
+                h-8
+                px-3
+                rounded-[8px]
+                border
+                text-[10px]
+                font-semibold
+                flex
+                items-center
+                gap-1.5
+                transition-colors
+                ${
+                  autoScroll
+                    ? 'bg-brand-500/10 border-brand-500/25 text-brand-500'
+                    : 'bg-white/5 border-white/10 text-[#78909c] hover:text-white'
+                }
+              `}
+            >
+
+              <ArrowDown className="w-3 h-3" />
+
+              <span className="hidden sm:inline">
+                Auto-scroll
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
               onClick={handleCopy}
               disabled={logs.length === 0}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-medium transition-colors disabled:opacity-50"
+              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-40"
             >
-              {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-              <span>{copied ? 'Copiado' : 'Copiar'}</span>
+
+              {copied ? (
+                <Check className="w-3 h-3 text-brand-500" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+
+              <span className="hidden sm:inline">
+                {copied ? 'Copiado' : 'Copiar'}
+              </span>
+
             </button>
+
 
             <button
+              type="button"
               onClick={fetchLogs}
               disabled={loading}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-medium transition-colors disabled:opacity-50"
+              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-40"
             >
-              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refrescar</span>
+
+              <RefreshCw
+                className={`
+                  w-3
+                  h-3
+                  ${loading ? 'animate-spin' : ''}
+                `}
+              />
+
+              <span className="hidden sm:inline">
+                Refrescar
+              </span>
+
             </button>
+
           </div>
+
         </div>
 
-        {/* Terminal Screen */}
+
+        {/* =====================================================
+            TERMINAL
+        ====================================================== */}
         <div
           ref={logContainerRef}
-          className="flex-1 p-4 bg-[#0a0f1d] font-mono text-[12px] leading-relaxed overflow-y-auto space-y-1 select-text scroll-smooth"
+          className="flex-1 overflow-y-auto bg-[#08131b] px-4 sm:px-5 py-4 font-mono text-[11px] sm:text-[12px] leading-relaxed select-text scroll-smooth"
         >
+
           {loading && logs.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-              <p className="text-xs">Conectando con Docker daemon...</p>
-            </div>
+
+            <TerminalState>
+
+              <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+
+              <p>
+                Conectando con el contenedor...
+              </p>
+
+            </TerminalState>
+
           ) : error ? (
-            <div className="h-full flex flex-col items-center justify-center text-red-400 gap-2">
-              <AlertCircle className="w-6 h-6" />
-              <p className="text-xs">{error}</p>
-            </div>
+
+            <TerminalState>
+
+              <AlertCircle className="w-6 h-6 text-rose-400" />
+
+              <p className="text-rose-300">
+                {error}
+              </p>
+
+            </TerminalState>
+
           ) : filteredLogs.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-500">
-              <p className="text-xs">No hay líneas de log registradas aún en el stream seleccionado.</p>
-              <p className="text-[11px] text-slate-600 mt-1">Genera peticiones HTTP a tu sitio para observar la salida.</p>
-            </div>
+
+            <TerminalState>
+
+              <Terminal className="w-6 h-6 text-[#415965]" />
+
+              <div className="text-center">
+
+                <p>
+                  No hay registros en este stream.
+                </p>
+
+                <p className="mt-1 text-[10px] text-[#415965]">
+                  Genera peticiones HTTP a tu sitio para observar la salida.
+                </p>
+
+              </div>
+
+            </TerminalState>
+
           ) : (
-            filteredLogs.map((line, idx) => {
-              const isError = line.toLowerCase().includes('[error]') || line.includes(' 404 ') || line.includes(' 500 ');
-              return (
-                <div key={idx} className="flex items-start gap-3 hover:bg-slate-800/40 px-1 py-0.5 rounded">
-                  <span className="text-slate-600 select-none text-[10px] w-8 text-right flex-shrink-0 pt-0.5">
-                    {idx + 1}
-                  </span>
-                  <span className={`break-all ${isError ? 'text-rose-300' : 'text-emerald-300/90'}`}>
-                    {line}
-                  </span>
-                </div>
-              );
-            })
+
+            <div className="space-y-[2px]">
+
+              {filteredLogs.map((line, idx) => {
+
+                const isError =
+                  line.toLowerCase().includes('[error]') ||
+                  line.toLowerCase().includes('stderr') ||
+                  line.includes(' 404 ') ||
+                  line.includes(' 500 ');
+
+
+                return (
+                  <div
+                    key={idx}
+                    className="group flex items-start gap-3 rounded-[4px] px-1.5 py-[2px] hover:bg-white/[0.035]"
+                  >
+
+                    <span className="w-8 flex-shrink-0 text-right text-[9px] pt-[2px] text-[#314853] select-none">
+                      {idx + 1}
+                    </span>
+
+
+                    <span
+                      className={`
+                        break-all
+                        ${
+                          isError
+                            ? 'text-rose-300'
+                            : 'text-[#83dcb8]'
+                        }
+                      `}
+                    >
+                      {line}
+                    </span>
+
+                  </div>
+                );
+              })}
+
+            </div>
+
           )}
+
         </div>
 
-        {/* Footer info bar */}
-        <div className="px-5 py-2 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-          <span>Últimas 100 líneas retenidas (política de rotación: 5MB / 2 archivos)</span>
-          <span className="font-mono">{filteredLogs.length} líneas mostradas</span>
+
+        {/* =====================================================
+            FOOTER
+        ====================================================== */}
+        <div className="px-5 sm:px-6 py-2.5 bg-[#0d1922] border-t border-white/[0.07] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-[9px] text-[#506875]">
+
+          <span>
+            Últimas 100 líneas · Rotación 5 MB / 2 archivos
+          </span>
+
+
+          <span className="font-mono text-[#78909c]">
+            {filteredLogs.length} líneas mostradas
+          </span>
+
         </div>
 
       </div>
+
+    </div>
+  );
+}
+
+
+/* =========================================================
+   FILTER BUTTON
+========================================================= */
+
+function FilterButton({
+  active,
+  onClick,
+  children,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`
+        h-7
+        px-3
+        rounded-[6px]
+        text-[10px]
+        font-semibold
+        transition-colors
+        ${
+          active
+            ? 'bg-brand-500 text-white'
+            : 'text-[#78909c] hover:text-white hover:bg-white/5'
+        }
+      `}
+    >
+      {children}
+    </button>
+  );
+}
+
+
+/* =========================================================
+   TERMINAL STATE
+========================================================= */
+
+function TerminalState({
+  children,
+}) {
+  return (
+    <div className="h-full flex flex-col items-center justify-center gap-3 text-[#5f7783] text-[11px]">
+      {children}
     </div>
   );
 }
