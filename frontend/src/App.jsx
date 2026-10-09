@@ -17,7 +17,7 @@ function AuthenticatedApp({ onLogout }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-brand-500 selection:text-white">
       <Navbar onLogout={onLogout} />
 
       <div className="flex-1">
@@ -34,7 +34,7 @@ function AuthenticatedApp({ onLogout }) {
       />
 
       <footer className="border-t border-[#e2e8f0] bg-white py-6 text-center text-xs text-[#64748b]">
-        CloudPaaS • Web Hosting Platform
+        Codrop • De tu código a la web, sin complicaciones.
       </footer>
     </div>
   );
@@ -57,6 +57,7 @@ function AppContent() {
   if (screen === 'register') {
     return (
       <Register
+        onHome={() => setScreen('landing')}
         onLogin={() => setScreen('login')}
         onVerification={(email) => {
           setVerificationEmail(email);
@@ -78,6 +79,7 @@ function AppContent() {
   if (screen === 'login') {
     return (
       <Login
+        onHome={() => setScreen('landing')}
         onRegister={() => setScreen('register')}
       />
     );
