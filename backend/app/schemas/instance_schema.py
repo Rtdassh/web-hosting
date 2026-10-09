@@ -23,3 +23,33 @@ class InstanceResponse(InstanceBase):
 
 class InstanceActionRequest(BaseModel):
     action: str  # start, stop, restart
+
+class InstanceActionResponse(BaseModel):
+    message: str
+    status: InstanceStatus
+
+class InstanceLogsResponse(BaseModel):
+    instance_id: int
+    container_id: Optional[str] = None
+    total_lines: int
+    lines: list[str]
+
+class InstanceMetricsResponse(BaseModel):
+    instance_id: int
+    status: InstanceStatus
+    cpu_percent: float
+    memory_usage_mb: float
+    memory_limit_mb: float
+    memory_percent: float
+    updated_at: datetime
+
+class InstanceSyncResponse(BaseModel):
+    instance_id: int
+    previous_status: InstanceStatus
+    current_status: InstanceStatus
+    synced: bool
+
+class InstanceDestroyResponse(BaseModel):
+    message: str
+    instance_id: int
+

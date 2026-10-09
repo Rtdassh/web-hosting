@@ -25,7 +25,10 @@ class Settings(BaseSettings):
     
     # Docker Engine y Almacenamiento
     DOCKER_SOCKET_PATH: str = "/var/run/docker.sock"
-    HOSTING_STORAGE_PATH: str = "./infra/host-storage/instances"
+    DOCKER_IMAGE_NAME: str = "cloudpaas/nginx-hosting:latest"
+    DOCKER_NETWORK: str = "paas_instances_network"
+    HOST_PUBLIC_IP: str = "100.112.65.75"
+    HOSTING_STORAGE_PATH: str = "/srv/hosting/instancias"
     PORT_RANGE_START: int = 30001
     PORT_RANGE_END: int = 30100
     
@@ -36,15 +39,19 @@ class Settings(BaseSettings):
     def RESOLVED_STORAGE_PATH(self) -> Path:
         """Resuelve la ruta de almacenamiento de forma absoluta independiente del CWD."""
         p = Path(self.HOSTING_STORAGE_PATH)
-        if not p.is_absolute():
-            candidate = (PROJECT_ROOT / p).resolve()
-            if candidate.exists() or (PROJECT_ROOT / "infra").exists():
-                return candidate
-        return p.resolve()
+        if p.is_absolute() and (p.exists() or Path("/srv/hosting").exists()):
+            return p
+        # Si existe /srv/hosting/instancias en el sistema anfitrión
+        srv_path = Path("/srv/hosting/instancias")
+        if srv_path.exists():
+            return srv_path
+        # Fallback a directorio local en el repositorio para desarrollo local aislado
+        candidate = (PROJECT_ROOT / "infra/host-storage/instances").resolve()
+        return candidate
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        return f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     class Config:
         case_sensitive = True

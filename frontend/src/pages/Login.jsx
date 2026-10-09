@@ -7,6 +7,7 @@ import {
   LockKeyhole,
   Server,
   Globe2,
+  Zap,
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -49,10 +50,18 @@ export default function Login({
     }
   };
 
+  const handleTestAccount = () => {
+    setEmail('dev@cloudpaas.local');
+    setPassword('admin123');
+    setError('');
+  };
+
   return (
     <main className="min-h-screen bg-[#f6faf8] text-navy-900 relative overflow-hidden">
 
-      {/* Fondo */}
+      {/* =====================================================
+          FONDO
+      ====================================================== */}
       <div className="absolute inset-0 pointer-events-none">
 
         <div className="absolute top-[-170px] left-1/2 -translate-x-1/2 w-[620px] h-[420px] rounded-full bg-brand-100/50 blur-[100px]" />
@@ -72,7 +81,7 @@ export default function Login({
 
 
       {/* =====================================================
-          MISMO NAVBAR DE LANDING
+          NAVBAR COMPARTIDO
       ====================================================== */}
       <PublicNavbar
         variant="login"
@@ -89,7 +98,9 @@ export default function Login({
         <div className="w-full max-w-[980px] mx-auto">
 
 
-          {/* Intro */}
+          {/* =================================================
+              INTRO
+          ================================================== */}
           <div className="text-center max-w-[620px] mx-auto">
 
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-100">
@@ -130,11 +141,15 @@ export default function Login({
           </div>
 
 
-          {/* Login */}
+          {/* =================================================
+              ZONA LOGIN
+          ================================================== */}
           <div className="mt-10 grid lg:grid-cols-[1fr_430px] gap-8 items-stretch">
 
 
-            {/* Panel izquierdo */}
+            {/* =================================================
+                PANEL INFORMATIVO
+            ================================================== */}
             <div className="hidden lg:block relative overflow-hidden rounded-[22px] bg-[#eef8f3] border border-brand-100 p-8">
 
               <div className="absolute -top-16 -left-16 w-[180px] h-[180px] rounded-full bg-brand-100/80 blur-3xl" />
@@ -214,7 +229,9 @@ export default function Login({
             </div>
 
 
-            {/* Formulario */}
+            {/* =================================================
+                FORMULARIO
+            ================================================== */}
             <div className="relative">
 
               <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-brand-100/60 blur-2xl pointer-events-none" />
@@ -223,6 +240,7 @@ export default function Login({
               <div className="relative bg-white border border-[#dfe7e4] rounded-[22px] p-8 shadow-[0_22px_60px_rgba(23,40,56,0.08)]">
 
 
+                {/* Acceso seguro */}
                 <div className="flex items-center gap-3">
 
                   <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
@@ -257,22 +275,27 @@ export default function Login({
                 </p>
 
 
+                {/* Error */}
                 {error && (
                   <div className="mt-6 flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 text-red-600 rounded-[9px] text-sm">
 
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
 
-                    <span>{error}</span>
+                    <span>
+                      {error}
+                    </span>
 
                   </div>
                 )}
 
 
+                {/* Formulario */}
                 <form
                   onSubmit={handleSubmit}
                   className="mt-7 space-y-5"
                 >
 
+                  {/* Correo */}
                   <div>
 
                     <label
@@ -296,6 +319,7 @@ export default function Login({
                   </div>
 
 
+                  {/* Contraseña */}
                   <div>
 
                     <label
@@ -319,6 +343,7 @@ export default function Login({
                   </div>
 
 
+                  {/* Botón login */}
                   <button
                     type="submit"
                     disabled={loading}
@@ -339,9 +364,24 @@ export default function Login({
 
                   </button>
 
+
+                  {/* ===========================================
+                      CUENTA DE PRUEBA - VIENE DE DEVELOPMENT
+                  ============================================ */}
+                  <button
+                    type="button"
+                    onClick={handleTestAccount}
+                    className="w-full h-[40px] rounded-[9px] border border-brand-100 bg-brand-50/80 hover:bg-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+
+                    Usar cuenta de prueba
+                  </button>
+
                 </form>
 
 
+                {/* Registro */}
                 <div className="mt-6 pt-6 border-t border-[#eef2f1] text-center">
 
                   <p className="text-[13px] text-[#64748b]">
@@ -373,6 +413,10 @@ export default function Login({
 }
 
 
+/* =========================================================
+   COMPONENTE BENEFICIO
+========================================================= */
+
 function LoginBenefit({
   icon: Icon,
   title,
@@ -382,7 +426,9 @@ function LoginBenefit({
     <div className="flex gap-3">
 
       <div className="w-9 h-9 rounded-[10px] bg-white border border-brand-100 flex items-center justify-center flex-shrink-0">
+
         <Icon className="w-4 h-4 text-brand-600" />
+
       </div>
 
 

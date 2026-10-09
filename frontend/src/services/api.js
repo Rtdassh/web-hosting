@@ -6,11 +6,32 @@ const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Interceptor para inyectar token JWT automáticamente
+export const ensureAuthenticated = async () => {
+  let token = localStorage.getItem('paas_token');
+  if (!token) {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/auth/login`, {
+        email: 'dev@cloudpaas.local',
+        password: 'admin123'
+      });
+      if (res.data?.access_token) {
+        token = res.data.access_token;
+        localStorage.setItem('paas_token', token);
+      }
+    } catch (e) {
+      console.warn("Falla en sesión inicial:", e);
+    }
+  }
+  return token;
+};
+
+// Interceptor para inyectar token JWT automáticamente si existe sesión
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('paas_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (!config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
+    const token = localStorage.getItem('paas_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
@@ -55,6 +76,20 @@ export const instanceService = {
   },
   destroyInstance: async (instanceId) => {
     const res = await apiClient.delete(`/instances/${instanceId}`);
+    return res.data;
+  },
+  getMetrics: async (instanceId) => {
+    const res = await apiClient.get(`/instances/${instanceId}/metrics`);
+    return res.data;
+  },
+  getLogs: async (instanceId, tail = 100) => {
+    const res = await apiClient.get(`/instances/${instanceId}/logs`, {
+      params: { tail }
+    });
+    return res.data;
+  },
+  syncStatus: async (instanceId) => {
+    const res = await apiClient.post(`/instances/${instanceId}/sync`);
     return res.data;
   }
 };

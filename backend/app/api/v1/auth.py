@@ -60,3 +60,36 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": user
     }
+
+from app.core.security import get_current_user
+from app.models.instance import Instance, InstanceStatus
+from app.schemas.user_schema import UserMeResponse, PlanInfo
+
+@router.get("/me", response_model=UserMeResponse)
+def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Obtiene el perfil del usuario autenticado y su cuota actual de instancias."""
+    sub = db.query(Subscription).filter(Subscription.user_id == current_user.id, Subscription.status == "active").first()
+    plan_info = None
+    if sub and sub.plan:
+        active_count = db.query(Instance).filter(
+            Instance.user_id == current_user.id,
+            Instance.status != InstanceStatus.FAILED
+        ).count()
+        plan_info = PlanInfo(
+            name=sub.plan.name,
+            max_instances=sub.plan.max_instances,
+            max_ram_mb=sub.plan.max_ram_mb,
+            cpu_quota=sub.plan.cpu_quota,
+            active_instances=active_count,
+            available_slots=max(0, sub.plan.max_instances - active_count)
+        )
+    
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "role": current_user.role,
+        "is_active": current_user.is_active,
+        "created_at": current_user.created_at,
+        "plan": plan_info
+    }
