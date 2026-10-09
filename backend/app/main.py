@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
 from app.core.security import get_password_hash
-from app.models import User, UserRole, Plan, Subscription, Instance, PortAllocation
+from app.models import User, UserRole, Plan, Subscription, Instance, InstanceStatusHistory, PortAllocation
 from app.api.v1.api import api_router
 
 logging.basicConfig(level=logging.INFO)
