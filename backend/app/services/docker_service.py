@@ -4,6 +4,7 @@ from typing import Optional
 import docker
 from docker.errors import DockerException, NotFound
 from app.core.config import settings
+from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -165,8 +166,17 @@ class DockerService:
 
     def remove_instance(self, container_id: str) -> bool:
         """Elimina definitivamente un contenedor Docker (RF-17)."""
-        if not self.client or container_id.startswith("mock_"):
-            return True
+
+        if container_id.startswith("mock_"):
+            return True  # Una instancia simulada no tiene contenedor real.
+
+        if not self.client:
+            logger.error(
+                "No se puede eliminar el contenedor %s: Docker no está disponible.",
+                container_id
+            )
+            return False
+
         try:
             container = self.client.containers.get(container_id)
             container.remove(force=True)
@@ -212,14 +222,17 @@ class DockerService:
         if not container_id:
             return default_stats
 
-        if not self.client or container_id.startswith("mock_"):
-            return {
-                "cpu_percent": 0.5,
-                "memory_usage_mb": 6.8,
-                "memory_limit_mb": float(ram_limit_mb),
-                "memory_percent": round((6.8 / ram_limit_mb) * 100.0, 2) if ram_limit_mb > 0 else 0.0,
-                "status": "running"
-            }
+        if not self.client:
+            raise HTTPException(
+                status_code=503,
+                detail="No hay conexión con Docker."
+            )
+
+        if container_id.startswith("mock_"):
+            raise HTTPException(
+                status_code=404,
+                detail="La instancia simulada no tiene un contenedor real."
+            )
 
         try:
             container = self.client.containers.get(container_id)
@@ -227,7 +240,9 @@ class DockerService:
             current_status = container.status.lower()
 
             if current_status != "running":
-                default_stats["status"] = current_status
+                default_stats["status"] = (
+                    "stopped" if current_status == "exited" else current_status
+                )
                 return default_stats
 
             stats = container.stats(stream=False)
@@ -276,11 +291,20 @@ class DockerService:
                 "memory_percent": memory_percent,
                 "status": "running"
             }
-        except NotFound:
-            return default_stats
-        except Exception as e:
-            logger.error(f"Error extrayendo telemetría de {container_id}: {e}")
-            return default_stats
+        except NotFound as exc:
+            raise HTTPException(
+                status_code=404,
+                detail="Contenedor no encontrado en Docker."
+                )from exc
+
+        except DockerException as exc:
+            logger.exception(
+                "Error extrayendo telemetría de %s", container_id
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="No se pudieron consultar las métricas de Docker."
+            ) from exc
 
     def get_container_logs(self, container_id: Optional[str], tail: int = 100) -> list[str]:
         """
@@ -290,13 +314,17 @@ class DockerService:
         if not container_id:
             return []
 
-        if not self.client or container_id.startswith("mock_"):
-            return [
-                "2026-10-04T00:00:01Z [notice] 1#1: using the \"epoll\" event method",
-                "2026-10-04T00:00:01Z [notice] 1#1: nginx/1.27.0",
-                "2026-10-04T00:00:01Z [notice] 1#1: start worker processes",
-                "2026-10-04T00:00:02Z 127.0.0.1 - [04/Oct/2026:00:00:02 +0000] \"GET / HTTP/1.1\" 200 450 \"-\" \"CloudPaaS-Probe/1.0\""
-            ]
+        if not self.client:
+            raise HTTPException(
+                status_code=503,
+                detail="No hay conexión con Docker."
+            )
+
+        if container_id.startswith("mock_"):
+            raise HTTPException(
+                status_code=404,
+                detail="La instancia simulada no tiene un contenedor real."
+            )
 
         try:
             container = self.client.containers.get(container_id)
@@ -304,11 +332,21 @@ class DockerService:
             decoded_text = raw_bytes.decode("utf-8", errors="replace")
             lines = [line for line in decoded_text.splitlines() if line.strip()]
             return lines
-        except NotFound:
-            return ["[advertencia] El contenedor no se encuentra en el motor Docker."]
-        except Exception as e:
-            logger.error(f"Error obteniendo logs de {container_id}: {e}")
-            return [f"[error] No se pudieron obtener los logs: {str(e)}"]
+
+        except NotFound as exc:
+            raise HTTPException(
+                status_code=404,
+                detail="Contenedor no encontrado en Docker."
+            ) from exc
+
+        except DockerException as exc:
+            logger.exception(
+                "Error obteniendo logs de %s", container_id
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="No se pudieron obtener los logs de Docker."
+            ) from exc
 
 docker_service = DockerService()
 
