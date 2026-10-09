@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import get_current_user
 from app.models.instance import Instance, InstanceStatus
+from app.models.instance_status_history import InstanceStatusHistory
 from app.models.user import User, UserRole
 from app.models.plan import Subscription
 from app.schemas.instance_schema import (
@@ -23,6 +24,7 @@ from app.schemas.instance_schema import (
     InstanceDestroyResponse
 )
 from app.services.artifact_service import artifact_service
+from app.services.action_audit_service import audit_action
 from app.services.docker_service import docker_service
 from app.services.port_service import port_service
 
@@ -169,28 +171,50 @@ def instance_action(
         )
 
     action = action_data.action.lower()
-    if action == "stop":
-        docker_service.stop_instance(instance.container_id)
-        instance.status = InstanceStatus.STOPPED
-    elif action == "start":
-        docker_service.start_instance(instance.container_id)
-        instance.status = InstanceStatus.RUNNING
-    elif action == "restart":
-        docker_service.restart_instance(instance.container_id)
-        instance.status = InstanceStatus.RUNNING
-    else:
+    operations = {
+        "stop": (docker_service.stop_instance, InstanceStatus.STOPPED),
+        "start": (docker_service.start_instance, InstanceStatus.RUNNING),
+        "restart": (docker_service.restart_instance, InstanceStatus.RUNNING),
+    }
+    if action not in operations:
+        audit_action(current_user.id, instance.id, action, "failed")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Acción no soportada (usar: start, stop, restart)."
         )
 
-    db.commit()
-    db.refresh(instance)
+    operation, target_status = operations[action]
+    try:
+        operation_succeeded = operation(instance.container_id)
+    except Exception:
+        db.rollback()
+        audit_action(current_user.id, instance.id, action, "failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="No se pudo ejecutar la acción en Docker."
+        )
 
-    # T3.4: Bitácora estructurada de auditoría de acciones
-    logger.info(
-        f"[ACTION_AUDIT] user_id={current_user.id} instance_id={instance.id} action={action} result=success"
-    )
+    if not operation_succeeded:
+        db.rollback()
+        audit_action(current_user.id, instance.id, action, "failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Docker no pudo completar la acción solicitada."
+        )
+
+    try:
+        instance.status = target_status
+        db.commit()
+        db.refresh(instance)
+    except Exception:
+        db.rollback()
+        audit_action(current_user.id, instance.id, action, "failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo actualizar el estado de la instancia."
+        )
+
+    audit_action(current_user.id, instance.id, action, "success")
 
     return InstanceActionResponse(
         message=f"Instancia {action} ejecutada exitosamente.",
@@ -214,57 +238,57 @@ def destroy_instance(
             detail="No tienes permiso para eliminar esta instancia."
         )
 
-    # Validar la ruta antes de modificar Docker o la base de datos.
-    if not instance.storage_path:
-        raise HTTPException(
-            status_code=409,
-            detail="La instancia no tiene una ruta de almacenamiento válida."
-        )
-
-    target_dir = Path(instance.storage_path).resolve()
-    base_dir = settings.RESOLVED_STORAGE_PATH.resolve()
-
-    if target_dir == base_dir or not target_dir.is_relative_to(base_dir):
-        raise HTTPException(
-            status_code=409,
-            detail="La ruta de la instancia está fuera del almacenamiento permitido."
-        )
-
-    # 1. Eliminar el contenedor y comprobar el resultado.
+    # 1. Detener y remover contenedor Docker
     if instance.container_id:
-        removed = docker_service.remove_instance(instance.container_id)
-        if not removed:
+        try:
+            removal_succeeded = docker_service.remove_instance(instance.container_id)
+        except Exception:
+            db.rollback()
+            audit_action(current_user.id, instance_id, "destroy", "failed")
             raise HTTPException(
-                status_code=503,
-                detail="No se pudo eliminar el contenedor de Docker."
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="No se pudo eliminar el contenedor en Docker."
             )
 
-    # 2. Eliminar únicamente la carpeta previamente validada.
+        if not removal_succeeded:
+            db.rollback()
+            audit_action(current_user.id, instance_id, "destroy", "failed")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Docker no pudo eliminar el contenedor."
+            )
+
     try:
-        shutil.rmtree(target_dir)
-    except FileNotFoundError:
-        pass  # La carpeta ya fue eliminada.
-    except OSError as exc:
-        logger.exception(
-            "Error limpiando almacenamiento de la instancia %s",
-            instance.id
-        )
+        # 2. Liberar puerto asignado en la BD
+        port_service.release_port(db, instance.assigned_port, commit=False)
+
+        # 3. Limpiar almacenamiento en disco en el host de forma segura (T4.4)
+        storage_path = instance.storage_path
+        if storage_path:
+            target_dir = Path(storage_path).resolve()
+            base_dir = settings.RESOLVED_STORAGE_PATH.resolve()
+            # Verificar confinamiento dentro del directorio base de instancias
+            if (
+                target_dir != base_dir
+                and str(target_dir).startswith(str(base_dir))
+                and target_dir.exists()
+            ):
+                shutil.rmtree(target_dir, ignore_errors=True)
+            else:
+                logger.warning(f"Intento de eliminar ruta fuera de almacenamiento permitido o inexistente: {target_dir}")
+
+        # 4. Eliminar registro en BD
+        db.delete(instance)
+        db.commit()
+    except Exception:
+        db.rollback()
+        audit_action(current_user.id, instance_id, "destroy", "failed")
         raise HTTPException(
-            status_code=500,
-            detail="No se pudo limpiar el almacenamiento. Reintentá la eliminación."
-        ) from exc
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo completar la eliminación de la instancia."
+        )
 
-    # 3. Liberar el puerto después de completar la limpieza.
-    port_service.release_port(db, instance.assigned_port)
-
-    # 4. Eliminar registro en BD
-    db.delete(instance)
-    db.commit()
-
-    # T3.4: Bitácora de auditoría
-    logger.info(
-        f"[ACTION_AUDIT] user_id={current_user.id} instance_id={instance_id} action=destroy result=success"
-    )
+    audit_action(current_user.id, instance_id, "destroy", "success")
 
     return InstanceDestroyResponse(
         message="Instancia destruida, puerto liberado y almacenamiento limpiado correctamente.",
@@ -357,32 +381,72 @@ def sync_instance_status(
         )
 
     previous_status = instance.status
-    docker_status = docker_service.get_container_status(instance.container_id)
+    try:
+        docker_status = docker_service.get_container_status(instance.container_id)
+    except Exception:
+        db.rollback()
+        audit_action(current_user.id, instance.id, "sync", "failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="No se pudo consultar el estado del contenedor en Docker."
+        )
+
+    if docker_status == "error":
+        db.rollback()
+        audit_action(current_user.id, instance.id, "sync", "failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Docker no pudo informar el estado del contenedor."
+        )
 
     if docker_status == "running":
         current_status = InstanceStatus.RUNNING
     elif docker_status in ("exited", "stopped"):
         current_status = InstanceStatus.STOPPED
     elif docker_status == "not_found":
-        current_status = InstanceStatus.STOPPED
+        # Contrato con Rol 4: not_found es ausencia real, no indisponibilidad de Docker.
+        current_status = InstanceStatus.FAILED
     else:
-        current_status = previous_status
+        db.rollback()
+        audit_action(current_user.id, instance.id, "sync", "failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Docker informó un estado no soportado: {docker_status}."
+        )
 
-    synced = False
-    if current_status != previous_status:
+    if current_status == previous_status:
+        audit_action(current_user.id, instance.id, "sync", "success")
+        return InstanceSyncResponse(
+            instance_id=instance.id,
+            previous_status=previous_status,
+            current_status=instance.status,
+            synced=False
+        )
+
+    try:
         instance.status = current_status
+        db.add(InstanceStatusHistory(
+            instance_id=instance.id,
+            previous_status=previous_status.value,
+            new_status=current_status.value,
+            reason="Docker status sync",
+        ))
         db.commit()
         db.refresh(instance)
-        synced = True
+    except Exception:
+        db.rollback()
+        audit_action(current_user.id, instance.id, "sync", "failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo persistir la sincronización de estado."
+        )
 
-    logger.info(
-        f"[ACTION_AUDIT] user_id={current_user.id} instance_id={instance.id} action=sync result=success previous={previous_status} current={instance.status}"
-    )
+    audit_action(current_user.id, instance.id, "sync", "success")
 
     return InstanceSyncResponse(
         instance_id=instance.id,
         previous_status=previous_status,
         current_status=instance.status,
-        synced=synced
+        synced=True
     )
 

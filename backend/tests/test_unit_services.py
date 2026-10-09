@@ -69,14 +69,13 @@ def test_instance_sync_schema():
 # ==============================================================================
 # Pruebas Unitarias de DockerService (T4.1, T4.2, T4.3)
 # ==============================================================================
-def test_docker_stats_mock_mode():
+def test_docker_stats_no_connection_raises_503():
+    from fastapi import HTTPException
     service = DockerService()
     service.client = None  # Simular entorno sin daemon
-    stats = service.get_container_stats("mock_container", ram_limit_mb=128.0)
-    assert stats["status"] == "running"
-    assert stats["memory_limit_mb"] == 128.0
-    assert stats["memory_usage_mb"] == 6.8
-    assert stats["memory_percent"] == 5.31
+    with pytest.raises(HTTPException) as exc_info:
+        service.get_container_stats("c123", ram_limit_mb=128.0)
+    assert exc_info.value.status_code == 503
 
 
 def test_docker_stats_stopped_container():
@@ -87,7 +86,7 @@ def test_docker_stats_stopped_container():
     service.client.containers.get.return_value = mock_container
 
     stats = service.get_container_stats("c123", ram_limit_mb=256.0)
-    assert stats["status"] == "exited"
+    assert stats["status"] == "stopped"
     assert stats["cpu_percent"] == 0.0
     assert stats["memory_usage_mb"] == 0.0
     assert stats["memory_limit_mb"] == 256.0
