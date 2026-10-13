@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Raíces del proyecto para resolución consistente de rutas
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
@@ -53,15 +53,15 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         return f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
-    class Config:
-        case_sensitive = True
-        # Admite .env en la raíz del monorepo o en la carpeta backend
-        env_file = (
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=(
             str(PROJECT_ROOT / ".env"),
             str(BACKEND_DIR / ".env"),
             ".env"
-        )
-        extra = "allow"
+        ),
+        extra="allow"
+    )
 
 settings = Settings()
 

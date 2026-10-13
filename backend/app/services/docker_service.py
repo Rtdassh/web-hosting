@@ -4,7 +4,12 @@ from typing import Optional
 import docker
 from docker.errors import DockerException, NotFound
 from app.core.config import settings
-from fastapi import HTTPException
+from app.core.exceptions import (
+    DockerUnavailableError,
+    ContainerNotFoundError,
+    ContainerMockError,
+    DockerOperationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -210,6 +215,12 @@ class DockerService:
         Fórmulas precisas:
         - CPU%: (cpu_delta / system_cpu_delta) * number_cpus * 100.0
         - RAM MB: (usage - cache) / (1024 * 1024)
+
+        Raises:
+            DockerUnavailableError: si no hay conexión con Docker.
+            ContainerMockError: si el contenedor es simulado.
+            ContainerNotFoundError: si el contenedor no existe.
+            DockerOperationError: si falla la consulta de métricas.
         """
         default_stats = {
             "cpu_percent": 0.0,
@@ -223,16 +234,10 @@ class DockerService:
             return default_stats
 
         if not self.client:
-            raise HTTPException(
-                status_code=503,
-                detail="No hay conexión con Docker."
-            )
+            raise DockerUnavailableError("No hay conexión con Docker.")
 
         if container_id.startswith("mock_"):
-            raise HTTPException(
-                status_code=404,
-                detail="La instancia simulada no tiene un contenedor real."
-            )
+            raise ContainerMockError("La instancia simulada no tiene un contenedor real.")
 
         try:
             container = self.client.containers.get(container_id)
@@ -292,39 +297,33 @@ class DockerService:
                 "status": "running"
             }
         except NotFound as exc:
-            raise HTTPException(
-                status_code=404,
-                detail="Contenedor no encontrado en Docker."
-                )from exc
+            raise ContainerNotFoundError("Contenedor no encontrado en Docker.") from exc
 
         except DockerException as exc:
             logger.exception(
                 "Error extrayendo telemetría de %s", container_id
             )
-            raise HTTPException(
-                status_code=503,
-                detail="No se pudieron consultar las métricas de Docker."
-            ) from exc
+            raise DockerOperationError("No se pudieron consultar las métricas de Docker.") from exc
 
     def get_container_logs(self, container_id: Optional[str], tail: int = 100) -> list[str]:
         """
         Extrae las últimas líneas de logs de Nginx desde stdout/stderr (T4.2, RF-21).
         Decodifica UTF-8 de forma segura.
+
+        Raises:
+            DockerUnavailableError: si no hay conexión con Docker.
+            ContainerMockError: si el contenedor es simulado.
+            ContainerNotFoundError: si el contenedor no existe.
+            DockerOperationError: si falla la obtención de logs.
         """
         if not container_id:
             return []
 
         if not self.client:
-            raise HTTPException(
-                status_code=503,
-                detail="No hay conexión con Docker."
-            )
+            raise DockerUnavailableError("No hay conexión con Docker.")
 
         if container_id.startswith("mock_"):
-            raise HTTPException(
-                status_code=404,
-                detail="La instancia simulada no tiene un contenedor real."
-            )
+            raise ContainerMockError("La instancia simulada no tiene un contenedor real.")
 
         try:
             container = self.client.containers.get(container_id)
@@ -334,19 +333,12 @@ class DockerService:
             return lines
 
         except NotFound as exc:
-            raise HTTPException(
-                status_code=404,
-                detail="Contenedor no encontrado en Docker."
-            ) from exc
+            raise ContainerNotFoundError("Contenedor no encontrado en Docker.") from exc
 
         except DockerException as exc:
             logger.exception(
                 "Error obteniendo logs de %s", container_id
             )
-            raise HTTPException(
-                status_code=503,
-                detail="No se pudieron obtener los logs de Docker."
-            ) from exc
+            raise DockerOperationError("No se pudieron obtener los logs de Docker.") from exc
 
 docker_service = DockerService()
-

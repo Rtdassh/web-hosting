@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel
+from typing import Literal, Optional
+from pydantic import BaseModel, ConfigDict
 from app.models.instance import InstanceStatus
 
 class InstanceBase(BaseModel):
@@ -18,11 +18,10 @@ class InstanceResponse(InstanceBase):
     created_at: datetime
     container_id: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class InstanceActionRequest(BaseModel):
-    action: str  # start, stop, restart
+    action: Literal["start", "stop", "restart"]
 
 class InstanceActionResponse(BaseModel):
     message: str
