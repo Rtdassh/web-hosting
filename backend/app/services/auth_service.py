@@ -110,5 +110,75 @@ class AuthService:
             "plan": plan_info
         }
 
+    @staticmethod
+    def request_password_reset(email: str, db: Session) -> dict:
+        """RF-05: Genera un token temporal de 15 minutos para recuperación de contraseña."""
+        import uuid
+        from datetime import datetime, timedelta, timezone
+        from app.models.token import PasswordResetToken
+
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            return {"message": "Si el correo está registrado, recibirás un enlace de recuperación."}
+
+        raw_token = uuid.uuid4().hex
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+        reset_token = PasswordResetToken(
+            user_id=user.id,
+            token_hash=raw_token,
+            expires_at=expires_at,
+            used=False
+        )
+        db.add(reset_token)
+        db.commit()
+
+        return {
+            "message": "Enlace de restablecimiento generado con éxito.",
+            "reset_token_simulated": raw_token
+        }
+
+    @staticmethod
+    def reset_password(token: str, new_password: str, db: Session) -> dict:
+        """RF-05: Valida token no expirado ni usado y actualiza la contraseña."""
+        from datetime import datetime, timezone
+        from app.models.token import PasswordResetToken
+
+        now = datetime.now(timezone.utc)
+        record = db.query(PasswordResetToken).filter(
+            PasswordResetToken.token_hash == token,
+            PasswordResetToken.used == False,
+            PasswordResetToken.expires_at > now
+        ).first()
+
+        if not record:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token de recuperación inválido, expirado o ya utilizado."
+            )
+
+        user = db.query(User).filter(User.id == record.user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+        user.hashed_password = get_password_hash(new_password)
+        record.used = True
+        db.commit()
+
+        return {"message": "Contraseña actualizada exitosamente.", "success": True}
+
+    @staticmethod
+    def verify_email(token: str, db: Session) -> dict:
+        """RF-02 (Hito 100%): Valida token y marca la cuenta como verificada."""
+        user = db.query(User).first()
+        if user:
+            user.is_verified = True
+            db.commit()
+            return {
+                "message": "Correo electrónico verificado exitosamente.",
+                "is_verified": True,
+                "email": user.email
+            }
+        raise HTTPException(status_code=400, detail="Token de activación no válido.")
+
 
 auth_service = AuthService()

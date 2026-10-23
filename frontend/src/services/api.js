@@ -50,6 +50,69 @@ export const authService = {
   },
   logout: () => {
     localStorage.removeItem('paas_token');
+  },
+  forgotPassword: async (email) => {
+    const res = await apiClient.post('/auth/forgot-password', { email });
+    return res.data;
+  },
+  resetPassword: async (token, newPassword) => {
+    const res = await apiClient.post('/auth/reset-password', { token, new_password: newPassword });
+    return res.data;
+  },
+  verifyEmail: async (token) => {
+    const res = await apiClient.get('/auth/verify-email', { params: { token } });
+    return res.data;
+  }
+};
+
+export const billingService = {
+  getPlans: async () => {
+    const res = await apiClient.get('/plans');
+    return res.data;
+  },
+  checkout: async (checkoutData) => {
+    const res = await apiClient.post('/billing/checkout', checkoutData);
+    return res.data;
+  },
+  getInvoices: async () => {
+    const res = await apiClient.get('/billing/invoices');
+    return res.data;
+  },
+  changePlan: async (targetPlanId) => {
+    const res = await apiClient.post('/subscriptions/change-plan', { target_plan_id: targetPlanId });
+    return res.data;
+  }
+};
+
+export const templateService = {
+  getTemplates: async () => {
+    const res = await apiClient.get('/templates');
+    return res.data;
+  },
+  deployTemplate: async (name, templateId) => {
+    const res = await apiClient.post('/instances/deploy-template', {
+      name,
+      template_id: templateId
+    });
+    return res.data;
+  }
+};
+
+export const adminService = {
+  getDashboard: async () => {
+    const res = await apiClient.get('/admin/dashboard');
+    return res.data;
+  },
+  getInstances: async () => {
+    const res = await apiClient.get('/admin/instances');
+    return res.data;
+  },
+  forceAction: async (instanceId, action, reason) => {
+    const res = await apiClient.post(`/admin/instances/${instanceId}/force-action`, {
+      action,
+      reason
+    });
+    return res.data;
   }
 };
 
@@ -95,3 +158,4 @@ export const instanceService = {
 };
 
 export default apiClient;
+

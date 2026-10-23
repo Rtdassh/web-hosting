@@ -10,18 +10,26 @@ import {
   PackageOpen,
 } from 'lucide-react';
 
-import { instanceService } from '../../services/api';
+import { instanceService, templateService } from '../../services/api';
 
 export default function DeployModal({
   isOpen,
   onClose,
   onInstanceDeployed,
 }) {
+  const [activeTab, setActiveTab] = useState('zip'); // 'zip' | 'template'
   const [name, setName] = useState('');
   const [file, setFile] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState('landing-business');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+
+  const templates = [
+    { id: 'landing-business', name: 'Landing Business', desc: 'Sitio comercial moderno con Tailwind', tag: 'Negocios' },
+    { id: 'personal-portfolio', name: 'Portafolio Dev', desc: 'Página personal minimalista para ingenieros', tag: 'Personal' },
+    { id: 'html5-docs', name: 'Doc Técnica', desc: 'Estructura limpia con sidebar para documentación', tag: 'Docs' },
+  ];
 
   if (!isOpen) return null;
 
@@ -98,7 +106,7 @@ export default function DeployModal({
       return;
     }
 
-    if (!file) {
+    if (activeTab === 'zip' && !file) {
       setError('Por favor selecciona un paquete .zip.');
       return;
     }
@@ -106,10 +114,18 @@ export default function DeployModal({
     setLoading(true);
 
     try {
-      const newInstance = await instanceService.deployInstance(
-        name.trim(),
-        file
-      );
+      let newInstance;
+      if (activeTab === 'template') {
+        newInstance = await templateService.deployTemplate(
+          name.trim(),
+          selectedTemplate
+        );
+      } else {
+        newInstance = await instanceService.deployInstance(
+          name.trim(),
+          file
+        );
+      }
 
       onInstanceDeployed(newInstance);
 
@@ -127,6 +143,7 @@ export default function DeployModal({
       setLoading(false);
     }
   };
+
 
   const formatFileSize = (bytes) => {
     if (!bytes) return '0 MB';
@@ -263,22 +280,91 @@ export default function DeployModal({
 
 
           {/* =================================================
-              FILE
+              PESTAÑAS DE SELECCIÓN (RF-14)
           ================================================== */}
-          <div className="mt-6">
+          <div className="mt-5 flex rounded-[11px] bg-slate-100 p-1 border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setActiveTab('zip')}
+              className={`flex-1 py-1.5 text-[11px] font-bold rounded-[8px] transition ${
+                activeTab === 'zip'
+                  ? 'bg-white text-navy-900 shadow-sm'
+                  : 'text-[#64748b] hover:text-navy-900'
+              }`}
+            >
+              Subir Archivo .ZIP
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('template')}
+              className={`flex-1 py-1.5 text-[11px] font-bold rounded-[8px] transition ${
+                activeTab === 'template'
+                  ? 'bg-white text-brand-700 shadow-sm'
+                  : 'text-[#64748b] hover:text-navy-900'
+              }`}
+            >
+              Plantillas en 1 Clic (RF-14)
+            </button>
+          </div>
 
-            <div className="flex items-center justify-between mb-2">
 
-              <label className="block text-[12px] font-semibold text-navy-900">
-                Archivo del proyecto
+          {activeTab === 'template' ? (
+            /* =================================================
+                PLANTILLAS EN 1 CLIC
+            ================================================== */
+            <div className="mt-5 space-y-2.5">
+              <label className="block text-[12px] font-semibold text-navy-900 mb-1">
+                Selecciona una Plantilla Prediseñada
               </label>
-
-
-              <span className="text-[10px] font-medium text-[#94a3b8]">
-                Máx. 25 MB
-              </span>
-
+              <div className="grid grid-cols-1 gap-2">
+                {templates.map((tmpl) => (
+                  <div
+                    key={tmpl.id}
+                    onClick={() => setSelectedTemplate(tmpl.id)}
+                    className={`p-3 rounded-[12px] border cursor-pointer transition flex items-center justify-between ${
+                      selectedTemplate === tmpl.id
+                        ? 'border-brand-500 bg-brand-50/50 shadow-sm'
+                        : 'border-[#e2e8f0] bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-[13px] text-navy-900">{tmpl.name}</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-[#64748b]">
+                          {tmpl.tag}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#64748b] mt-0.5">{tmpl.desc}</p>
+                    </div>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      selectedTemplate === tmpl.id
+                        ? 'border-brand-500 bg-brand-500'
+                        : 'border-slate-300'
+                    }`}>
+                      {selectedTemplate === tmpl.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+          ) : (
+            /* =================================================
+                FILE UPLOAD
+            ================================================== */
+            <div className="mt-6">
+
+              <div className="flex items-center justify-between mb-2">
+
+                <label className="block text-[12px] font-semibold text-navy-900">
+                  Archivo del proyecto
+                </label>
+
+
+                <span className="text-[10px] font-medium text-[#94a3b8]">
+                  Máx. 25 MB
+                </span>
+
+              </div>
 
 
             {!file ? (
@@ -389,6 +475,7 @@ export default function DeployModal({
             )}
 
           </div>
+          )}
 
 
           {/* =================================================

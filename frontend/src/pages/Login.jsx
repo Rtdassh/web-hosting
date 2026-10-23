@@ -17,6 +17,7 @@ import PublicNavbar from '../components/layout/PublicNavbar';
 export default function Login({
   onHome,
   onRegister,
+  onForgotPassword,
 }) {
   const { login } = useAuth();
 
@@ -322,12 +323,23 @@ export default function Login({
                   {/* Contraseña */}
                   <div>
 
-                    <label
-                      htmlFor="password"
-                      className="block text-[13px] font-semibold text-navy-900 mb-2"
-                    >
-                      Contraseña
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label
+                        htmlFor="password"
+                        className="block text-[13px] font-semibold text-navy-900"
+                      >
+                        Contraseña
+                      </label>
+                      {onForgotPassword && (
+                        <button
+                          type="button"
+                          onClick={onForgotPassword}
+                          className="text-[12px] font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                        >
+                          ¿Olvidaste tu contraseña?
+                        </button>
+                      )}
+                    </div>
 
                     <input
                       id="password"

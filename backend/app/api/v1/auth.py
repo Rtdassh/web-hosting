@@ -9,6 +9,13 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.schemas.user_schema import UserCreate, UserLogin, UserResponse, TokenResponse, UserMeResponse
+from app.schemas.auth_recovery_schema import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+    VerifyEmailResponse
+)
 from app.services.auth_service import auth_service
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
@@ -30,3 +37,21 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Obtiene el perfil del usuario autenticado y su cuota actual de instancias."""
     return auth_service.get_user_profile(current_user, db)
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """RF-05: Genera un token temporal de 15 minutos para recuperación de contraseña."""
+    return auth_service.request_password_reset(request.email, db)
+
+
+@router.post("/reset-password", response_model=ResetPasswordResponse)
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """RF-05: Restablece la contraseña utilizando el token de un solo uso."""
+    return auth_service.reset_password(request.token, request.new_password, db)
+
+
+@router.get("/verify-email", response_model=VerifyEmailResponse)
+def verify_email(token: str, db: Session = Depends(get_db)):
+    """RF-02 (Hito 100%): Verificación formal de correo electrónico de cuenta."""
+    return auth_service.verify_email(token, db)
