@@ -21,6 +21,7 @@ from app.services.artifact_service import artifact_service
 from app.services.docker_service import docker_service
 from app.services.port_service import port_service
 from app.services.action_audit_service import audit_action
+from app.services.subscription_service import require_current_subscription_plan
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +76,10 @@ class InstanceService:
             Subscription.user_id == current_user.id,
             Subscription.status == "active"
         ).first()
-        plan = sub.plan if sub and sub.plan else None
-        max_instances = plan.max_instances if plan else 1
-        ram_limit_mb = plan.max_ram_mb if plan else 128
-        cpu_quota = plan.cpu_quota if plan else 0.25
+        plan = require_current_subscription_plan(sub)
+        max_instances = plan.max_instances
+        ram_limit_mb = plan.max_ram_mb
+        cpu_quota = plan.cpu_quota
 
         active_count = db.query(Instance).filter(
             Instance.user_id == current_user.id,
@@ -88,7 +89,7 @@ class InstanceService:
         if active_count >= max_instances:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Has alcanzado el límite máximo de {max_instances} instancia(s) de tu plan '{plan.name if plan else 'Free'}'. Actualiza tu suscripción para desplegar más sitios."
+                detail=f"Has alcanzado el límite máximo de {max_instances} instancia(s) de tu plan '{plan.name}'. Actualiza tu suscripción para desplegar más sitios."
             )
 
         instance_uuid = str(uuid.uuid4())[:8]

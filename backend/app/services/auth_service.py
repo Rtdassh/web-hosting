@@ -2,7 +2,12 @@
 AuthService: Gestiona exclusivamente credenciales, registro, login y tokens JWT.
 Cumple el principio de Responsabilidad Única (S de SOLID) definido en AGENTS.md §2.1.
 """
+import hashlib
 import logging
+import secrets
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
@@ -12,11 +17,18 @@ from app.models.user import User, UserRole
 from app.models.plan import Plan, Subscription
 from app.models.instance import Instance, InstanceStatus
 from app.schemas.user_schema import UserCreate, UserLogin, PlanInfo
+from app.services.password_reset_delivery import (
+    PasswordResetDeliveryProvider,
+    create_password_reset_delivery_provider,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class AuthService:
+
+    def __init__(self, password_reset_delivery: PasswordResetDeliveryProvider | None = None):
+        self.password_reset_delivery = password_reset_delivery
 
     @staticmethod
     def register_user(user_in: UserCreate, db: Session) -> User:
@@ -31,6 +43,16 @@ class AuthService:
                 detail="Ya existe un usuario registrado con este correo electrónico."
             )
 
+        free_plan = db.query(Plan).filter(
+            Plan.name == "Free",
+            Plan.is_active.is_(True),
+        ).first()
+        if not free_plan:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="El plan Free no está disponible temporalmente.",
+            )
+
         db_user = User(
             email=user_in.email,
             hashed_password=get_password_hash(user_in.password),
@@ -40,15 +62,15 @@ class AuthService:
             is_verified=True  # Simulado para entorno local (RF-02)
         )
         db.add(db_user)
+        db.flush()
+        db.add(Subscription(
+            user_id=db_user.id,
+            plan_id=free_plan.id,
+            status="active",
+            auto_renew=False,
+        ))
         db.commit()
         db.refresh(db_user)
-
-        # Asignar suscripción Free por defecto (RF-08)
-        free_plan = db.query(Plan).filter(Plan.name == "Free").first()
-        if free_plan:
-            sub = Subscription(user_id=db_user.id, plan_id=free_plan.id, status="active")
-            db.add(sub)
-            db.commit()
 
         return db_user
 
@@ -110,61 +132,120 @@ class AuthService:
             "plan": plan_info
         }
 
-    @staticmethod
-    def request_password_reset(email: str, db: Session) -> dict:
-        """RF-05: Genera un token temporal de 15 minutos para recuperación de contraseña."""
-        import uuid
-        from datetime import datetime, timedelta, timezone
+    def request_password_reset(self, email: str, db: Session) -> dict:
+        """Create a hashed, expiring reset token and pass it to the delivery adapter."""
         from app.models.token import PasswordResetToken
 
-        user = db.query(User).filter(User.email == email).first()
-        if not user:
-            return {"message": "Si el correo está registrado, recibirás un enlace de recuperación."}
+        generic_response = {
+            "message": (
+                "La solicitud se recibió. Si la dirección corresponde a una cuenta y el mensaje "
+                "puede entregarse, recibirás instrucciones. Esta respuesta no confirma el envío."
+            )
+        }
+        delivery = self.password_reset_delivery
+        if delivery is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="La recuperación por correo no está configurada.",
+            )
 
-        raw_token = uuid.uuid4().hex
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+        user = db.query(User).filter(User.email == email).first()
+        if user is None:
+            return generic_response
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
         reset_token = PasswordResetToken(
             user_id=user.id,
-            token_hash=raw_token,
-            expires_at=expires_at,
-            used=False
+            token_hash=token_hash,
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+            used=False,
         )
-        db.add(reset_token)
-        db.commit()
+        try:
+            db.add(reset_token)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
 
-        return {
-            "message": "Enlace de restablecimiento generado con éxito.",
-            "reset_token_simulated": raw_token
-        }
+        try:
+            delivery.send_password_reset(email, raw_token)
+        except Exception as delivery_error:
+            try:
+                invalidated_id = db.execute(
+                    update(PasswordResetToken)
+                    .where(PasswordResetToken.id == reset_token.id)
+                    .values(used=True)
+                    .returning(PasswordResetToken.id)
+                ).scalar_one_or_none()
+                if invalidated_id is None:
+                    raise RuntimeError("The password reset token was not invalidated.")
+                db.commit()
+            except Exception as invalidation_error:
+                rollback_error_type = "none"
+                try:
+                    db.rollback()
+                except Exception as rollback_error:
+                    rollback_error_type = type(rollback_error).__name__
+                logger.critical(
+                    "Password reset delivery failed and token invalidation failed "
+                    "(delivery_error_type=%s, invalidation_error_type=%s, "
+                    "rollback_error_type=%s).",
+                    type(delivery_error).__name__,
+                    type(invalidation_error).__name__,
+                    rollback_error_type,
+                )
+            else:
+                logger.warning(
+                    "Password reset delivery failed; issued token was invalidated "
+                    "(error_type=%s).",
+                    type(delivery_error).__name__,
+                )
+        return generic_response
 
     @staticmethod
     def reset_password(token: str, new_password: str, db: Session) -> dict:
-        """RF-05: Valida token no expirado ni usado y actualiza la contraseña."""
+        """Atomically consume a valid reset token and change its user's password."""
         from datetime import datetime, timezone
         from app.models.token import PasswordResetToken
 
         now = datetime.now(timezone.utc)
-        record = db.query(PasswordResetToken).filter(
-            PasswordResetToken.token_hash == token,
-            PasswordResetToken.used == False,
-            PasswordResetToken.expires_at > now
-        ).first()
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        try:
+            user_id = db.execute(
+                update(PasswordResetToken)
+                .where(
+                    PasswordResetToken.token_hash == token_hash,
+                    PasswordResetToken.used.is_(False),
+                    PasswordResetToken.expires_at > now,
+                )
+                .values(used=True)
+                .returning(PasswordResetToken.user_id)
+            ).scalar_one_or_none()
 
-        if not record:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Token de recuperación inválido, expirado o ya utilizado."
-            )
+            if user_id is None:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token de recuperación inválido, expirado o ya utilizado.",
+                )
 
-        user = db.query(User).filter(User.id == record.user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+            user = db.query(User).filter(User.id == user_id).first()
+            if user is None:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token de recuperación inválido, expirado o ya utilizado.",
+                )
 
-        user.hashed_password = get_password_hash(new_password)
-        record.used = True
-        db.commit()
-
-        return {"message": "Contraseña actualizada exitosamente.", "success": True}
+            user.hashed_password = get_password_hash(new_password)
+            db.commit()
+            return {"message": "Contraseña actualizada exitosamente.", "success": True}
+        except HTTPException:
+            raise
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def verify_email(token: str, db: Session) -> dict:
@@ -181,4 +262,6 @@ class AuthService:
         raise HTTPException(status_code=400, detail="Token de activación no válido.")
 
 
-auth_service = AuthService()
+auth_service = AuthService(
+    password_reset_delivery=create_password_reset_delivery_provider()
+)
