@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.instance import Instance, InstanceStatus
 from app.models.billing import PaymentTransaction, TransactionStatus
 from app.models.audit import AdminAuditLog
@@ -112,6 +112,19 @@ class AdminService:
         """
         Ejecuta detención o eliminación forzada sobre un contenedor de terceros y registra auditoría.
         """
+        
+        if admin_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=403,
+                detail="Solo un administrador puede ejecutar acciones forzosas."
+            )
+
+        if not reason or not reason.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Debes indicar el motivo de la acción administrativa."
+            )
+
         instance = db.query(Instance).filter(Instance.id == instance_id).first()
         if not instance:
             raise HTTPException(status_code=404, detail="La instancia no existe.")

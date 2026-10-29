@@ -96,17 +96,30 @@ class TemplateService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Has alcanzado el límite de {max_instances} sitio(s) de tu plan actual ({plan.name if plan else 'Free'}). Realiza un Upgrade para continuar."
             )
+        if docker_service.client is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Docker no está disponible. No se puede desplegar la plantilla."
+            )
+        src_dir = self._resolve_template_source(template_id)
 
         # 3. Asignación de Puerto TCP
-        assigned_port = port_service.allocate_port(db)
+        assigned_port = port_service.get_and_reserve_available_port(db)
 
         # 4. Creación de Directorio de Destino para el Inquilino
         instance_uuid = uuid.uuid4().hex[:8]
         dest_dir = settings.RESOLVED_STORAGE_PATH / f"{user.id}_{instance_uuid}"
-        dest_dir.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            dest_dir.mkdir(parents=True, exist_ok=False)
+        except OSError as exc:
+            port_service.release_port(db, assigned_port)
+            raise HTTPException(
+                status_code=500,
+                detail="No se pudo crear la carpeta de la instancia."
+            ) from exc
 
         # 5. Clonación de Archivos de Plantilla
-        src_dir = self._resolve_template_source(template_id)
         try:
             for item in os.listdir(src_dir):
                 s = src_dir / item
@@ -115,50 +128,116 @@ class TemplateService:
                     shutil.copytree(s, d, dirs_exist_ok=True)
                 else:
                     shutil.copy2(s, d)
-        except Exception as e:
-            logger.error(f"Error al clonar plantilla: {e}")
-            port_service.release_port(assigned_port, db)
-            raise HTTPException(status_code=500, detail=f"Fallo al aprovisionar archivos de plantilla: {e}")
+        except Exception as exc:
+            logger.exception("Error al copiar los archivos de la plantilla.")
 
+            try:
+                shutil.rmtree(dest_dir)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                logger.exception(
+                    "No se pudo limpiar la carpeta de la plantilla."
+                )
+
+            port_service.release_port(db, assigned_port)
+
+            raise HTTPException(
+                status_code=500,
+                detail="No se pudieron copiar los archivos de la plantilla."
+            ) from exc
+        
         # 6. Creación y Despliegue de Contenedor Docker
         container_name = f"paas_{user.id}_{instance_uuid}"
         public_url = f"http://localhost:{assigned_port}"
 
         try:
-            container_info = docker_service.run_nginx_instance(
+            container_id = docker_service.run_nginx_instance(
                 container_name=container_name,
                 host_port=assigned_port,
-                source_path=str(dest_dir.resolve()),
+                host_storage_path=str(dest_dir.resolve()),
+                ram_limit_mb=plan.max_ram_mb if plan else 128,
                 cpu_quota=plan.cpu_quota if plan else 0.25,
-                memory_limit_mb=plan.max_ram_mb if plan else 128
+                user_id=user.id,
+                instance_uuid=instance_uuid
             )
-            container_id = container_info.get("container_id")
-        except Exception as e:
-            logger.warning(f"Error al levantar contenedor Docker: {e}. Usando simulación.")
-            container_id = f"sim_{instance_uuid}"
+        except Exception as exc:
+            logger.exception("Error al desplegar el contenedor de la plantilla.")
+            try:
+                shutil.rmtree(dest_dir)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                logger.exception(
+                    "No se pudo limpiar la carpeta del despliegue fallido."
+                )
+
+            port_service.release_port(db, assigned_port)
+
+            raise HTTPException(
+                status_code=503,
+                detail="No se pudo desplegar la plantilla en Docker."
+            ) from exc
 
         # 7. Persistencia en Base de Datos
-        instance = Instance(
-            uuid=instance_uuid,
-            name=name,
-            user_id=user.id,
-            container_id=container_id,
-            assigned_port=assigned_port,
-            public_url=public_url,
-            status=InstanceStatus.RUNNING,
-            storage_path=str(dest_dir.resolve())
-        )
-        db.add(instance)
-        db.flush()
+        try:
+            instance = Instance(
+                uuid=instance_uuid,
+                name=name,
+                user_id=user.id,
+                container_id=container_id,
+                assigned_port=assigned_port,
+                public_url=public_url,
+                status=InstanceStatus.RUNNING,
+                storage_path=str(dest_dir.resolve())
+            )
+            db.add(instance)
+            db.flush()
 
-        history = InstanceStatusHistory(
-            instance_id=instance.id,
-            previous_status="pending",
-            new_status="running",
-            details=f"Desplegado mediante plantilla 1-clic: {template_id}"
-        )
-        db.add(history)
-        db.commit()
+            history = InstanceStatusHistory(
+                instance_id=instance.id,
+                previous_status="pending",
+                new_status="running",
+                reason=f"Desplegado mediante plantilla 1-clic: {template_id}"
+            )
+            db.add(history)
+
+            from app.models.port import PortAllocation
+
+            allocation = db.query(PortAllocation).filter(
+                PortAllocation.port_number == assigned_port
+            ).one()
+            allocation.instance_id = instance.id
+
+            db.commit()
+
+        except Exception as exc:
+            db.rollback()
+            logger.exception("Error al guardar la instancia de plantilla.")
+
+            removed = docker_service.remove_instance(container_id)
+            if removed:
+                try:
+                    shutil.rmtree(dest_dir)
+                except FileNotFoundError:
+                    pass
+                except OSError:
+                    logger.exception(
+                        "No se pudo limpiar el almacenamiento del despliegue."
+                    )
+                port_service.release_port(db, assigned_port)
+            else:
+                logger.error(
+                    "Contenedor %s pendiente de limpieza; puerto %s reservado.",
+                    container_id,
+                    assigned_port
+                )
+
+            raise HTTPException(
+                status_code=500,
+                detail="No se pudo guardar la instancia de plantilla."
+            ) from exc
+
         db.refresh(instance)
 
         return {
