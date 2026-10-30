@@ -25,12 +25,15 @@ import {
   Link2,
   Layers3,
   Zap,
+  Search,
+  Check,
 } from 'lucide-react';
 
 import { instanceService } from '../services/api';
 
 import InstanceLogsModal from '../components/instances/InstanceLogsModal';
 import InstanceMetricsCard from '../components/instances/InstanceMetricsCard';
+import SystemStatusModal from '../components/system/SystemStatusModal';
 
 import codropIsotipo from '../assets/codrop-isotipo.png';
 
@@ -45,6 +48,10 @@ export default function DashboardPage({
   const [actionLoading, setActionLoading] = useState({});
   const [selectedLogInstance, setSelectedLogInstance] = useState(null);
   const [destroyConfirmInstance, setDestroyConfirmInstance] = useState(null);
+  const [activeNav, setActiveNav] = useState('dashboard');
+  const [isSystemModalOpen, setIsSystemModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
 
   /* =========================================================
@@ -173,6 +180,23 @@ export default function DashboardPage({
     (instance) => instance.status === 'running'
   ).length;
 
+  const stoppedInstances = instances.length - runningInstances;
+
+  const filteredInstances = instances.filter((inst) => {
+    const matchesStatus =
+      statusFilter === 'all'
+        ? true
+        : statusFilter === 'running'
+        ? inst.status === 'running'
+        : inst.status !== 'running';
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      inst.name?.toLowerCase().includes(query) ||
+      String(inst.assigned_port || '').includes(query);
+    return matchesStatus && matchesSearch;
+  });
+
 
   /* =========================================================
      RENDER
@@ -208,22 +232,65 @@ export default function DashboardPage({
 
             <nav className="mt-3 space-y-1.5">
 
-              <div className="h-10 px-3 rounded-[10px] bg-brand-50 border border-brand-100 text-brand-700 flex items-center gap-3 text-[13px] font-semibold shadow-[0_4px_14px_rgba(40,181,134,0.05)]">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveNav('dashboard');
+                  setStatusFilter('all');
+                  setSearchQuery('');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition text-left cursor-pointer ${
+                  activeNav === 'dashboard'
+                    ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
+                    : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
+                }`}
+              >
                 <LayoutDashboard className="w-4 h-4" />
                 Dashboard
-              </div>
+              </button>
 
 
-              <div className="h-10 px-3 rounded-[10px] text-[#64748b] flex items-center gap-3 text-[13px]">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveNav('deployments');
+                  onDeployClick();
+                }}
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition text-left cursor-pointer ${
+                  activeNav === 'deployments'
+                    ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
+                    : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
+                }`}
+              >
                 <Rocket className="w-4 h-4" />
                 Despliegues
-              </div>
+                <span className="ml-auto text-[10px] font-mono bg-brand-50 text-brand-700 border border-brand-200 px-1.5 py-0.5 rounded font-bold">
+                  +ZIP
+                </span>
+              </button>
 
 
-              <div className="h-10 px-3 rounded-[10px] text-[#64748b] flex items-center gap-3 text-[13px]">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveNav('instances');
+                  document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition text-left cursor-pointer ${
+                  activeNav === 'instances'
+                    ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
+                    : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
+                }`}
+              >
                 <Server className="w-4 h-4" />
                 Instancias
-              </div>
+                {instances.length > 0 && (
+                  <span className="ml-auto text-[10px] text-slate-600 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                    {instances.length}
+                  </span>
+                )}
+              </button>
 
             </nav>
 
@@ -236,24 +303,31 @@ export default function DashboardPage({
               </p>
 
 
-              <div className="mt-4 p-3 rounded-[13px] bg-white border border-[#e2e8f0] shadow-[0_5px_20px_rgba(23,40,56,0.025)]">
+              <button
+                type="button"
+                onClick={() => setIsSystemModalOpen(true)}
+                className="mt-4 w-full p-3 rounded-[13px] bg-white hover:bg-brand-50/40 border border-[#e2e8f0] hover:border-brand-200 shadow-[0_5px_20px_rgba(23,40,56,0.025)] transition group text-left cursor-pointer"
+              >
 
                 <div className="flex items-center gap-3">
 
-                  <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-brand-600" />
+                  <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 group-hover:scale-105 transition-transform">
+                    <Activity className="w-4 h-4" />
                   </div>
 
 
-                  <div>
-                    <p className="text-[11px] font-semibold text-navy-900">
-                      Sistema
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-semibold text-navy-900">
+                        Sistema
+                      </p>
+                      <span className="text-[9px] font-mono text-slate-400 group-hover:text-brand-600 font-medium">Ver &rarr;</span>
+                    </div>
 
                     <div className="mt-0.5 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
 
-                      <p className="text-[10px] text-brand-700">
+                      <p className="text-[10px] text-brand-700 font-medium">
                         Operativo
                       </p>
                     </div>
@@ -261,7 +335,7 @@ export default function DashboardPage({
 
                 </div>
 
-              </div>
+              </button>
 
             </div>
 
@@ -513,7 +587,7 @@ export default function DashboardPage({
               {/* =================================================
                   PROJECTS
               ================================================== */}
-              <section className="mt-5 bg-white border border-[#dfe7e4] rounded-[20px] shadow-[0_12px_38px_rgba(23,40,56,0.04)] overflow-hidden">
+              <section id="projects-section" className="mt-5 bg-white border border-[#dfe7e4] rounded-[20px] shadow-[0_12px_38px_rgba(23,40,56,0.04)] overflow-hidden">
 
 
                 {/* Header */}
@@ -551,7 +625,7 @@ export default function DashboardPage({
                     <button
                       type="button"
                       onClick={onDeployClick}
-                      className="h-9 px-4 rounded-[9px] bg-brand-50 hover:bg-brand-100 border border-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition-colors"
+                      className="h-9 px-4 rounded-[9px] bg-brand-50 hover:bg-brand-100 border border-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Nuevo proyecto
@@ -559,6 +633,58 @@ export default function DashboardPage({
                   )}
 
                 </div>
+
+                {/* Filters & Search Toolbar */}
+                {instances.length > 0 && (
+                  <div className="px-6 py-3 bg-[#fbfdfc] border-b border-[#e8eeeb] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                      <button
+                        type="button"
+                        onClick={() => setStatusFilter('all')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                          statusFilter === 'all'
+                            ? 'bg-navy-900 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        Todos ({instances.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStatusFilter('running')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                          statusFilter === 'running'
+                            ? 'bg-brand-500 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        En ejecución ({runningInstances})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStatusFilter('stopped')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                          statusFilter === 'stopped'
+                            ? 'bg-slate-700 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        Detenidos ({stoppedInstances})
+                      </button>
+                    </div>
+
+                    <div className="relative min-w-[210px]">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre o puerto..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 font-medium"
+                      />
+                    </div>
+                  </div>
+                )}
 
 
                 {/* EMPTY */}
@@ -600,11 +726,29 @@ export default function DashboardPage({
 
                   </div>
 
+                ) : filteredInstances.length === 0 ? (
+
+                  <div className="py-12 px-6 text-center">
+                    <p className="text-xs font-semibold text-slate-700">
+                      No hay proyectos que coincidan con los filtros aplicados.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter('all');
+                        setSearchQuery('');
+                      }}
+                      className="mt-3 text-xs font-bold text-brand-600 hover:underline cursor-pointer"
+                    >
+                      Restablecer filtros
+                    </button>
+                  </div>
+
                 ) : (
 
                   <div className="divide-y divide-[#edf1ef]">
 
-                    {instances.map((inst) => {
+                    {filteredInstances.map((inst) => {
 
                       const isRunning = inst.status === 'running';
 
@@ -1015,6 +1159,13 @@ export default function DashboardPage({
 
         </div>
       )}
+
+      {/* Modal de Telemetría e Infraestructura de Sistema */}
+      <SystemStatusModal
+        isOpen={isSystemModalOpen}
+        onClose={() => setIsSystemModalOpen(false)}
+        instances={instances}
+      />
 
     </main>
   );

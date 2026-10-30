@@ -47,6 +47,8 @@ allowed_origins = list(dict.fromkeys([
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     f"http://{settings.HOST_PUBLIC_IP}:5173",
+    "http://100.121.210.57:5173",
+    "http://100.112.65.75:5173",
 ]))
 
 app.add_middleware(

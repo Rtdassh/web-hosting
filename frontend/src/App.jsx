@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Globe, Sparkles, FileText, ShieldCheck } from 'lucide-react';
 
 import Navbar from './components/layout/Navbar';
 import DashboardPage from './pages/DashboardPage';
@@ -36,44 +37,48 @@ function AuthenticatedApp({ onLogout }) {
         <div className="flex items-center space-x-1 sm:space-x-4">
           <button
             onClick={() => setCurrentView('dashboard')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
               currentView === 'dashboard'
                 ? 'bg-brand-50 text-brand-700'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            💻 Mis Sitios
+            <Globe className="w-3.5 h-3.5" />
+            Mis Sitios
           </button>
           <button
             onClick={() => setCurrentView('pricing')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
               currentView === 'pricing'
                 ? 'bg-indigo-50 text-indigo-700'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            💎 Planes & Suscripciones
+            <Sparkles className="w-3.5 h-3.5" />
+            Planes & Suscripciones
           </button>
           <button
             onClick={() => setCurrentView('billing')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
               currentView === 'billing'
                 ? 'bg-indigo-50 text-indigo-700'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            🧾 Facturación & Recibos
+            <FileText className="w-3.5 h-3.5" />
+            Facturación & Recibos
           </button>
           {user?.role === 'admin' && (
             <button
               onClick={() => setCurrentView('admin')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
                 currentView === 'admin'
                   ? 'bg-amber-50 text-amber-700'
                   : 'text-amber-600 hover:text-amber-700'
               }`}
             >
-              🛡️ Consola Admin
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Consola Admin
             </button>
           )}
         </div>

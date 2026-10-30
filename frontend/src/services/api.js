@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return `http://${window.location.hostname}:8000/api/v1`;
+  }
+  return import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -50,6 +57,10 @@ export const authService = {
   },
   logout: () => {
     localStorage.removeItem('paas_token');
+  },
+  getMe: async () => {
+    const res = await apiClient.get('/auth/me');
+    return res.data;
   },
   forgotPassword: async (email) => {
     const res = await apiClient.post('/auth/forgot-password', { email });
