@@ -107,7 +107,7 @@ class TemplateService:
 
         current_count = db.query(Instance).filter(
             Instance.user_id == user.id,
-            Instance.status.in_([InstanceStatus.RUNNING, InstanceStatus.PENDING])
+            Instance.status != InstanceStatus.FAILED
         ).count()
 
         if current_count >= max_instances:
