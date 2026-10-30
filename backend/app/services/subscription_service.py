@@ -19,13 +19,19 @@ def require_current_subscription_plan(
     subscription: Optional[Subscription],
     now: Optional[datetime] = None,
 ) -> Plan:
-    if subscription is None or subscription.status != "active" or subscription.plan is None:
+    if subscription is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes una suscripción activa y vigente para desplegar instancias.",
         )
 
-    plan = subscription.plan
+    sub_status = getattr(subscription, "status", "active")
+    plan = getattr(subscription, "plan", None)
+    if sub_status != "active" or plan is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes una suscripción activa y vigente para desplegar instancias.",
+        )
     if plan.name.casefold() == PlanType.FREE.value.casefold():
         return plan
     period_end = subscription.current_period_end

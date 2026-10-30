@@ -18,6 +18,7 @@ from app.models.instance import Instance, InstanceStatus
 from app.models.instance_status_history import InstanceStatusHistory
 from app.services.port_service import port_service
 from app.services.docker_service import docker_service
+from app.services.subscription_service import require_current_subscription_plan
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +55,21 @@ class TemplateService:
 
     def _resolve_template_source(self, template_id: str) -> Path:
         """Ubica el directorio fuente de la plantilla en el host o en el repositorio local."""
+        if not template_id or ".." in template_id or "/" in template_id or "\\" in template_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Identificador de plantilla '{template_id}' inválido."
+            )
+
         # Ruta 1: /srv/hosting/plantillas/<id>
         srv_candidate = Path(f"/srv/hosting/plantillas/{template_id}")
         if srv_candidate.exists() and srv_candidate.is_dir():
             return srv_candidate
 
         # Ruta 2: infra/host-storage/templates/<id>
-        repo_candidate = (settings.RESOLVED_STORAGE_PATH.parent / "templates" / template_id).resolve()
-        if repo_candidate.exists() and repo_candidate.is_dir():
+        templates_base = (settings.RESOLVED_STORAGE_PATH.parent / "templates").resolve()
+        repo_candidate = (templates_base / template_id).resolve()
+        if repo_candidate.is_relative_to(templates_base) and repo_candidate.exists() and repo_candidate.is_dir():
             return repo_candidate
 
         raise HTTPException(
@@ -78,13 +86,24 @@ class TemplateService:
         if not matching_template:
             raise HTTPException(status_code=400, detail=f"Plantilla '{template_id}' no válida.")
 
-        # 2. Control de Cuota del Usuario
+        # 2. Control de Cuota del Usuario y Validación de Suscripción Vigente
         sub = db.query(Subscription).filter(
             Subscription.user_id == user.id,
             Subscription.status == "active"
         ).first()
-        plan = sub.plan if sub and sub.plan else db.query(Plan).filter(Plan.name == "Free").first()
-        max_instances = plan.max_instances if plan else 1
+
+        if sub is not None:
+            plan = require_current_subscription_plan(sub)
+        else:
+            free_plan = db.query(Plan).filter(Plan.name == "Free").first()
+            if free_plan is None:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="No tienes un plan activo disponible para desplegar instancias."
+                )
+            plan = free_plan
+
+        max_instances = getattr(plan, "max_instances", 1)
 
         current_count = db.query(Instance).filter(
             Instance.user_id == user.id,
@@ -149,7 +168,8 @@ class TemplateService:
         
         # 6. Creación y Despliegue de Contenedor Docker
         container_name = f"paas_{user.id}_{instance_uuid}"
-        public_url = f"http://localhost:{assigned_port}"
+        host_ip = getattr(settings, "HOST_PUBLIC_IP", "localhost")
+        public_url = f"http://{host_ip}:{assigned_port}"
 
         try:
             container_id = docker_service.run_nginx_instance(

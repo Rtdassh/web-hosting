@@ -277,10 +277,15 @@ class InstanceService:
             if storage_path:
                 target_dir = path_cls(storage_path).resolve()
                 base_dir = settings.RESOLVED_STORAGE_PATH.resolve()
-                # Verificar confinamiento dentro del directorio base de instancias
+                # Verificar confinamiento dentro del directorio base de instancias (RNF-04)
+                is_safe_relative = (
+                    target_dir.is_relative_to(base_dir)
+                    if hasattr(target_dir, "is_relative_to")
+                    else str(target_dir).startswith(str(base_dir))
+                )
                 if (
                     target_dir != base_dir
-                    and str(target_dir).startswith(str(base_dir))
+                    and is_safe_relative
                     and target_dir.exists()
                 ):
                     shutil_mod.rmtree(target_dir, ignore_errors=True)

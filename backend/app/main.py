@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import settings
+from app.core.rate_limit import RateLimitMiddleware
 from app.api.v1.api import api_router
 
 
@@ -54,6 +55,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(RateLimitMiddleware)
 
 # [FUTURA IMPLEMENTACIÓN]: Los miembros del equipo añadirán aquí nuevos routers o sub-módulos
 app.include_router(api_router, prefix=settings.API_V1_STR)

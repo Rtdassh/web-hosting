@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.models.instance import Instance, InstanceStatus
+from app.models.instance_status_history import InstanceStatusHistory
 from app.services.docker_service import docker_service
 from app.services.port_service import port_service
 
@@ -32,29 +33,44 @@ class SyncWorker:
             return {"status": "skipped", "reason": "docker_unavailable"}
 
         try:
-            # Obtener todos los contenedores gestionados
-            active_containers = {c.name: c.status for c in docker_service.client.containers.list(all=True)}
-            
             # Consultar instancias que la base de datos cree que están corriendo
             running_instances = db.query(Instance).filter(
                 Instance.status == InstanceStatus.RUNNING
             ).all()
 
             for inst in running_instances:
-                expected_container_name = f"paas_{inst.user_id}_{inst.uuid}"
-                docker_status = active_containers.get(expected_container_name)
+                docker_status = docker_service.get_container_status(inst.container_id)
 
                 # Si el contenedor ya no existe en Docker
-                if not docker_status:
-                    logger.warning(f"[RECONCILIATION] Contenedor '{expected_container_name}' no existe en Docker. Marcando como FAILED.")
+                if docker_status == "not_found":
+                    logger.warning(
+                        f"[RECONCILIATION] Contenedor '{inst.container_id}' (instancia {inst.id}) "
+                        f"no existe en Docker. Marcando como FAILED y liberando puerto {inst.assigned_port}."
+                    )
                     inst.status = InstanceStatus.FAILED
-                    port_service.release_port(inst.assigned_port, db)
+                    port_service.release_port(db, inst.assigned_port, commit=False)
+                    db.add(InstanceStatusHistory(
+                        instance_id=inst.id,
+                        previous_status=InstanceStatus.RUNNING.value,
+                        new_status=InstanceStatus.FAILED.value,
+                        reason="Contenedor no encontrado en Docker durante reconciliación periódica (SyncWorker)"
+                    ))
                     discrepancies_found += 1
                     reconciled_instances.append(inst.id)
+
                 # Si el contenedor está detenido en Docker pero corriendo en BD
-                elif docker_status in ["exited", "dead"]:
-                    logger.warning(f"[RECONCILIATION] Contenedor '{expected_container_name}' detenido en Docker. Marcando como STOPPED.")
+                elif docker_status in ["exited", "stopped", "dead"]:
+                    logger.warning(
+                        f"[RECONCILIATION] Contenedor '{inst.container_id}' (instancia {inst.id}) "
+                        f"detenido en Docker ({docker_status}). Marcando como STOPPED."
+                    )
                     inst.status = InstanceStatus.STOPPED
+                    db.add(InstanceStatusHistory(
+                        instance_id=inst.id,
+                        previous_status=InstanceStatus.RUNNING.value,
+                        new_status=InstanceStatus.STOPPED.value,
+                        reason=f"Contenedor detenido externamente en Docker [{docker_status}] (SyncWorker)"
+                    ))
                     discrepancies_found += 1
                     reconciled_instances.append(inst.id)
 
@@ -64,7 +80,8 @@ class SyncWorker:
 
         except Exception as e:
             logger.error(f"[RECONCILIATION] Error durante el ciclo de sincronización: {e}")
-            db.rollback()
+            if db:
+                db.rollback()
 
         return {
             "discrepancies_found": discrepancies_found,

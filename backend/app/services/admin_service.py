@@ -97,7 +97,7 @@ class AdminService:
                 "owner_name": owner.full_name if owner else "Desconocido",
                 "plan_name": plan_name,
                 "assigned_port": inst.assigned_port,
-                "status": inst.status.value,
+                "status": inst.status.value if hasattr(inst.status, "value") else str(inst.status),
                 "public_url": inst.public_url,
                 "container_id": inst.container_id,
                 "created_at": inst.created_at

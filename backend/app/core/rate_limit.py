@@ -4,7 +4,8 @@ Protege contra ataques de fuerza bruta en endpoints sensibles (ej. /auth/login) 
 """
 import time
 from collections import defaultdict
-from fastapi import Request, HTTPException, status
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # Registro en memoria de peticiones por IP: ip -> [timestamp1, timestamp2, ...]
@@ -16,6 +17,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.max_requests = max_requests
         self.window_seconds = window_seconds
+
+    @classmethod
+    def reset_limits(cls):
+        """Limpia el registro de peticiones (útil para pruebas unitarias)."""
+        _request_counts.clear()
 
     async def dispatch(self, request: Request, call_next):
         # Aplicar Rate Limit estricto únicamente en endpoints de autenticación
@@ -29,9 +35,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             ]
 
             if len(_request_counts[client_ip]) >= self.max_requests:
-                raise HTTPException(
+                return JSONResponse(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=f"Límite de peticiones excedido. Espere {self.window_seconds} segundos antes de reintentar."
+                    content={
+                        "detail": f"Límite de peticiones excedido. Espere {self.window_seconds} segundos antes de reintentar."
+                    },
+                    headers={
+                        "X-Content-Type-Options": "nosniff",
+                        "X-Frame-Options": "DENY",
+                        "X-XSS-Protection": "1; mode=block",
+                    }
                 )
 
             _request_counts[client_ip].append(now)
