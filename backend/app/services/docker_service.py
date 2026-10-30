@@ -107,6 +107,13 @@ class DockerService:
             }
         }
 
+        # Endurecimiento y principio de menor privilegio Non-Root (RNF-07 - Hito 100%)
+        extra_kwargs["user"] = "101:101"
+        extra_kwargs["cap_drop"] = ["ALL"]
+        extra_kwargs["security_opt"] = ["no-new-privileges:true"]
+        extra_kwargs["sysctls"] = {"net.ipv4.ip_unprivileged_port_start": "0"}
+        extra_kwargs["tmpfs"] = {"/tmp": "rw,noexec,nosuid,size=16m"}
+
         container = self.client.containers.run(
             image=image_name,
             name=container_name,
