@@ -25,7 +25,7 @@ router = APIRouter(tags=["Facturación & Suscripciones"])
 @router.get("/plans", response_model=List[PlanResponse])
 def get_plans(db: Session = Depends(get_db)):
     """Retorna el catálogo público de planes parametrizados (Free, Developer, Pro)."""
-    return db.query(Plan).order_by(Plan.id.asc()).all()
+    return db.query(Plan).filter(Plan.is_active.is_(True)).order_by(Plan.id.asc()).all()
 
 
 @router.post("/billing/checkout", response_model=TransactionResponse, status_code=status.HTTP_200_OK)

@@ -151,6 +151,10 @@ development (Rama central de integración continua liderada por Rol 4)
   }
 ]
 ```
+`plan_name` conserva el nombre registrado al realizar la compra. Para registros
+anteriores sin ese dato se mantiene el tipo `string` y se devuelve
+`"Nombre del plan no registrado"`; no se sustituye por el nombre actual del
+plan.
 
 ---
 
@@ -165,12 +169,26 @@ development (Rama central de integración continua liderada por Rol 4)
 ```
 * **Respuestas:**
   * `200 OK`: Plan actualizado exitosamente.
-  * `400 Bad Request` (Bloqueo preventivo en Downgrade):
+  * Cambiar directamente a Free está permitido, sujeto a la validación de cuota.
+    Si el usuario no tiene una suscripción activa, el backend puede crear la
+    suscripción Free.
+  * Un destino de pago requiere una suscripción activa y vigente. Si su precio
+    es mayor que el del plan actual, `change-plan` lo rechaza con HTTP 400: el
+    usuario debe completar `POST /api/v1/billing/checkout`, que registra la
+    transacción y la factura y actualiza inmediatamente la suscripción. El
+    cambio directo no concede upgrades gratuitos.
+  * Los cambios directos a un plan de precio igual o menor se conservan desde
+    una suscripción activa y vigente; la política comercial para esos cambios
+    queda pendiente de confirmación.
+  * `400 Bad Request` si el downgrade excede la cuota de instancias:
     ```json
     {
       "detail": "No se puede realizar el downgrade al plan Free. Tienes 3 instancias activas y el plan destino solo permite 1. Detén o elimina 2 instancias antes de continuar."
     }
     ```
+    El conteo actual considera `RUNNING` y `PENDING`. El contrato de T4.2
+    requiere contar todas las instancias cuyo estado no sea `destroyed`; la
+    definición y alineación de estados dependen de la coordinación con el Rol 4.
 
 ---
 

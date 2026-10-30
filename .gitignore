@@ -51,3 +51,6 @@ postgres_dev_data/
 .DS_Store
 Thumbs.db
 *.log
+
+# Respaldos locales de bases de datos
+/backups/

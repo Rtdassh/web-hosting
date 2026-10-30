@@ -1,29 +1,21 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.core.config import settings
-from app.core.database import Base, engine, SessionLocal
 from app.api.v1.api import api_router
 
-from app.seed import seed_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("paas-core")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # [ESTRUCTURA BASE]: Inicialización de tablas y datos semilla al arrancar
-    try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("Tablas de base de datos verificadas/creadas.")
-        
-        db = SessionLocal()
-        seed_db(db)
-        db.close()
-    except Exception as e:
-        logger.warning(f"No se pudo conectar a la BD durante el arranque: {e}. Asegúrate de levantar 'docker-compose.dev.yml'.")
-    
+    # Schema and seed are explicit deployment steps; API startup never writes them.
+    logger.info("Esquema gestionado con Alembic; semillas mediante app.seed.")
     yield
 
 app = FastAPI(
@@ -31,6 +23,22 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def safe_checkout_validation_error(request: Request, exc: RequestValidationError):
+    if request.url.path == f"{settings.API_V1_STR}/billing/checkout":
+        safe_errors = [
+            {
+                "loc": error["loc"],
+                "msg": error["msg"],
+                "type": error["type"],
+            }
+            for error in exc.errors()
+        ]
+        return JSONResponse(status_code=422, content={"detail": safe_errors})
+    return await request_validation_exception_handler(request, exc)
+
 
 # Configuración de CORS con orígenes explícitos para compatibilidad con credenciales
 allowed_origins = list(dict.fromkeys([

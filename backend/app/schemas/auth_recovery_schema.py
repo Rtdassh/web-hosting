@@ -1,7 +1,6 @@
 """
 Esquemas Pydantic para Recuperación de Contraseña y Verificación de Correo (RF-05, RF-02).
 """
-from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -11,7 +10,6 @@ class ForgotPasswordRequest(BaseModel):
 
 class ForgotPasswordResponse(BaseModel):
     message: str
-    reset_token_simulated: Optional[str] = None  # Útil para demo local
 
 
 class ResetPasswordRequest(BaseModel):

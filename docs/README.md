@@ -27,3 +27,15 @@ docs/
 └── entregables_oficiales_pdf/    # PDFs oficiales para sustentación final
 ```
 
+# Migraciones PostgreSQL
+
+El backend ya no crea tablas ni ejecuta semillas al arrancar. Consultar
+[MIGRACIONES_ALEMBIC.md](MIGRACIONES_ALEMBIC.md) para instalaciones nuevas,
+pruebas aisladas y la adopción pendiente de verificar de la base Debian.
+
+La ruta específica de adopción del esquema heredado está en
+[RECONCILIACION_DEBIAN.md](RECONCILIACION_DEBIAN.md); no utiliza stamp.
+
+El mapeo ORM común y los contratos físicos de ambos historiales se describen en
+[ADAPTACION_ORM_DEBIAN.md](ADAPTACION_ORM_DEBIAN.md).
+

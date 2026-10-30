@@ -39,7 +39,11 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
     return auth_service.get_user_profile(current_user, db)
 
 
-@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+@router.post(
+    "/forgot-password",
+    response_model=ForgotPasswordResponse,
+    responses={503: {"description": "La entrega de correo de recuperación no está configurada."}},
+)
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """RF-05: Genera un token temporal de 15 minutos para recuperación de contraseña."""
     return auth_service.request_password_reset(request.email, db)

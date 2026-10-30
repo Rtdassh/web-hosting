@@ -5,7 +5,11 @@ No dependen de FastAPI, base de datos ni modelos.
 from passlib.context import CryptContext
 
 # Hashing seguro con Bcrypt (RNF-06: factor de coste estándar)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12,
+)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
