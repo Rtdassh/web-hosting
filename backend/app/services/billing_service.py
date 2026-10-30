@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Tuple
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from app.services.quota_service import validate_quota_downgrade
 
 from app.models.billing import PaymentTransaction, Invoice, TransactionStatus
 from app.models.plan import Plan, Subscription
@@ -76,7 +77,8 @@ class BillingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="El plan especificado no existe en el catálogo."
             )
-
+        validate_quota_downgrade(db, user.id, target_plan)
+            
         # 4. Generación de Códigos de Autorización y Factura
         auth_code = f"AUTH-{uuid.uuid4().hex[:6].upper()}"
         brand = self.detect_card_brand(request.card_number)
@@ -152,22 +154,7 @@ class BillingService:
         if not target_plan:
             raise HTTPException(status_code=404, detail="El plan objetivo no existe.")
 
-        # Conteo de instancias activas
-        active_instances = db.query(Instance).filter(
-            Instance.user_id == user.id,
-            Instance.status.in_([InstanceStatus.RUNNING, InstanceStatus.PENDING])
-        ).count()
-
-        # Si es un Downgrade con exceso de instancias
-        if active_instances > target_plan.max_instances:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    f"No se puede realizar el downgrade al plan {target_plan.name}. "
-                    f"Tienes {active_instances} instancias activas y el plan destino solo permite {target_plan.max_instances}. "
-                    f"Detén o elimina {active_instances - target_plan.max_instances} instancia(s) antes de continuar."
-                )
-            )
+        validate_quota_downgrade(db, user.id, target_plan)
 
         subscription = db.query(Subscription).filter(
             Subscription.user_id == user.id,
