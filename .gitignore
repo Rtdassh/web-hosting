@@ -37,8 +37,6 @@ dist/
 # Almacenamiento local de instancias de usuarios (no versionar sitios subidos por usuarios)
 infra/host-storage/instances/*
 !infra/host-storage/instances/.gitkeep
-infra/host-storage/templates/*
-!infra/host-storage/templates/.gitkeep
 
 # Base de datos local (volúmenes de Docker / SQLite)
 postgres_data/
