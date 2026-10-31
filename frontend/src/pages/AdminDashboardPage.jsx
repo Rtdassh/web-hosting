@@ -1,66 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, Users, DollarSign, Server, Cpu, HardDrive, AlertTriangle, StopCircle, Trash2, ArrowLeft, RefreshCw, CheckCircle } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Cpu,
+  DollarSign,
+  Gauge,
+  HardDrive,
+  Loader2,
+  MemoryStick,
+  RefreshCw,
+  Server,
+  ShieldCheck,
+  Square,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react';
+
 import { adminService } from '../services/api';
 
-/**
- * AdminDashboardPage: Consola de Gobernanza y Supervisión Global para Administradores (RF-22, RF-23).
- */
 export default function AdminDashboardPage({ onBack }) {
   const [dashboardData, setDashboardData] = useState(null);
   const [instances, setInstances] = useState([]);
+
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [actionLoading, setActionLoading] = useState(false);
-  const [selectedInstanceForAction, setSelectedInstanceForAction] = useState(null);
+  const [selectedInstanceForAction, setSelectedInstanceForAction] =
+    useState(null);
   const [actionType, setActionType] = useState('force_stop');
-  const [actionReason, setActionReason] = useState('Uso excesivo no autorizado de recursos');
+  const [actionReason, setActionReason] = useState(
+    'Intervención administrativa por uso anómalo de recursos'
+  );
+
   const [notification, setNotification] = useState(null);
+
+  const extractErrorMessage = (requestError) => {
+    const detail = requestError.response?.data?.detail;
+
+    if (typeof detail === 'string') {
+      return detail;
+    }
+
+    return 'No fue posible cargar la consola administrativa. Verifica que la API de administración esté disponible y que la sesión tenga rol admin.';
+  };
 
   const fetchData = async () => {
     setLoading(true);
+    setError(null);
+
     try {
-      const [dash, insts] = await Promise.all([
+      const [dashboardResponse, instancesResponse] = await Promise.all([
         adminService.getDashboard(),
-        adminService.getInstances()
+        adminService.getInstances(),
       ]);
-      setDashboardData(dash);
-      setInstances(insts || []);
-    } catch (err) {
-      console.log('Error cargando datos de administración:', err);
-      // Fallback para visualización
-      setDashboardData({
-        summary: {
-          total_users: 28,
-          total_revenue_simulated: 349.72,
-          total_instances: 14,
-          active_instances: 11,
-          stopped_instances: 3
-        },
-        host_resources: {
-          cpu_usage_percent: 14.8,
-          memory_used_mb: 4200.5,
-          memory_total_mb: 16384.0,
-          memory_usage_percent: 25.6,
-          storage_used_gb: 12.4,
-          storage_total_gb: 240.0,
-          containers_running: 11,
-          containers_total: 14
-        }
-      });
-      setInstances([
-        {
-          id: 5,
-          uuid: 'a7b3c9d1',
-          name: 'Demo Inquilino A',
-          owner_email: 'cliente1@empresa.com',
-          owner_name: 'Cliente Uno',
-          plan_name: 'Developer',
-          assigned_port: 30004,
-          status: 'running',
-          public_url: 'http://localhost:30004',
-          container_id: 'c8f7e6d5a4b3',
-          created_at: new Date().toISOString()
-        }
-      ]);
+
+      setDashboardData(dashboardResponse);
+      setInstances(
+        Array.isArray(instancesResponse) ? instancesResponse : []
+      );
+    } catch (requestError) {
+      console.error(
+        'Error cargando datos de administración:',
+        requestError
+      );
+
+      setDashboardData(null);
+      setInstances([]);
+      setError(extractErrorMessage(requestError));
     } finally {
       setLoading(false);
     }
@@ -70,239 +80,680 @@ export default function AdminDashboardPage({ onBack }) {
     fetchData();
   }, []);
 
+  const users = useMemo(() => {
+    if (Array.isArray(dashboardData?.users)) {
+      return dashboardData.users;
+    }
+
+    const map = new Map();
+
+    instances.forEach((instance) => {
+      const email = instance.owner_email;
+
+      if (!email || map.has(email)) return;
+
+      map.set(email, {
+        id: instance.owner_id || email,
+        name: instance.owner_name || 'Usuario Codrop',
+        email,
+        plan_name: instance.plan_name || 'Free',
+        created_at:
+          instance.owner_created_at ||
+          instance.user_created_at ||
+          instance.created_at ||
+          null,
+      });
+    });
+
+    return Array.from(map.values());
+  }, [dashboardData, instances]);
+
+  const formatDate = (value) => {
+    if (!value) return '—';
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString('es-GT', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+  };
+
+  const formatMetric = (value, suffix = '') => {
+    if (value === undefined || value === null) {
+      return '—';
+    }
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return '—';
+    }
+
+    return `${number.toFixed(1)}${suffix}`;
+  };
+
   const handleExecuteAction = async () => {
     if (!selectedInstanceForAction) return;
+
     setActionLoading(true);
+
     try {
-      await adminService.forceAction(selectedInstanceForAction.id, actionType, actionReason);
-      setNotification(`Acción ${actionType} ejecutada exitosamente sobre instancia ${selectedInstanceForAction.name}.`);
+      await adminService.forceAction(
+        selectedInstanceForAction.id,
+        actionType,
+        actionReason
+      );
+
+      setNotification(
+        `${actionType === 'force_destroy' ? 'Eliminación' : 'Detención'} forzosa ejecutada sobre ${selectedInstanceForAction.name}.`
+      );
+
       setSelectedInstanceForAction(null);
-      fetchData();
-    } catch (err) {
-      alert(err.response?.data?.detail || 'Error al ejecutar acción administrativa.');
+      await fetchData();
+    } catch (requestError) {
+      setNotification(null);
+      setError(extractErrorMessage(requestError));
     } finally {
       setActionLoading(false);
     }
   };
 
+  const openForceAction = (instance, type) => {
+    setActionType(type);
+    setSelectedInstanceForAction(instance);
+
+    setActionReason(
+      type === 'force_destroy'
+        ? 'Eliminación administrativa de instancia por incumplimiento o anomalía'
+        : 'Detención administrativa preventiva por uso anómalo de recursos'
+    );
+  };
+
+  const summary = dashboardData?.summary || {};
+  const host = dashboardData?.host_resources || {};
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 px-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="relative min-h-screen overflow-hidden bg-[#f5f9f7] px-5 py-8 text-[#172838] sm:px-6 lg:px-10">
+      {/* Background Codrop */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-28 top-24 h-80 w-80 rounded-full bg-[#28B586]/[0.07] blur-3xl" />
+        <div className="absolute -right-28 top-20 h-96 w-96 rounded-full bg-[#172838]/[0.05] blur-3xl" />
+
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage:
+              'linear-gradient(#172838 1px, transparent 1px), linear-gradient(90deg, #172838 1px, transparent 1px)',
+            backgroundSize: '34px 34px',
+          }}
+        />
+      </div>
+
+      <div className="relative mx-auto max-w-[1380px]">
         {/* Top bar */}
-        <div className="flex items-center justify-between">
+        <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
+            type="button"
             onClick={onBack}
-            className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition"
+            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-black text-[#334e5e] shadow-sm transition hover:border-[#b9d8ca] hover:text-[#1C7F62]"
           >
-            <ArrowLeft className="w-4 h-4" /> Salir de Modo Administrador
+            <ArrowLeft className="h-4 w-4" />
+            Salir de administración
           </button>
+
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5" /> Consola de Gobernanza (Rol Admin)
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#CFE4D6] bg-[#EAF7F1] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-[#1C7F62]">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Rol administrador
             </span>
+
             <button
+              type="button"
               onClick={fetchData}
               disabled={loading}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
-              title="Refrescar métricas"
+              title="Actualizar consola"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce7e2] bg-white text-[#1C7F62] shadow-sm transition hover:bg-[#f8fbf9] disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+              />
             </button>
           </div>
         </div>
 
+        {/* Hero */}
+        <section className="relative mb-7 overflow-hidden rounded-[28px] border border-[#dce7e2] bg-[#172838] px-6 py-8 text-white shadow-[0_22px_60px_rgba(23,40,56,0.13)] md:px-9">
+          <div
+            className="absolute inset-0 opacity-[0.055]"
+            style={{
+              backgroundImage:
+                'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
+              backgroundSize: '30px 30px',
+            }}
+          />
+
+          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#28B586]/20 blur-3xl" />
+
+          <div className="relative max-w-3xl">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#28B586]/30 bg-[#28B586]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.17em] text-[#7de0bd]">
+              <Gauge className="h-3.5 w-3.5" />
+              Gobernanza Codrop
+            </div>
+
+            <h1 className="text-3xl font-black tracking-[-0.035em] sm:text-4xl lg:text-[44px]">
+              Visibilidad global para
+              <span className="text-[#55d3a6]"> mantener el control.</span>
+            </h1>
+
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-slate-300">
+              Supervisa usuarios, facturación simulada, contenedores y
+              recursos del host desde una única consola administrativa.
+            </p>
+          </div>
+        </section>
+
         {notification && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-[#b9ddcd] bg-[#edf9f3] p-4 text-xs font-bold text-[#176c53]">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              <span>{notification}</span>
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              {notification}
             </div>
-            <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-white">✕</button>
+
+            <button
+              type="button"
+              onClick={() => setNotification(null)}
+              className="text-[#64748B]"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         )}
 
-        {/* Header KPI Cards */}
-        {dashboardData && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
-              <div className="flex items-center gap-2 text-slate-400 text-xs mb-2">
-                <Users className="w-4 h-4 text-indigo-400" /> Total Usuarios
-              </div>
-              <div className="text-2xl font-black text-white">{dashboardData.summary.total_users}</div>
-              <div className="text-[11px] text-slate-500 mt-1">Inquilinos en base de datos</div>
+        {loading ? (
+          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[24px] border border-[#dce7e2] bg-white">
+            <Loader2 className="h-7 w-7 animate-spin text-[#28B586]" />
+
+            <p className="mt-4 text-sm font-black text-[#172838]">
+              Consultando la plataforma
+            </p>
+
+            <p className="mt-1 text-xs font-medium text-[#94A3B8]">
+              Cargando métricas y recursos administrativos...
+            </p>
+          </div>
+        ) : error ? (
+          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[24px] border border-[#dce7e2] bg-white px-6 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+              <AlertCircle className="h-6 w-6" />
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
-              <div className="flex items-center gap-2 text-slate-400 text-xs mb-2">
-                <DollarSign className="w-4 h-4 text-emerald-400" /> Ingresos MRR
-              </div>
-              <div className="text-2xl font-black text-emerald-400">
-                ${dashboardData.summary.total_revenue_simulated.toFixed(2)}
-              </div>
-              <div className="text-[11px] text-slate-500 mt-1">Facturación simulada</div>
+            <h2 className="mt-5 text-lg font-black text-[#172838]">
+              Consola administrativa no disponible
+            </h2>
+
+            <p className="mt-2 max-w-lg text-sm leading-6 text-[#64748B]">
+              {error}
+            </p>
+
+            <button
+              type="button"
+              onClick={fetchData}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#172838] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#1F3141]"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Intentar nuevamente
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* KPIs */}
+            <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              <KpiCard
+                icon={Users}
+                label="Usuarios"
+                value={summary.total_users ?? 0}
+                caption="registrados"
+              />
+
+              <KpiCard
+                icon={DollarSign}
+                label="Ingresos simulados"
+                value={`$${Number(
+                  summary.total_revenue_simulated || 0
+                ).toFixed(2)}`}
+                caption="acumulados"
+                accent
+              />
+
+              <KpiCard
+                icon={Server}
+                label="Contenedores"
+                value={`${summary.active_instances ?? 0} / ${
+                  summary.total_instances ?? 0
+                }`}
+                caption="activos / totales"
+              />
+
+              <KpiCard
+                icon={Cpu}
+                label="CPU host"
+                value={formatMetric(host.cpu_usage_percent, '%')}
+                caption="uso global"
+              />
+
+              <KpiCard
+                icon={MemoryStick}
+                label="RAM host"
+                value={formatMetric(
+                  host.memory_usage_percent,
+                  '%'
+                )}
+                caption={
+                  host.memory_used_mb !== undefined &&
+                  host.memory_total_mb !== undefined
+                    ? `${(
+                        Number(host.memory_used_mb) / 1024
+                      ).toFixed(1)} / ${(
+                        Number(host.memory_total_mb) / 1024
+                      ).toFixed(1)} GB`
+                    : 'uso global'
+                }
+              />
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
-              <div className="flex items-center gap-2 text-slate-400 text-xs mb-2">
-                <Server className="w-4 h-4 text-cyan-400" /> Contenedores
-              </div>
-              <div className="text-2xl font-black text-white">
-                {dashboardData.summary.active_instances} / {dashboardData.summary.total_instances}
-              </div>
-              <div className="text-[11px] text-slate-500 mt-1">Activos vs Registrados</div>
-            </div>
+            {/* Instances */}
+            <section className="mb-7 overflow-hidden rounded-[24px] border border-[#dce7e2] bg-white shadow-[0_16px_45px_rgba(23,40,56,0.055)]">
+              <div className="flex flex-col gap-3 border-b border-[#e9efec] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#28B586]">
+                    Supervisión multi-inquilino
+                  </p>
 
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
-              <div className="flex items-center gap-2 text-slate-400 text-xs mb-2">
-                <Cpu className="w-4 h-4 text-amber-400" /> Carga CPU Host
-              </div>
-              <div className="text-2xl font-black text-white">
-                {dashboardData.host_resources.cpu_usage_percent}%
-              </div>
-              <div className="text-[11px] text-slate-500 mt-1">Uso del procesador anfitrión</div>
-            </div>
+                  <h2 className="mt-1 text-lg font-black text-[#172838]">
+                    Instancias de la plataforma
+                  </h2>
 
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 text-slate-400 text-xs mb-2">
-                <HardDrive className="w-4 h-4 text-purple-400" /> Memoria RAM Host
+                  <p className="mt-1 text-xs font-medium text-[#64748B]">
+                    Estado, propietario, recursos y acciones administrativas.
+                  </p>
+                </div>
+
+                <span className="rounded-full bg-[#f3f6f4] px-3 py-1.5 text-[10px] font-black text-[#64748B]">
+                  {instances.length} instancias
+                </span>
               </div>
-              <div className="text-2xl font-black text-white">
-                {dashboardData.host_resources.memory_usage_percent}%
+
+              {instances.length === 0 ? (
+                <div className="px-6 py-14 text-center">
+                  <Server className="mx-auto h-6 w-6 text-[#94A3B8]" />
+
+                  <p className="mt-3 text-sm font-black text-[#172838]">
+                    No hay instancias registradas
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1180px] border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-[#e9efec] bg-[#f8fbf9] text-[10px] font-black uppercase tracking-[0.13em] text-[#94A3B8]">
+                        <th className="px-5 py-4">Instancia</th>
+                        <th className="px-5 py-4">Propietario</th>
+                        <th className="px-5 py-4">Plan</th>
+                        <th className="px-5 py-4">Puerto</th>
+                        <th className="px-5 py-4">CPU</th>
+                        <th className="px-5 py-4">RAM</th>
+                        <th className="px-5 py-4">Estado</th>
+                        <th className="px-5 py-4 text-right">
+                          Contingencia
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-[#edf1ef]">
+                      {instances.map((instance) => (
+                        <tr
+                          key={instance.id}
+                          className="transition hover:bg-[#f9fcfa]"
+                        >
+                          <td className="px-5 py-4">
+                            <div className="font-black text-[#172838]">
+                              {instance.name}
+                            </div>
+
+                            <div className="mt-1 font-mono text-[10px] text-[#94A3B8]">
+                              #{instance.id}
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <div className="text-xs font-bold text-[#475569]">
+                              {instance.owner_name ||
+                                'Usuario Codrop'}
+                            </div>
+
+                            <div className="mt-1 text-[10px] font-medium text-[#94A3B8]">
+                              {instance.owner_email || '—'}
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <span className="rounded-full border border-[#CFE4D6] bg-[#EAF7F1] px-2.5 py-1 text-[10px] font-black text-[#1C7F62]">
+                              {instance.plan_name || 'Free'}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 font-mono text-xs font-black text-[#334e5e]">
+                            {instance.assigned_port || '—'}
+                          </td>
+
+                          <td className="px-5 py-4 text-xs font-black text-[#334e5e]">
+                            {formatMetric(
+                              instance.cpu_usage_percent ??
+                                instance.cpu_percent,
+                              '%'
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4 text-xs font-black text-[#334e5e]">
+                            {instance.memory_usage_mb !== undefined
+                              ? `${Number(
+                                  instance.memory_usage_mb
+                                ).toFixed(1)} MB`
+                              : instance.ram_usage_mb !== undefined
+                              ? `${Number(
+                                  instance.ram_usage_mb
+                                ).toFixed(1)} MB`
+                              : '—'}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
+                                instance.status === 'running'
+                                  ? 'border border-[#b9ddcd] bg-[#edf9f3] text-[#176c53]'
+                                  : 'border border-[#e2e8e5] bg-[#f3f6f4] text-[#64748B]'
+                              }`}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  instance.status === 'running'
+                                    ? 'bg-[#28B586]'
+                                    : 'bg-[#94A3B8]'
+                                }`}
+                              />
+
+                              {instance.status || 'unknown'}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 text-right">
+                            <div className="inline-flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openForceAction(
+                                    instance,
+                                    'force_stop'
+                                  )
+                                }
+                                disabled={
+                                  instance.status !== 'running'
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <Square className="h-3 w-3" />
+                                Forzar detención
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openForceAction(
+                                    instance,
+                                    'force_destroy'
+                                  )
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-black text-red-600 transition hover:bg-red-100"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                Forzar eliminación
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {/* Users */}
+            <section className="overflow-hidden rounded-[24px] border border-[#dce7e2] bg-white shadow-[0_16px_45px_rgba(23,40,56,0.055)]">
+              <div className="border-b border-[#e9efec] px-6 py-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#28B586]">
+                  Usuarios
+                </p>
+
+                <h2 className="mt-1 text-lg font-black text-[#172838]">
+                  Clientes observados
+                </h2>
+
+                <p className="mt-1 text-xs font-medium text-[#64748B]">
+                  Vista construida con los datos disponibles en la consola
+                  administrativa.
+                </p>
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
-                {(dashboardData.host_resources.memory_used_mb / 1024).toFixed(1)} GB / {(dashboardData.host_resources.memory_total_mb / 1024).toFixed(0)} GB
+
+              {users.length === 0 ? (
+                <div className="px-6 py-12 text-center text-xs font-semibold text-[#94A3B8]">
+                  No hay información de usuarios disponible.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[760px] border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-[#e9efec] bg-[#f8fbf9] text-[10px] font-black uppercase tracking-[0.13em] text-[#94A3B8]">
+                        <th className="px-5 py-4">Usuario</th>
+                        <th className="px-5 py-4">Correo</th>
+                        <th className="px-5 py-4">Plan actual</th>
+                        <th className="px-5 py-4">Registro</th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-[#edf1ef]">
+                      {users.map((user) => (
+                        <tr
+                          key={user.id || user.email}
+                          className="hover:bg-[#f9fcfa]"
+                        >
+                          <td className="px-5 py-4 text-xs font-black text-[#172838]">
+                            {user.name || 'Usuario Codrop'}
+                          </td>
+
+                          <td className="px-5 py-4 text-xs font-semibold text-[#64748B]">
+                            {user.email || '—'}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <span className="rounded-full border border-[#CFE4D6] bg-[#EAF7F1] px-2.5 py-1 text-[10px] font-black text-[#1C7F62]">
+                              {user.plan_name ||
+                                user.plan?.name ||
+                                'Free'}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 text-xs font-semibold text-[#64748B]">
+                            {formatDate(user.created_at)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        {/* Force action modal */}
+        {selectedInstanceForAction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md">
+            <div className="w-full max-w-[500px] overflow-hidden rounded-[26px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.4)]">
+              <div className="relative bg-[#172838] px-6 py-5 text-white">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedInstanceForAction(null)
+                  }
+                  disabled={actionLoading}
+                  className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+
+                <div className="flex items-start gap-3 pr-12">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-300">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-300">
+                      Acción administrativa
+                    </p>
+
+                    <h3 className="mt-1 text-lg font-black">
+                      {actionType === 'force_destroy'
+                        ? 'Forzar eliminación'
+                        : 'Forzar detención'}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <p className="text-sm leading-6 text-[#64748B]">
+                  Vas a intervenir la instancia{' '}
+                  <strong className="text-[#172838]">
+                    {selectedInstanceForAction.name}
+                  </strong>{' '}
+                  perteneciente a{' '}
+                  <strong className="text-[#172838]">
+                    {selectedInstanceForAction.owner_email ||
+                      'un usuario Codrop'}
+                  </strong>.
+                </p>
+
+                {actionType === 'force_destroy' && (
+                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-bold leading-5 text-red-700">
+                    La eliminación forzosa es destructiva y puede liberar
+                    definitivamente los recursos asociados a esta instancia.
+                  </div>
+                )}
+
+                <div className="mt-5">
+                  <label className="mb-1.5 block text-xs font-black text-[#334e5e]">
+                    Motivo de auditoría
+                  </label>
+
+                  <textarea
+                    value={actionReason}
+                    onChange={(event) =>
+                      setActionReason(event.target.value)
+                    }
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-[#d6dfdb] bg-white px-4 py-3 text-xs font-semibold text-[#172838] outline-none transition focus:border-[#28B586] focus:ring-2 focus:ring-[#28B586]/10"
+                  />
+                </div>
+
+                <div className="mt-6 flex justify-end gap-3 border-t border-[#edf1ef] pt-5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedInstanceForAction(null)
+                    }
+                    disabled={actionLoading}
+                    className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition hover:bg-[#f3f6f4]"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExecuteAction}
+                    disabled={
+                      actionLoading || !actionReason.trim()
+                    }
+                    className={`inline-flex min-w-[175px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white transition disabled:opacity-50 ${
+                      actionType === 'force_destroy'
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : 'bg-amber-500 hover:bg-amber-600'
+                    }`}
+                  >
+                    {actionLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Ejecutando...
+                      </>
+                    ) : actionType === 'force_destroy' ? (
+                      <>
+                        <Trash2 className="h-4 w-4" />
+                        Confirmar eliminación
+                      </>
+                    ) : (
+                      <>
+                        <Square className="h-4 w-4" />
+                        Confirmar detención
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
 
-        {/* Global Instances Table (RF-23) */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-white">Supervisión y Control Forzoso de Instancias</h2>
-              <p className="text-xs text-slate-400">
-                Auditoría global de contenedores activos en el daemon Docker con aislamiento y mitigación de anomalías.
-              </p>
-            </div>
-            <span className="text-xs font-mono text-slate-500">
-              {instances.length} instancias totales
-            </span>
-          </div>
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  caption,
+  accent = false,
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-[22px] border border-[#dce7e2] bg-white p-5 shadow-[0_12px_35px_rgba(23,40,56,0.045)]">
+      <div className="absolute -bottom-8 -right-8 h-24 w-24 rounded-full bg-[#EAF7F1]" />
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-4">ID</th>
-                  <th className="py-3 px-4">Instancia</th>
-                  <th className="py-3 px-4">Propietario</th>
-                  <th className="py-3 px-4">Plan</th>
-                  <th className="py-3 px-4">Puerto</th>
-                  <th className="py-3 px-4">Estado</th>
-                  <th className="py-3 px-4 text-right">Acciones Forzosas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {instances.map((inst) => (
-                  <tr key={inst.id} className="hover:bg-slate-800/30 transition">
-                    <td className="py-3 px-4 font-mono text-slate-500">#{inst.id}</td>
-                    <td className="py-3 px-4 font-bold text-white">
-                      <div>{inst.name}</div>
-                      <a
-                        href={inst.public_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-indigo-400 hover:underline font-mono"
-                      >
-                        {inst.public_url}
-                      </a>
-                    </td>
-                    <td className="py-3 px-4 text-slate-300">
-                      <div>{inst.owner_name}</div>
-                      <span className="text-[11px] text-slate-500">{inst.owner_email}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-indigo-300 font-semibold text-[11px]">
-                        {inst.plan_name}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-slate-300">{inst.assigned_port}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                        inst.status === 'running'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {inst.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right space-x-2">
-                      <button
-                        onClick={() => {
-                          setSelectedInstanceForAction(inst);
-                          setActionType('force_stop');
-                        }}
-                        disabled={inst.status !== 'running'}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 font-semibold text-[11px] disabled:opacity-40 transition"
-                      >
-                        Force Stop
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedInstanceForAction(inst);
-                          setActionType('force_destroy');
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-semibold text-[11px] transition"
-                      >
-                        Force Destroy
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <div className="relative">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.13em] text-[#94A3B8]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#EAF7F1] text-[#1C7F62]">
+            <Icon className="h-4 w-4" />
+          </span>
+
+          {label}
         </div>
 
-        {/* Modal de Acción Forzosa */}
-        {selectedInstanceForAction && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl p-6 space-y-4 shadow-2xl">
-              <div className="flex items-center gap-3 text-amber-400">
-                <AlertTriangle className="w-6 h-6 shrink-0" />
-                <h3 className="text-lg font-bold text-white">Confirmar Acción Administrativa Forzosa</h3>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Estás a punto de ejecutar <strong className="text-amber-400 uppercase">{actionType}</strong> sobre la instancia <strong>{selectedInstanceForAction.name}</strong> del inquilino <em>{selectedInstanceForAction.owner_email}</em>.
-              </p>
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Motivo de la Auditoría:</label>
-                <input
-                  type="text"
-                  value={actionReason}
-                  onChange={(e) => setActionReason(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setSelectedInstanceForAction(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-slate-400 hover:text-white"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleExecuteAction}
-                  disabled={actionLoading}
-                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold text-white shadow-lg shadow-red-600/30"
-                >
-                  {actionLoading ? 'Ejecutando...' : 'Confirmar y Auditar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <div
+          className={`mt-4 text-2xl font-black tracking-[-0.03em] ${
+            accent ? 'text-[#28B586]' : 'text-[#172838]'
+          }`}
+        >
+          {value}
+        </div>
+
+        <p className="mt-1 text-[10px] font-semibold text-[#94A3B8]">
+          {caption}
+        </p>
       </div>
     </div>
   );
