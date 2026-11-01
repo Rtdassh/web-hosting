@@ -1,49 +1,103 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  X,
-  UploadCloud,
-  FileArchive,
   AlertCircle,
-  Loader2,
-  Rocket,
+  ArrowRight,
+  Check,
   CheckCircle2,
+  Code2,
+  Eye,
+  FileArchive,
+  FileText,
+  Globe2,
+  Layers3,
+  Loader2,
   PackageOpen,
+  Rocket,
+  UploadCloud,
+  UserRound,
+  X,
 } from 'lucide-react';
 
 import { instanceService, templateService } from '../../services/api';
 
-/**
- * DeployModal: Ventana modal compacta y ergonómica para el aprovisionamiento de sitios web.
- * Soporta carga directa de paquetes .ZIP y catálogo de plantillas 1-clic (RF-14).
- * Dimensionada con max-h y scroll inteligente para visualizarse correctamente en cualquier resolución.
- */
+const TEMPLATES = [
+  {
+    id: 'landing-business',
+    name: 'Landing Page',
+    subtitle: 'Landing Business',
+    description:
+      'Página comercial moderna para presentar una marca, producto o servicio.',
+    category: 'Negocios',
+    icon: Globe2,
+    preview: {
+      eyebrow: 'MODERN BUSINESS',
+      title: 'Convierte visitas en oportunidades.',
+      text: 'Hero comercial, beneficios, llamada a la acción y footer profesional.',
+      sections: ['Hero', 'Beneficios', 'CTA'],
+    },
+  },
+  {
+    id: 'personal-portfolio',
+    name: 'Portafolio',
+    subtitle: 'Personal Portfolio',
+    description:
+      'Portafolio limpio para mostrar proyectos, habilidades y experiencia.',
+    category: 'Personal',
+    icon: UserRound,
+    preview: {
+      eyebrow: 'DEVELOPER PORTFOLIO',
+      title: 'Diseño, código y proyectos.',
+      text: 'Presentación personal, proyectos destacados y sección de contacto.',
+      sections: ['Perfil', 'Proyectos', 'Contacto'],
+    },
+  },
+  {
+    id: 'html5-docs',
+    name: 'Documentación',
+    subtitle: 'HTML5 Docs',
+    description:
+      'Base estructurada para documentación técnica, guías y referencias.',
+    category: 'Docs',
+    icon: FileText,
+    preview: {
+      eyebrow: 'TECHNICAL DOCS',
+      title: 'Documentación clara y ordenada.',
+      text: 'Sidebar de navegación, contenido técnico y estructura preparada para crecer.',
+      sections: ['Sidebar', 'Guías', 'Referencia'],
+    },
+  },
+];
+
 export default function DeployModal({
   isOpen,
   onClose,
   onInstanceDeployed,
 }) {
-  const [activeTab, setActiveTab] = useState('zip'); // 'zip' | 'template'
+  const [activeTab, setActiveTab] = useState('zip');
   const [name, setName] = useState('');
   const [file, setFile] = useState(null);
-  const [selectedTemplate, setSelectedTemplate] = useState('landing-business');
+  const [selectedTemplate, setSelectedTemplate] = useState(
+    'landing-business'
+  );
+  const [previewTemplate, setPreviewTemplate] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
-  const templates = [
-    { id: 'landing-business', name: 'Landing Business', desc: 'Sitio comercial moderno con Tailwind', tag: 'Negocios' },
-    { id: 'personal-portfolio', name: 'Portafolio Dev', desc: 'Página personal minimalista para ingenieros', tag: 'Personal' },
-    { id: 'html5-docs', name: 'Doc Técnica', desc: 'Estructura limpia con sidebar para documentación', tag: 'Docs' },
-  ];
+  const MAX_FILE_SIZE = 25 * 1024 * 1024;
+
+  const currentTemplate = useMemo(
+    () =>
+      TEMPLATES.find((template) => template.id === selectedTemplate) ||
+      TEMPLATES[0],
+    [selectedTemplate]
+  );
 
   if (!isOpen) return null;
 
-  const MAX_FILE_SIZE = 25 * 1024 * 1024;
-
   const validateFile = (selectedFile) => {
-    if (!selectedFile) {
-      return false;
-    }
+    if (!selectedFile) return false;
 
     if (!selectedFile.name.toLowerCase().endsWith('.zip')) {
       setError('El archivo seleccionado debe tener formato .zip.');
@@ -62,27 +116,30 @@ export default function DeployModal({
     return true;
   };
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files?.[0];
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files?.[0];
+
     if (selectedFile) {
       validateFile(selectedFile);
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
+  const handleDragOver = (event) => {
+    event.preventDefault();
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e) => {
-    e.preventDefault();
+  const handleDragLeave = (event) => {
+    event.preventDefault();
     setIsDragging(false);
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
+  const handleDrop = (event) => {
+    event.preventDefault();
     setIsDragging(false);
-    const droppedFile = e.dataTransfer.files?.[0];
+
+    const droppedFile = event.dataTransfer.files?.[0];
+
     if (droppedFile) {
       validateFile(droppedFile);
     }
@@ -90,37 +147,57 @@ export default function DeployModal({
 
   const handleClose = () => {
     if (loading) return;
+
     setName('');
     setFile(null);
     setError('');
     setIsDragging(false);
+    setActiveTab('zip');
+    setSelectedTemplate('landing-business');
+    setPreviewTemplate(null);
+
     onClose();
   };
 
-  const extractErrorMessage = (err) => {
-    const detail = err.response?.data?.detail;
-    if (!detail) return 'No fue posible desplegar el sitio. Inténtalo nuevamente.';
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) {
-      return detail.map((d) => (typeof d === 'string' ? d : d.msg || d.detail || JSON.stringify(d))).join('. ');
+  const extractErrorMessage = (requestError) => {
+    const detail = requestError.response?.data?.detail;
+
+    if (!detail) {
+      return 'No fue posible desplegar el sitio. Inténtalo nuevamente.';
     }
+
+    if (typeof detail === 'string') {
+      return detail;
+    }
+
+    if (Array.isArray(detail)) {
+      return detail
+        .map((item) =>
+          typeof item === 'string'
+            ? item
+            : item.msg || item.detail || JSON.stringify(item)
+        )
+        .join('. ');
+    }
+
     if (typeof detail === 'object') {
       return detail.message || JSON.stringify(detail);
     }
+
     return String(detail);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
 
     if (!name.trim()) {
-      setError('Por favor indica un nombre para tu proyecto.');
+      setError('Indica un nombre para tu proyecto.');
       return;
     }
 
     if (activeTab === 'zip' && !file) {
-      setError('Por favor selecciona un paquete .zip.');
+      setError('Selecciona un paquete .zip.');
       return;
     }
 
@@ -128,6 +205,7 @@ export default function DeployModal({
 
     try {
       let newInstance;
+
       if (activeTab === 'template') {
         newInstance = await templateService.deployTemplate(
           name.trim(),
@@ -140,13 +218,18 @@ export default function DeployModal({
         );
       }
 
-      onInstanceDeployed(newInstance);
+      if (onInstanceDeployed) {
+        onInstanceDeployed(newInstance);
+      }
+
       setName('');
       setFile(null);
       setError('');
+      setPreviewTemplate(null);
+
       onClose();
-    } catch (err) {
-      setError(extractErrorMessage(err));
+    } catch (requestError) {
+      setError(extractErrorMessage(requestError));
     } finally {
       setLoading(false);
     }
@@ -154,259 +237,539 @@ export default function DeployModal({
 
   const formatFileSize = (bytes) => {
     if (!bytes) return '0 MB';
+
     const mb = bytes / (1024 * 1024);
+
     if (mb < 1) {
       return `${(bytes / 1024).toFixed(1)} KB`;
     }
+
     return `${mb.toFixed(2)} MB`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-navy-900/60 backdrop-blur-[2px] animate-fade-in">
-      {/* Contenedor Modal de tamaño ergonómico */}
-      <div className="relative w-full max-w-[490px] max-h-[90vh] bg-white border border-[#dfe7e4] rounded-[20px] shadow-[0_20px_60px_rgba(23,40,56,0.18)] flex flex-col overflow-hidden text-slate-900">
-        
-        {/* Header Compacto */}
-        <div className="relative px-5 py-4 bg-gradient-to-r from-brand-50/80 to-white border-b border-brand-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-200 flex items-center justify-center shadow-sm shrink-0">
-              <Rocket className="w-4 h-4 text-brand-600" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-700">
-                  Nuevo Despliegue
-                </span>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/70 p-3 backdrop-blur-md sm:p-4">
+        <div className="relative my-auto flex max-h-[92vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.32)]">
+          {/* Header */}
+          <div className="relative shrink-0 overflow-hidden border-b border-[#dce7e2] bg-[#172838] px-6 py-5 text-white">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.055]"
+              style={{
+                backgroundImage:
+                  'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
+                backgroundSize: '28px 28px',
+              }}
+            />
+
+            <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#28B586]/20 blur-3xl" />
+
+            <div className="relative flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#28B586]/25 bg-[#28B586]/10 text-[#7de0bd]">
+                  <Rocket className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <div className="mb-1 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#7de0bd]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#28B586]" />
+                    Nuevo despliegue
+                  </div>
+
+                  <h2 className="text-xl font-black tracking-[-0.02em]">
+                    Publica con Codrop
+                  </h2>
+                </div>
               </div>
-              <h2 className="text-[17px] font-bold text-navy-900 leading-tight">
-                Publica tu proyecto web
-              </h2>
+
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={loading}
+                aria-label="Cerrar modal"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-40"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </div>
+
+          {/* Content */}
+          <form
+            onSubmit={handleSubmit}
+            className="flex-1 space-y-5 overflow-y-auto bg-[#fbfdfc] px-6 py-5"
+          >
+            {error && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-700">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Project name */}
+            <div>
+              <label
+                htmlFor="project-name"
+                className="mb-1.5 block text-xs font-black text-[#334e5e]"
+              >
+                Nombre del proyecto
+              </label>
+
+              <input
+                id="project-name"
+                type="text"
+                value={name}
+                disabled={loading}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setError('');
+                }}
+                placeholder="Ej. Mi portafolio"
+                required
+                className="h-11 w-full rounded-xl border border-[#d6dfdb] bg-white px-4 text-sm font-semibold text-[#172838] outline-none transition placeholder:text-[#94A3B8] focus:border-[#28B586] focus:ring-2 focus:ring-[#28B586]/10 disabled:bg-slate-50"
+              />
+            </div>
+
+            {/* Tabs */}
+            <div className="grid grid-cols-2 rounded-xl border border-[#dce7e2] bg-[#f2f6f4] p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('zip');
+                  setError('');
+                }}
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-black transition ${
+                  activeTab === 'zip'
+                    ? 'bg-white text-[#172838] shadow-sm'
+                    : 'text-[#64748B] hover:text-[#172838]'
+                }`}
+              >
+                <FileArchive className="h-4 w-4" />
+                Subir .ZIP
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('template');
+                  setError('');
+                }}
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-black transition ${
+                  activeTab === 'template'
+                    ? 'bg-white text-[#1C7F62] shadow-sm'
+                    : 'text-[#64748B] hover:text-[#172838]'
+                }`}
+              >
+                <Layers3 className="h-4 w-4" />
+                Plantillas 1-Clic
+              </button>
+            </div>
+
+            {activeTab === 'template' ? (
+              <div>
+                <div className="mb-3 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#94A3B8]">
+                      Catálogo Codrop
+                    </p>
+
+                    <h3 className="mt-1 text-sm font-black text-[#172838]">
+                      Elige un punto de partida
+                    </h3>
+                  </div>
+
+                  <span className="text-[10px] font-bold text-[#94A3B8]">
+                    3 disponibles
+                  </span>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  {TEMPLATES.map((template) => {
+                    const Icon = template.icon;
+                    const isSelected =
+                      selectedTemplate === template.id;
+
+                    return (
+                      <article
+                        key={template.id}
+                        className={`relative overflow-hidden rounded-2xl border bg-white transition ${
+                          isSelected
+                            ? 'border-[#28B586] shadow-[0_12px_30px_rgba(40,181,134,0.12)]'
+                            : 'border-[#dce7e2] hover:border-[#b9d8ca]'
+                        }`}
+                      >
+                        {/* Mini preview */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedTemplate(template.id)
+                          }
+                          className="block w-full text-left"
+                        >
+                          <div className="relative h-28 overflow-hidden border-b border-[#e5ece8] bg-[#172838] p-3">
+                            <div
+                              className="absolute inset-0 opacity-[0.06]"
+                              style={{
+                                backgroundImage:
+                                  'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
+                                backgroundSize: '20px 20px',
+                              }}
+                            />
+
+                            <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[#28B586]/25 blur-2xl" />
+
+                            <div className="relative">
+                              <div className="flex items-center justify-between">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#28B586]/15 text-[#7de0bd]">
+                                  <Icon className="h-3.5 w-3.5" />
+                                </span>
+
+                                {isSelected && (
+                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#28B586] text-white">
+                                    <Check className="h-3.5 w-3.5" />
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="mt-4 h-2 w-20 rounded-full bg-white/80" />
+                              <div className="mt-2 h-1.5 w-28 rounded-full bg-white/25" />
+                              <div className="mt-1.5 h-1.5 w-20 rounded-full bg-white/15" />
+                            </div>
+                          </div>
+
+                          <div className="p-3.5">
+                            <span className="rounded-full bg-[#EAF7F1] px-2 py-1 text-[8px] font-black uppercase tracking-wide text-[#1C7F62]">
+                              {template.category}
+                            </span>
+
+                            <h4 className="mt-2.5 text-sm font-black text-[#172838]">
+                              {template.name}
+                            </h4>
+
+                            <p className="mt-1 min-h-[48px] text-[10px] font-medium leading-4 text-[#64748B]">
+                              {template.description}
+                            </p>
+                          </div>
+                        </button>
+
+                        <div className="grid grid-cols-2 border-t border-[#edf1ef]">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewTemplate(template)
+                            }
+                            className="inline-flex items-center justify-center gap-1.5 border-r border-[#edf1ef] px-2 py-2.5 text-[10px] font-black text-[#64748B] transition hover:bg-[#f8fbf9] hover:text-[#1C7F62]"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Vista previa
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedTemplate(template.id)
+                            }
+                            className={`inline-flex items-center justify-center gap-1.5 px-2 py-2.5 text-[10px] font-black transition ${
+                              isSelected
+                                ? 'bg-[#EAF7F1] text-[#1C7F62]'
+                                : 'text-[#64748B] hover:bg-[#f8fbf9] hover:text-[#1C7F62]'
+                            }`}
+                          >
+                            {isSelected ? (
+                              <>
+                                <Check className="h-3.5 w-3.5" />
+                                Seleccionada
+                              </>
+                            ) : (
+                              <>
+                                <ArrowRight className="h-3.5 w-3.5" />
+                                Elegir
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-xs font-black text-[#334e5e]">
+                    Archivo del proyecto
+                  </label>
+
+                  <span className="text-[10px] font-bold text-[#94A3B8]">
+                    Máx. 25 MB
+                  </span>
+                </div>
+
+                {!file ? (
+                  <label
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`block cursor-pointer rounded-2xl border-2 border-dashed px-5 py-7 text-center transition ${
+                      isDragging
+                        ? 'scale-[1.01] border-[#28B586] bg-[#EAF7F1]'
+                        : 'border-[#cddbd5] bg-white hover:border-[#28B586] hover:bg-[#f8fbf9]'
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      accept=".zip,application/zip"
+                      disabled={loading}
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+
+                    <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-[#CFE4D6] bg-[#EAF7F1] text-[#1C7F62]">
+                      <UploadCloud className="h-5 w-5" />
+                    </div>
+
+                    <p className="mt-3 text-sm font-black text-[#172838]">
+                      Arrastra tu archivo .zip
+                    </p>
+
+                    <p className="mt-1 text-xs font-medium text-[#64748B]">
+                      o haz clic para buscarlo en tu equipo
+                    </p>
+
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#e2e8e5] bg-[#f8fbf9] px-3 py-1.5">
+                      <PackageOpen className="h-3 w-3 text-[#28B586]" />
+
+                      <span className="text-[10px] font-semibold text-[#64748B]">
+                        Debe contener{' '}
+                        <code className="font-mono font-black text-[#172838]">
+                          index.html
+                        </code>{' '}
+                        en la raíz
+                      </span>
+                    </div>
+                  </label>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-2xl border border-[#b9ddcd] bg-[#edf9f3] p-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#1C7F62]">
+                      <FileArchive className="h-5 w-5" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-xs font-black text-[#172838]">
+                          {file.name}
+                        </p>
+
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#28B586]" />
+                      </div>
+
+                      <p className="mt-1 text-[10px] font-semibold text-[#64748B]">
+                        {formatFileSize(file.size)} · Listo para desplegar
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => {
+                        setFile(null);
+                        setError('');
+                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-[#94A3B8] transition hover:bg-red-50 hover:text-red-500"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Flow */}
+            <div className="rounded-2xl border border-[#e5ece8] bg-white px-4 py-3">
+              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.15em] text-[#94A3B8]">
+                Flujo Codrop
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2 text-[10px] font-black">
+                <span className="inline-flex items-center gap-1.5 text-[#172838]">
+                  {activeTab === 'template' ? (
+                    <>
+                      <Layers3 className="h-3.5 w-3.5 text-[#28B586]" />
+                      {currentTemplate.name}
+                    </>
+                  ) : (
+                    <>
+                      <Code2 className="h-3.5 w-3.5 text-[#28B586]" />
+                      Archivo .zip
+                    </>
+                  )}
+                </span>
+
+                <ArrowRight className="h-3.5 w-3.5 text-[#28B586]" />
+
+                <span className="text-[#64748B]">Deploy aislado</span>
+
+                <ArrowRight className="h-3.5 w-3.5 text-[#28B586]" />
+
+                <span className="text-[#1C7F62]">URL pública</span>
+              </div>
+            </div>
+          </form>
+
+          {/* Footer */}
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[#e8eeeb] bg-white px-6 py-4">
+            <div className="hidden text-[10px] font-semibold text-[#94A3B8] sm:block">
+              {activeTab === 'template'
+                ? 'Sin necesidad de preparar un archivo .zip'
+                : 'Tu proyecto se desplegará en un contenedor aislado'}
+            </div>
+
+            <div className="ml-auto flex gap-2.5">
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={loading}
+                className="rounded-xl border border-[#dfe7e4] bg-white px-4 py-2.5 text-xs font-black text-[#64748B] transition hover:bg-[#f8fbf9]"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-xl bg-[#28B586] px-4 py-2.5 text-xs font-black text-white shadow-[0_10px_25px_rgba(40,181,134,0.2)] transition hover:bg-[#239C76] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Desplegando...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="h-4 w-4" />
+                    {activeTab === 'template'
+                      ? 'Desplegar plantilla'
+                      : 'Desplegar sitio'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Template Preview */}
+      {previewTemplate && (
+        <TemplatePreviewModal
+          template={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+          onSelect={() => {
+            setSelectedTemplate(previewTemplate.id);
+            setPreviewTemplate(null);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function TemplatePreviewModal({ template, onClose, onSelect }) {
+  const Icon = template.icon;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md">
+      <div className="w-full max-w-[720px] overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.38)]">
+        <div className="flex items-center justify-between border-b border-[#e5ece8] px-6 py-4">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#28B586]">
+              Vista previa
+            </p>
+
+            <h3 className="mt-1 text-lg font-black text-[#172838]">
+              {template.name}
+            </h3>
+          </div>
+
           <button
             type="button"
-            onClick={handleClose}
-            disabled={loading}
-            aria-label="Cerrar modal"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-navy-900 hover:bg-slate-100 disabled:opacity-50 transition"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f3f6f4] text-[#64748B] transition hover:text-[#172838]"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Formulario con Scroll Interno si es necesario */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {/* Error Message */}
-          {error && (
-            <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-medium">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
-              <span>{error}</span>
-            </div>
-          )}
+        <div className="bg-[#eef5f2] p-5 sm:p-7">
+          <div className="overflow-hidden rounded-[22px] border border-[#dce7e2] bg-white shadow-[0_18px_45px_rgba(23,40,56,0.09)]">
+            <div className="relative overflow-hidden bg-[#172838] px-6 py-8 text-white sm:px-9 sm:py-10">
+              <div
+                className="absolute inset-0 opacity-[0.05]"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
+                  backgroundSize: '26px 26px',
+                }}
+              />
 
-          {/* Nombre del proyecto */}
-          <div>
-            <label
-              htmlFor="project-name"
-              className="block text-xs font-bold text-slate-800 mb-1.5"
-            >
-              Nombre del proyecto
-            </label>
-            <input
-              id="project-name"
-              type="text"
-              value={name}
-              disabled={loading}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ej. Mi sitio comercial"
-              required
-              className="w-full h-10 bg-white border border-[#cbd5e1] rounded-xl px-3.5 text-xs text-slate-900 font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 disabled:bg-slate-50 transition"
-            />
-          </div>
-
-          {/* Selector de Método (ZIP vs Plantilla) */}
-          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-            <button
-              type="button"
-              onClick={() => setActiveTab('zip')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                activeTab === 'zip'
-                  ? 'bg-white text-navy-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Subir Archivo .ZIP
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('template')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                activeTab === 'template'
-                  ? 'bg-white text-brand-700 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Plantillas en 1 Clic
-            </button>
-          </div>
-
-          {activeTab === 'template' ? (
-            /* Plantillas */
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-800 mb-1">
-                Selecciona una Plantilla
-              </label>
-              <div className="space-y-2">
-                {templates.map((tmpl) => (
-                  <div
-                    key={tmpl.id}
-                    onClick={() => setSelectedTemplate(tmpl.id)}
-                    className={`p-3 rounded-xl border cursor-pointer transition flex items-center justify-between ${
-                      selectedTemplate === tmpl.id
-                        ? 'border-brand-500 bg-brand-50/50 shadow-sm'
-                        : 'border-[#e2e8f0] bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-navy-900">{tmpl.name}</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
-                          {tmpl.tag}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5 font-normal">{tmpl.desc}</p>
-                    </div>
-                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                      selectedTemplate === tmpl.id
-                        ? 'border-brand-500 bg-brand-500'
-                        : 'border-slate-300'
-                    }`}>
-                      {selectedTemplate === tmpl.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            /* Zona de Carga de Archivo ZIP Compacta */
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-800">
-                  Archivo del proyecto
-                </label>
-                <span className="text-[11px] font-semibold text-slate-500">
-                  Máx. 25 MB (.zip)
+              <div className="relative max-w-lg">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#28B586]/30 bg-[#28B586]/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#7de0bd]">
+                  <Icon className="h-3.5 w-3.5" />
+                  {template.preview.eyebrow}
                 </span>
-              </div>
 
-              {!file ? (
-                <label
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`
-                    block border-2 border-dashed rounded-xl px-4 py-5 text-center cursor-pointer transition-all
-                    ${
-                      isDragging
-                        ? 'border-brand-500 bg-brand-50 scale-[1.01]'
-                        : 'border-[#cddbd5] bg-[#fbfdfc] hover:border-brand-500 hover:bg-brand-50/50'
-                    }
-                  `}
-                >
-                  <input
-                    type="file"
-                    accept=".zip,application/zip"
-                    disabled={loading}
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <div className="w-9 h-9 mx-auto rounded-xl bg-white border border-brand-100 flex items-center justify-center shadow-sm">
-                    <UploadCloud className="w-4 h-4 text-brand-600" />
-                  </div>
-                  <p className="mt-2 text-xs font-bold text-navy-900">
-                    Arrastra tu archivo .zip aquí
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 font-normal">
-                    o haz clic para explorar en tu equipo
-                  </p>
-                  <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-[#e2e8f0]">
-                    <PackageOpen className="w-3 h-3 text-brand-600" />
-                    <span className="text-[10px] text-slate-600 font-medium">
-                      Debe contener un <code className="font-mono text-slate-800 font-semibold">index.html</code> en la raíz
-                    </span>
-                  </div>
-                </label>
-              ) : (
-                <div className="border border-brand-200 bg-brand-50/50 rounded-xl p-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-white border border-brand-100 flex items-center justify-center shrink-0">
-                    <FileArchive className="w-4 h-4 text-brand-600" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-bold text-navy-900 truncate">
-                        {file.name}
-                      </p>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-brand-600 shrink-0" />
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                      {formatFileSize(file.size)} · Listo para desplegar
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => {
-                      setFile(null);
-                      setError('');
-                    }}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                    aria-label="Remover archivo"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                <h4 className="mt-5 text-3xl font-black tracking-[-0.035em]">
+                  {template.preview.title}
+                </h4>
+
+                <p className="mt-3 max-w-md text-xs font-medium leading-5 text-slate-300">
+                  {template.preview.text}
+                </p>
+
+                <div className="mt-6 inline-flex rounded-xl bg-[#28B586] px-4 py-2.5 text-xs font-black text-white">
+                  Empezar ahora
                 </div>
-              )}
+              </div>
             </div>
-          )}
 
-          {/* Resumen del Flujo Codrop */}
-          <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-600">
-            <span className="text-navy-900">Código .zip</span>
-            <span className="text-brand-500">→</span>
-            <span>Nginx Aislado (:ro)</span>
-            <span className="text-brand-500">→</span>
-            <span className="text-brand-700">URL Pública Automática</span>
+            <div className="grid gap-3 p-5 sm:grid-cols-3">
+              {template.preview.sections.map((section, index) => (
+                <div
+                  key={section}
+                  className="rounded-xl border border-[#e5ece8] bg-[#f8fbf9] p-4"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#EAF7F1] text-[10px] font-black text-[#1C7F62]">
+                    0{index + 1}
+                  </span>
+
+                  <p className="mt-3 text-xs font-black text-[#172838]">
+                    {section}
+                  </p>
+
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-[#e2ebe7]" />
+                  <div className="mt-1.5 h-1.5 w-2/3 rounded-full bg-[#edf2ef]" />
+                </div>
+              ))}
+            </div>
           </div>
-        </form>
+        </div>
 
-        {/* Footer Fijo con Acciones */}
-        <div className="px-5 py-3.5 border-t border-[#e8eeeb] bg-[#fafcfb] flex items-center justify-end gap-2.5 shrink-0">
+        <div className="flex items-center justify-end gap-3 border-t border-[#e5ece8] px-6 py-4">
           <button
             type="button"
-            onClick={handleClose}
-            disabled={loading}
-            className="h-9 px-4 rounded-xl bg-white border border-[#dfe7e4] hover:bg-slate-50 text-slate-700 text-xs font-bold transition"
+            onClick={onClose}
+            className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition hover:bg-[#f3f6f4]"
           >
-            Cancelar
+            Volver
           </button>
+
           <button
             type="button"
-            onClick={handleSubmit}
-            disabled={loading}
-            className="min-w-[135px] h-9 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50 cursor-pointer"
+            onClick={onSelect}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#28B586] px-5 py-2.5 text-xs font-black text-white transition hover:bg-[#239C76]"
           >
-            {loading ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Desplegando...
-              </>
-            ) : (
-              <>
-                <Rocket className="w-3.5 h-3.5" />
-                Desplegar sitio
-              </>
-            )}
+            <Check className="h-4 w-4" />
+            Usar esta plantilla
           </button>
         </div>
       </div>
