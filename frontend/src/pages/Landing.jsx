@@ -19,6 +19,8 @@ import {
   Rocket,
   Clock,
   ExternalLink,
+  Award,
+  Users,
 } from 'lucide-react';
 
 import codropIsotipo from '../assets/codrop-isotipo.png';
@@ -63,7 +65,7 @@ export default function Landing({ onLogin, onRegister }) {
         <div className="absolute -top-16 -left-20 w-[260px] h-[250px] rounded-[42%_58%_70%_30%/45%_45%_55%_55%] bg-brand-100/55 rotate-[-12deg] pointer-events-none" />
         <div className="absolute bottom-[90px] -left-[120px] w-[240px] h-[210px] rounded-[60%_40%_35%_65%/60%_55%_45%_40%] bg-brand-50 rotate-[18deg] pointer-events-none" />
 
-        {/* Cuadrícula técnica de fondo */}
+        {/* Cuadrícula sutil de fondo */}
         <div
           className="absolute right-0 top-[280px] w-[360px] h-[340px] opacity-[0.055] pointer-events-none"
           style={{
@@ -104,32 +106,33 @@ export default function Landing({ onLogin, onRegister }) {
               </h1>
 
               <p className="mt-7 max-w-[670px] text-[18px] sm:text-[19px] leading-[1.55] text-[#64748b]">
-                Sube tu proyecto en un archivo .zip o selecciona una plantilla en 1 clic.
-                Codrop asigna un puerto TCP y levanta un contenedor Nginx dedicado en menos de 5 segundos.
+                Olvídate de servidores difíciles y configuraciones lentas. Sube tus archivos o
+                elige una plantilla lista para usar: en 5 segundos tu página web estará en línea,
+                rápida y con su propio enlace para compartir con quien quieras.
               </p>
 
               <div className="mt-9 flex flex-col sm:flex-row gap-4">
                 <button
                   type="button"
                   onClick={onRegister}
-                  className="h-[50px] px-7 rounded-[9px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-semibold shadow-[0_10px_25px_rgba(40,181,134,0.28)] flex items-center justify-center gap-3 transition-colors"
+                  className="h-[52px] px-8 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_12px_28px_rgba(40,181,134,0.28)] flex items-center justify-center gap-3 transition-colors"
                 >
-                  Comenzar gratis
+                  Empezar gratis en 1 minuto
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
                 <a
                   href="#planes"
-                  className="h-[50px] px-7 rounded-[9px] border border-[#d6dfdb] hover:border-[#b9d8ca] bg-white text-navy-900 hover:text-brand-600 text-[15px] font-semibold flex items-center justify-center transition-colors shadow-sm"
+                  className="h-[52px] px-8 rounded-[10px] border border-[#d6dfdb] hover:border-[#b9d8ca] bg-white text-navy-900 hover:text-brand-600 text-[15px] font-semibold flex items-center justify-center transition-colors shadow-sm"
                 >
-                  Ver planes y cuotas
+                  Ver planes y precios
                 </a>
               </div>
 
               <div className="mt-10 flex flex-wrap items-center gap-6 text-[13px] text-[#64748b]">
-                <Benefit>Contenedores nginx:alpine aislados</Benefit>
-                <Benefit>Protección Anti-Zip Slip</Benefit>
-                <Benefit>Puertos dinámicos dedicados</Benefit>
+                <Benefit>Tu web online al instante</Benefit>
+                <Benefit>Recursos 100% dedicados</Benefit>
+                <Benefit>Comienza gratis sin compromiso</Benefit>
               </div>
             </div>
 
@@ -149,31 +152,31 @@ export default function Landing({ onLogin, onRegister }) {
 
                   <div>
                     <p className="text-[12px] tracking-[0.18em] font-bold text-brand-600">
-                      CODE + DROP
+                      HOSTING MODERNO
                     </p>
                     <p className="mt-1 text-[13px] text-[#64748b]">
-                      Sube. Despliega. Comparte.
+                      Sube. Enciende. Comparte.
                     </p>
                   </div>
                 </div>
 
                 <h2 className="mt-7 text-[28px] sm:text-[31px] leading-[1.12] font-bold tracking-[-0.03em] text-navy-900">
-                  Tu sitio estático,
+                  Tu sitio en internet,
                   <br />
-                  listo en producción
+                  sin enredos técnicos
                 </h2>
 
                 <p className="mt-4 max-w-[420px] text-[14px] leading-6 text-[#64748b]">
-                  Todo lo necesario para publicar y administrar tus instancias web estáticas
-                  desde un panel de control desacoplado y en tiempo real.
+                  La forma más rápida de tener presencia en la web. Diseñado para que cualquier
+                  persona o negocio publique su proyecto sin depender de expertos en servidores.
                 </p>
 
                 <div className="mt-7 space-y-3">
-                  <FeatureRow icon={Upload} text="Despliegue con archivo .ZIP" />
-                  <FeatureRow icon={Rocket} text="Plantillas rápidas en 1 clic" />
-                  <FeatureRow icon={Container} text="Contenedores Nginx con montaje :ro" />
-                  <FeatureRow icon={Activity} text="Telemetría en vivo de CPU y RAM" />
-                  <FeatureRow icon={FileText} text="Visor de logs en tiempo real" />
+                  <FeatureRow icon={Upload} text="Arrastra y suelta tu archivo .ZIP" />
+                  <FeatureRow icon={Rocket} text="Plantillas listas para usar en 1 clic" />
+                  <FeatureRow icon={ShieldCheck} text="Tu web segura y siempre protegida" />
+                  <FeatureRow icon={Activity} text="Monitoreo claro de visitas y consumo" />
+                  <FeatureRow icon={Globe} text="Dirección web lista para compartir" />
                 </div>
 
                 <div className="mt-7 pt-6 border-t border-[#eef2f1]">
@@ -182,7 +185,7 @@ export default function Landing({ onLogin, onRegister }) {
                     onClick={onRegister}
                     className="w-full h-[50px] rounded-[10px] bg-brand-50 hover:bg-brand-100 text-brand-700 text-[14px] font-semibold flex items-center justify-center gap-3 transition-colors"
                   >
-                    Crear cuenta en Codrop
+                    Crear mi cuenta gratuita
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -193,21 +196,21 @@ export default function Landing({ onLogin, onRegister }) {
       </section>
 
       {/* =====================================================
-          SECCIÓN: CÓMO FUNCIONA (THE CORE PIPELINE)
+          SECCIÓN: CÓMO FUNCIONA (PASO A PASO FÁCIL)
       ====================================================== */}
       <section id="como-funciona" className="py-24 bg-white border-t border-[#edf2f0]">
         <div className="max-w-[1380px] mx-auto px-6 lg:px-12">
           <div className="max-w-2xl mx-auto text-center">
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
               <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-              Pipeline Operativo
+              Sencillo y Veloz
             </span>
             <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-navy-900">
-              Tres pasos para pasar de tu código a una URL en vivo
+              Tres pasos simples para tener tu página web funcionando
             </h2>
             <p className="mt-4 text-[16px] leading-relaxed text-[#64748b]">
-              Diseñado bajo el principio de menor esfuerzo: empaquetas tu aplicación web o seleccionas
-              una plantilla prediseñada y el backend automatiza toda la infraestructura.
+              Eliminamos toda la fricción. Solo necesitas tu diseño o elegir una plantilla
+              y nosotros nos ocupamos de todo lo demás.
             </p>
           </div>
 
@@ -216,67 +219,67 @@ export default function Landing({ onLogin, onRegister }) {
               number="01"
               icon={Upload}
               title="1. Carga o Elige Plantilla"
-              description="Empaqueta tus archivos estáticos (HTML5, CSS3, JS, React/Vite builds) en un archivo .zip de hasta 25 MB con index.html en la raíz, o elige una plantilla prediseñada en 1 clic."
+              description="Sube tu página en un archivo comprimido (.zip) o elige una plantilla profesional de nuestro catálogo: landing comercial, portafolio de trabajo o sitio de documentación."
             />
             <StepCard
               number="02"
               icon={ShieldCheck}
-              title="2. Aprovisionamiento Aislado"
-              description="El backend aplica verificación Anti-Zip Slip, asigna un puerto TCP libre del pool 30001-30100 e invoca a Docker Engine para instanciar nginx:alpine con límites cgroups y volumen de solo lectura (:ro)."
+              title="2. Codrop lo Prepara al Instante"
+              description="Asignamos un espacio exclusivo con su propia memoria y procesador garantizados para tu sitio. Nada de servidores compartidos donde la página de otro ralentice la tuya."
             />
             <StepCard
               number="03"
               icon={Globe}
-              title="3. Consumo y Observabilidad"
-              description="Obtienes de inmediato una URL directa accesible. Desde tu panel controlas el ciclo de vida (Start, Stop, Restart, Destroy), monitoreas telemetría de CPU/RAM y consultas logs."
+              title="3. Comparte tu Enlace con el Mundo"
+              description="Recibes al instante una dirección web directa para mostrar tu trabajo a clientes, reclutadores y amigos. Enciende, apaga o actualiza tu web con un solo clic."
             />
           </div>
         </div>
       </section>
 
       {/* =====================================================
-          SECCIÓN: CARACTERÍSTICAS TÉCNICAS (SYSTEM DESIGN)
+          SECCIÓN: BENEFICIOS CLAVE (VENTAJAS COMERCIALES)
       ====================================================== */}
       <section id="caracteristicas" className="py-24 bg-[#f8fbfc] border-t border-[#edf2f0]">
         <div className="max-w-[1380px] mx-auto px-6 lg:px-12">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
-              <Cpu className="w-3.5 h-3.5 text-brand-500" />
-              Arquitectura del PaaS
+              <Award className="w-3.5 h-3.5 text-brand-500" />
+              ¿Por qué elegir Codrop?
             </span>
             <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-navy-900">
-              Ingeniería confiable, confinamiento estricto y alto rendimiento
+              La tranquilidad de que tu sitio siempre cargará rápido y seguro
             </h2>
             <p className="mt-4 text-[16px] leading-relaxed text-[#64748b]">
-              Cumplimiento riguroso de principios de seguridad en profundidad, aislamiento multi-tenant
-              sin virtual hosts compartidos y apego a la norma de calidad ISO/IEC 25010.
+              Construido para darte la máxima estabilidad. Diseñado para que tú te enfoques en hacer
+              crecer tu proyecto, mientras nuestra plataforma mantiene tu web activa 24/7.
             </p>
           </div>
 
           <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <ArchitectureCard
               icon={Container}
-              title="Aislamiento Multi-Tenant"
-              subtitle="Docker Engine API"
-              text="Cada usuario dispone de contenedores independientes nginx:1.27-alpine. Prohibidos los Virtual Hosts compartidos para evitar el problema de Noisy Neighbor."
+              title="Recursos Exclusivos"
+              subtitle="Cero Interrupciones"
+              text="Cada proyecto cuenta con su propia memoria RAM y CPU reservadas. Si otros sitios reciben muchas visitas, el tuyo no se verá afectado jamás."
             />
             <ArchitectureCard
               icon={Lock}
-              title="Seguridad por Diseño"
-              subtitle="Anti-Zip Slip + :ro"
-              text="Sanitización canónica de rutas antes de descomprimir. Los artefactos se montan en modo solo lectura impidiendo escrituras en tiempo de ejecución."
+              title="Protección Automática"
+              subtitle="Seguridad Garantizada"
+              text="Tus archivos quedan blindados contra modificaciones externas no autorizadas. Publica con la confianza de que tu sitio estará siempre a salvo."
+            />
+            <ArchitectureCard
+              icon={Rocket}
+              title="Plantillas en 1 Clic"
+              subtitle="Listas para Usar"
+              text="¿No tienes código preparado? Elige una plantilla moderna y comienza hoy mismo tu presencia digital sin escribir una sola línea de código."
             />
             <ArchitectureCard
               icon={Activity}
-              title="Límites Duros (cgroups)"
-              subtitle="Control del Kernel"
-              text="Cada contenedor tiene límites asignados de memoria RAM (hasta 512 MB) y cuotas de vCPU para garantizar disponibilidad y consumo predecible."
-            />
-            <ArchitectureCard
-              icon={Terminal}
-              title="Observabilidad Activa"
-              subtitle="Logs & Telemetría"
-              text="Muestreo en tiempo real de porcentaje de CPU y memoria RAM desde los sockets de Docker, junto con acceso instantáneo a las últimas 100 líneas de logs."
+              title="Panel Claro y Simple"
+              subtitle="Control Total"
+              text="Visualiza fácilmente el estado de tu web, su velocidad y rendimiento en tiempo real a través de gráficos limpios y comprensibles."
             />
           </div>
         </div>
@@ -290,14 +293,14 @@ export default function Landing({ onLogin, onRegister }) {
           <div className="max-w-2xl mx-auto text-center">
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
               <Zap className="w-3.5 h-3.5 text-brand-500" />
-              Catálogo Comercial
+              Planes Transparentes
             </span>
             <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-navy-900">
-              Planes transparentes diseñados para cada etapa
+              Precios claros, sin sorpresas ni contratos forzosos
             </h2>
             <p className="mt-4 text-[16px] leading-relaxed text-[#64748b]">
-              Comienza con el plan gratuito al registrarte y escala recursos según crezcan tus proyectos.
-              Pasarela de pago simulada con validación matemática de Luhn.
+              Elige el plan que mejor se adapte a tu proyecto actual. Puedes empezar completamente
+              gratis y mejorar tu suscripción en cualquier momento cuando lo necesites.
             </p>
           </div>
 
@@ -308,18 +311,18 @@ export default function Landing({ onLogin, onRegister }) {
               icon={Server}
               price="0"
               period="/ mes"
-              badge="Acceso Inicial"
-              description="La base perfecta para experimentar, aprender y desplegar tu primer sitio web sin ningún costo."
+              badge="Acceso Gratuito"
+              description="Ideal para estudiantes, proyectos personales o para publicar tu primer portafolio sin pagar nada."
               buttonLabel="Comenzar con Free"
               onAction={onRegister}
               features={[
-                '1 sitio web activo simultáneo',
-                '128 MB RAM por contenedor',
-                '0.25 vCPU dedicada',
-                'Despliegues mediante archivo .zip',
-                'Puerto dinámico TCP dedicado (30001-30100)',
-                'Telemetría básica de CPU y memoria',
-                'Montaje seguro en solo lectura (:ro)',
+                '1 página web activa en línea',
+                '128 MB de memoria rápida exclusiva',
+                '0.25 vCPU dedicada para tu sitio',
+                'Publicación fácil con archivo .zip',
+                'Enlace público propio y directo',
+                'Gráficos simples de actividad y consumo',
+                'Protección de archivos garantizada',
               ]}
             />
 
@@ -330,19 +333,19 @@ export default function Landing({ onLogin, onRegister }) {
               icon={Zap}
               price="9.99"
               period="/ mes"
-              badge="Recomendado"
-              description="El equilibrio ideal para desarrolladores y profesionales que mantienen varios proyectos web activos."
+              badge="El Más Elegido"
+              description="El favorito de freelancers y profesionales que gestionan varios proyectos con mayor velocidad."
               buttonLabel="Elegir Developer"
               onAction={onRegister}
               features={[
                 'Hasta 3 sitios web simultáneos',
-                '256 MB RAM por contenedor',
-                '0.50 vCPU dedicada',
-                'Plantillas en 1 clic (Landing, Portfolio, Docs)',
-                'Visor de logs Nginx en tiempo real (100 líneas)',
-                'Contratación simulada con Algoritmo de Luhn',
-                'Comprobante digital inmediato y facturas',
-                'Soporte para actualización y downgrade de plan',
+                '256 MB RAM por sitio (Doble de potencia)',
+                '0.50 vCPU dedicada para mayor velocidad',
+                'Plantillas en 1 clic (Negocios, Portfolio, Docs)',
+                'Monitoreo detallado y registro de visitas',
+                'Pasarela de pago fácil y simulada',
+                'Comprobante digital inmediato para tus registros',
+                'Mejora o cambia de plan cuando quieras',
               ]}
             />
 
@@ -352,53 +355,53 @@ export default function Landing({ onLogin, onRegister }) {
               icon={Layers3}
               price="24.99"
               period="/ mes"
-              badge="Mayor Capacidad"
-              description="Máxima concurrencia y límites extendidos para proyectos exigentes, agencias y equipos de trabajo."
+              badge="Máxima Capacidad"
+              description="Diseñado para negocios, agencias y sitios con alta afluencia que demandan la máxima velocidad."
               buttonLabel="Elegir Pro"
               onAction={onRegister}
               features={[
                 'Hasta 10 sitios web simultáneos',
-                '512 MB RAM por contenedor',
-                '1.00 vCPU dedicada',
-                'Plantillas rápidas en 1 clic ilimitadas',
-                'Telemetría completa de contenedor y host',
-                'Visor avanzado de logs de acceso y errores',
-                'Prioridad máxima en contención cgroups',
-                'Historial financiero e inmutabilidad de recibos',
+                '512 MB RAM por sitio (Máxima potencia)',
+                '1.00 vCPU completa dedicada por sitio',
+                'Acceso ilimitado a todas las plantillas en 1 clic',
+                'Prioridad máxima de recursos y velocidad de carga',
+                'Monitoreo avanzado de visitas y rendimiento',
+                'Historial completo de pagos y recibos digitales',
+                'Control administrativo preferencial',
               ]}
             />
           </div>
 
-          {/* Nota sobre pasarela académica */}
-          <div className="mt-12 max-w-3xl mx-auto rounded-2xl border border-brand-100 bg-brand-50/60 p-5 flex items-start gap-4">
+          {/* Garantía de tranquilidad */}
+          <div className="mt-12 max-w-3xl mx-auto rounded-2xl border border-brand-100 bg-brand-50/70 p-5 flex items-start gap-4">
             <ShieldCheck className="w-5 h-5 text-brand-600 flex-shrink-0 mt-0.5" />
             <div className="text-[13px] leading-relaxed text-[#475569]">
               <strong className="text-navy-900 font-semibold">
-                Pasarela de pagos académica simulada (RF-09):
+                Pruébalo sin riesgo financiero:
               </strong>{' '}
-              Codrop no procesa dinero real ni requiere tarjetas de crédito comerciales. La validación
-              sintáctica se realiza mediante el Algoritmo de Luhn (Módulo 10) en cliente y backend, emitiendo
-              comprobantes digitales y códigos de autorización simulados.
+              En Codrop utilizamos una pasarela de pago simulada con validación matemática en tiempo real
+              (Algoritmo de Luhn). Te permite experimentar todo el flujo de contratación y recibir
+              tus comprobantes digitales de forma inmediata, sin transferencias bancarias reales.
             </div>
           </div>
         </div>
       </section>
 
       {/* =====================================================
-          SECCIÓN: PREGUNTAS FRECUENTES (FAQ)
+          SECCIÓN: PREGUNTAS FRECUENTES (FAQ PARA EL USUARIO)
       ====================================================== */}
       <section id="faq" className="py-24 bg-[#f8fbfc] border-t border-[#edf2f0]">
         <div className="max-w-[980px] mx-auto px-6 lg:px-12">
           <div className="text-center max-w-xl mx-auto">
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
               <Clock className="w-3.5 h-3.5 text-brand-500" />
-              Resolución de Dudas
+              Resolvemos tus Dudas
             </span>
             <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-navy-900">
               Preguntas Frecuentes
             </h2>
             <p className="mt-4 text-[16px] text-[#64748b]">
-              Todo lo que necesitas saber sobre el funcionamiento de Codrop y el despliegue de sitios.
+              Todo lo que necesitas saber antes de comenzar a publicar tus páginas con Codrop.
             </p>
           </div>
 
@@ -407,43 +410,43 @@ export default function Landing({ onLogin, onRegister }) {
               index={0}
               isOpen={openFaqIndex === 0}
               onToggle={() => toggleFaq(0)}
-              question="¿Qué tipos de sitios web y tecnologías puedo alojar en Codrop?"
-              answer="Codrop está optimizado para sitios web estáticos y Single Page Applications (SPAs). Puedes publicar código HTML5, CSS3, JavaScript nativo, y compilaciones de producción generadas por frameworks modernos como React, Vite, Vue, Svelte, Astro o Next.js exportado estáticamente. El único requisito es que el paquete .zip contenga un archivo index.html en su raíz."
+              question="¿Necesito ser un experto en programación o servidores para usar Codrop?"
+              answer="No, en lo absoluto. Codrop fue pensado para personas que buscan rapidez y simplicidad. Si tienes una página web en archivos HTML/CSS/JS o generada con herramientas como React, Vite o WordPress estático, solo la guardas en un archivo .zip y la subes. O mejor aún: puedes hacer clic en una de nuestras plantillas y tendrás una página lista en menos de un minuto."
             />
             <FaqItem
               index={1}
               isOpen={openFaqIndex === 1}
               onToggle={() => toggleFaq(1)}
-              question="¿Cómo se asegura el aislamiento y la seguridad entre usuarios?"
-              answer="Cada instancia opera dentro de un contenedor Docker dedicado basado en la imagen oficial nginx:1.27-alpine. Los artefactos del usuario se montan con el modificador de solo lectura (:ro), impidiendo escrituras no autorizadas en el contenedor. Además, el backend ejecuta una validación estricta Anti-Zip Slip antes de descomprimir cualquier archivo para bloquear intentos de directory traversal hacia el host."
+              question="¿Qué diferencia a Codrop de un hosting tradicional compartido?"
+              answer="En un hosting tradicional, cientos de páginas comparten la misma memoria y procesador; si una página tiene muchas visitas, las demás se caen o se vuelven lentas. En Codrop, cada proyecto que publicas recibe su propio espacio y recursos exclusivos garantizados. Tu web siempre cargará a máxima velocidad, sin importar lo que hagan otros usuarios."
             />
             <FaqItem
               index={2}
               isOpen={openFaqIndex === 2}
               onToggle={() => toggleFaq(2)}
               question="¿Cómo funciona la pasarela de pagos simulada con Algoritmo de Luhn?"
-              answer="Para suscribirte a los planes Developer o Pro, el sistema solicita un número de tarjeta y verifica matemáticamente su validez aplicando el Algoritmo de Luhn (Módulo 10). La validación ocurre tanto en tiempo real en la interfaz como en el backend. Si el checksum es correcto y la tarjeta no ha expirado, se genera un comprobante digital con código de autorización simulado (AUTH-XXXXXX) y se actualiza la cuota sin transferencias de dinero real."
+              answer="Para suscribirte a los planes Developer o Pro, nuestro sistema verifica al instante que la numeración de tu tarjeta cumpla el estándar matemático de seguridad internacional (Algoritmo de Luhn). Al aprobarse la operación, tu cuenta se actualiza de inmediato y recibes un comprobante digital con código de autorización, permitiéndote probar toda la experiencia premium sin cargos de dinero real."
             />
             <FaqItem
               index={3}
               isOpen={openFaqIndex === 3}
               onToggle={() => toggleFaq(3)}
-              question="¿Puedo realizar Upgrade o Downgrade de mi plan en cualquier momento?"
-              answer="Sí. Desde el panel de suscripciones puedes mejorar tu plan (Upgrade) para obtener más sitios y memoria de forma inmediata. Si solicitas un Downgrade (por ejemplo, de Pro a Developer) y tienes más instancias activas de las que admite la nueva cuota, el sistema bloqueará preventivamente la operación y te pedirá detener o eliminar las instancias excedentes para garantizar la integridad de tus recursos."
+              question="¿Puedo cambiar de plan o cancelar cuando lo desee?"
+              answer="Sí, tienes total libertad. Si tu proyecto crece y necesitas más páginas o memoria, puedes mejorar tu suscripción en un clic. Si deseas bajar de plan o volver al gratuito, el sistema te avisará de forma preventiva para que elijas qué sitios mantener activos antes de aplicar el cambio."
             />
             <FaqItem
               index={4}
               isOpen={openFaqIndex === 4}
               onToggle={() => toggleFaq(4)}
-              question="¿Qué son las plantillas en 1 clic y cómo se diferencian de subir un .zip?"
-              answer="Las plantillas en 1 clic son proyectos estáticos prediseñados y preconfigurados (como Landing Pages de negocios, Portafolios de desarrollador y Documentación técnica) almacenados internamente en el host. Permiten levantar una instancia funcional en menos de 5 segundos sin necesidad de que compiles, empaquetes o subas un archivo desde tu máquina."
+              question="¿Qué son las plantillas en 1 clic y para qué me sirven?"
+              answer="Son páginas web profesionales ya diseñadas y preparadas para publicarse al instante. Si aún no tienes un sitio programado, puedes elegir entre una Landing Page comercial para presentar tu negocio, un Portafolio personal para tus servicios o una página de Documentación. Haces un clic y tu web ya está disponible con su enlace propio."
             />
           </div>
         </div>
       </section>
 
       {/* =====================================================
-          BANNER FINAL / CTA
+          BANNER FINAL / LLAMADA A LA ACCIÓN
       ====================================================== */}
       <section className="py-20 bg-navy-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none opacity-[0.06]"
@@ -459,16 +462,16 @@ export default function Landing({ onLogin, onRegister }) {
         <div className="relative z-10 max-w-[1380px] mx-auto px-6 lg:px-12 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-100 text-[11px] font-bold tracking-[0.16em] uppercase">
             <Rocket className="w-3.5 h-3.5 text-brand-500" />
-            Empieza Ahora
+            Tu web en internet hoy
           </div>
 
           <h2 className="mt-5 text-3xl sm:text-5xl font-bold tracking-[-0.03em] max-w-3xl mx-auto">
-            Publica tus sitios web hoy mismo en una plataforma dedicada
+            Publica tus sitios web hoy mismo sin complicaciones
           </h2>
 
           <p className="mt-5 text-[17px] text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Sin configuraciones complejas de servidores, sin terminales confusas.
-            Solo tu código en un .zip y un clic para ponerlo en producción.
+            Sin servidores complejos, sin esperas y con recursos dedicados.
+            Comienza gratis y dale a tus proyectos el hogar en línea que se merecen.
           </p>
 
           <div className="mt-9 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -512,15 +515,15 @@ export default function Landing({ onLogin, onRegister }) {
                 </span>
               </div>
               <p className="mt-3 text-[13px] leading-6 text-[#64748b] max-w-md">
-                Plataforma como Servicio (PaaS) de Web Hosting para el aprovisionamiento automatizado,
-                aislamiento de contenedores Nginx y control integral del ciclo de vida de aplicaciones web estáticas.
+                La plataforma de web hosting moderna que automatiza la publicación y el aislamiento de tus
+                páginas web. De tu código a internet en segundos, con total seguridad y control.
               </p>
             </div>
 
             {/* Columna Navegación */}
             <div>
               <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-navy-900 mb-3">
-                Plataforma
+                Explorar
               </p>
               <ul className="space-y-2 text-[13px] text-[#64748b]">
                 <li>
@@ -530,12 +533,12 @@ export default function Landing({ onLogin, onRegister }) {
                 </li>
                 <li>
                   <a href="#caracteristicas" className="hover:text-brand-600 transition-colors">
-                    Arquitectura y seguridad
+                    Ventajas y seguridad
                   </a>
                 </li>
                 <li>
                   <a href="#planes" className="hover:text-brand-600 transition-colors">
-                    Planes y cuotas
+                    Planes y precios
                   </a>
                 </li>
                 <li>
@@ -546,24 +549,24 @@ export default function Landing({ onLogin, onRegister }) {
               </ul>
             </div>
 
-            {/* Columna Sistema */}
+            {/* Columna Confianza */}
             <div>
               <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-navy-900 mb-3">
-                Especificación Técnica
+                Garantías
               </p>
               <ul className="space-y-2 text-[13px] text-[#64748b]">
-                <li>FastAPI + Python 3.11+</li>
-                <li>PostgreSQL 16 Relacional</li>
-                <li>Docker Engine + cgroups</li>
-                <li>nginx:1.27-alpine (:ro)</li>
-                <li>Pool dinámico TCP 30001-30100</li>
+                <li>Recursos dedicados por sitio</li>
+                <li>Protección contra modificaciones</li>
+                <li>Publicación en menos de 5 segundos</li>
+                <li>Sin cobros forzosos ni letras pequeñas</li>
+                <li>Comprobantes digitales al instante</li>
               </ul>
             </div>
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-[#64748b]">
             <span>
-              <strong className="font-semibold text-navy-900">Codrop</strong> • CloudPaaS Web Hosting Platform
+              <strong className="font-semibold text-navy-900">Codrop</strong> • Tu plataforma de hosting web
             </span>
             <span>
               De tu código a la web, sin complicaciones.
@@ -676,7 +679,7 @@ function PricingCard({
 
         <div className="mt-6 pt-6 border-t border-[#edf2f0] space-y-3">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#94a3b8]">
-            Recursos asignados:
+            Lo que incluye:
           </p>
           {features.map((feature, idx) => (
             <div key={idx} className="flex items-start gap-2.5 text-[13px] text-[#475569]">

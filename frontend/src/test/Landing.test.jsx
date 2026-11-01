@@ -15,16 +15,17 @@ describe('Landing Page UI Component', () => {
     ).toBeInTheDocument();
   });
 
-  it('debe exhibir la sección de pipeline operativo (Cómo funciona)', () => {
+  it('debe exhibir la sección de cómo funciona con pasos claros', () => {
     render(<Landing onLogin={vi.fn()} onRegister={vi.fn()} />);
 
-    expect(screen.getByText('Pipeline Operativo')).toBeInTheDocument();
+    expect(screen.getByText('Sencillo y Veloz')).toBeInTheDocument();
+    expect(screen.getByText(/Tres pasos simples para tener tu página web funcionando/i)).toBeInTheDocument();
     expect(screen.getByText(/1\. Carga o Elige Plantilla/i)).toBeInTheDocument();
-    expect(screen.getByText(/2\. Aprovisionamiento Aislado/i)).toBeInTheDocument();
-    expect(screen.getByText(/3\. Consumo y Observabilidad/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\. Codrop lo Prepara al Instante/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\. Comparte tu Enlace con el Mundo/i)).toBeInTheDocument();
   });
 
-  it('debe exhibir las 3 opciones de planes con sus límites técnicos y precios', () => {
+  it('debe exhibir las 3 opciones de planes con sus límites y precios', () => {
     render(<Landing onLogin={vi.fn()} onRegister={vi.fn()} />);
 
     expect(screen.getByText('Plan Free')).toBeInTheDocument();
@@ -35,9 +36,9 @@ describe('Landing Page UI Component', () => {
     expect(screen.getByText('$9.99')).toBeInTheDocument();
     expect(screen.getByText('$24.99')).toBeInTheDocument();
 
-    expect(screen.getByText(/128 MB RAM por contenedor/i)).toBeInTheDocument();
-    expect(screen.getByText(/256 MB RAM por contenedor/i)).toBeInTheDocument();
-    expect(screen.getByText(/512 MB RAM por contenedor/i)).toBeInTheDocument();
+    expect(screen.getByText(/128 MB de memoria rápida exclusiva/i)).toBeInTheDocument();
+    expect(screen.getByText(/256 MB RAM por sitio/i)).toBeInTheDocument();
+    expect(screen.getByText(/512 MB RAM por sitio/i)).toBeInTheDocument();
   });
 
   it('debe invocar onRegister al presionar el botón de acción de un plan', () => {
@@ -66,3 +67,4 @@ describe('Landing Page UI Component', () => {
     ).toBeInTheDocument();
   });
 });
+
