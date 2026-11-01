@@ -636,11 +636,10 @@ function PricingCard({
 }) {
   return (
     <div
-      className={`relative rounded-[24px] p-8 flex flex-col justify-between transition-all duration-300 ${
-        popular
+      className={`relative rounded-[24px] p-8 flex flex-col justify-between transition-all duration-300 ${popular
           ? 'bg-white border-2 border-brand-500 shadow-[0_20px_50px_rgba(40,181,134,0.14)] lg:-translate-y-2'
           : 'bg-[#fbfdfc] border border-[#dfe7e4] shadow-[0_10px_30px_rgba(23,40,56,0.04)] hover:shadow-md'
-      }`}
+        }`}
     >
       {popular && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-brand-500 text-white text-[10px] font-black uppercase tracking-[0.16em] shadow-sm">
@@ -696,11 +695,10 @@ function PricingCard({
         <button
           type="button"
           onClick={onAction}
-          className={`w-full h-[48px] rounded-[10px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-colors ${
-            popular
+          className={`w-full h-[48px] rounded-[10px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-colors ${popular
               ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-[0_8px_20px_rgba(40,181,134,0.25)]'
               : 'bg-navy-900 hover:bg-navy-800 text-white'
-          }`}
+            }`}
         >
           {buttonLabel}
           <ArrowRight className="w-4 h-4" />
@@ -722,9 +720,8 @@ function FaqItem({ question, answer, isOpen, onToggle }) {
           {question}
         </span>
         <ChevronDown
-          className={`w-5 h-5 text-brand-600 flex-shrink-0 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
+          className={`w-5 h-5 text-brand-600 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+            }`}
         />
       </button>
 

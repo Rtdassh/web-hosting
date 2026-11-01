@@ -36,6 +36,7 @@ import InstanceMetricsCard from '../components/instances/InstanceMetricsCard';
 import SystemStatusModal from '../components/system/SystemStatusModal';
 
 import codropIsotipo from '../assets/codrop-isotipo.png';
+import ServerMascot, { mascotDestroying } from '../components/mascot/ServerMascot';
 
 
 export default function DashboardPage({
@@ -768,9 +769,12 @@ export default function DashboardPage({
                             {/* Proyecto */}
                             <div className="flex items-center gap-3.5 xl:w-[23%] min-w-0">
 
-                              <div className="w-11 h-11 rounded-[13px] bg-gradient-to-br from-brand-50 to-white border border-brand-100 flex items-center justify-center flex-shrink-0 shadow-sm">
-                                <Globe className="w-5 h-5 text-brand-600" />
-                              </div>
+                              {/* Mascota según ciclo de vida del servidor */}
+                              <ServerMascot
+                                status={inst.status}
+                                action={actionLoading[inst.id]}
+                                size="md"
+                              />
 
 
                               <div className="min-w-0">
@@ -1077,12 +1081,15 @@ export default function DashboardPage({
           <div className="relative bg-white rounded-[22px] border border-red-200 max-w-[470px] w-full p-7 shadow-[0_30px_80px_rgba(23,40,56,0.2)]">
 
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
 
-              <div className="w-11 h-11 rounded-[13px] bg-red-50 border border-red-100 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="w-14 h-14 rounded-[16px] bg-red-50 border border-red-100 p-1 flex items-center justify-center flex-shrink-0">
+                <img
+                  src={mascotDestroying}
+                  alt="Cocodrilo fuera de servicio"
+                  className="w-full h-full object-contain"
+                />
               </div>
-
 
               <div>
 
@@ -1091,7 +1098,7 @@ export default function DashboardPage({
                 </h3>
 
                 <p className="mt-0.5 text-[10px] text-red-500 font-semibold uppercase tracking-[0.08em]">
-                  Acción irreversible
+                  Acción irreversible • Fin de ciclo de vida
                 </p>
 
               </div>

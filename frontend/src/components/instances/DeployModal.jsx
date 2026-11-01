@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 import { instanceService, templateService } from '../../services/api';
+import { mascotCreating } from '../mascot/ServerMascot';
 
 const TEMPLATES = [
   {
@@ -299,6 +300,26 @@ export default function DeployModal({
             onSubmit={handleSubmit}
             className="flex-1 space-y-5 overflow-y-auto bg-[#fbfdfc] px-6 py-5"
           >
+            {loading && (
+              <div className="flex items-center gap-3.5 rounded-2xl border border-brand-100 bg-brand-50/80 p-4 animate-pulse">
+                <div className="w-12 h-12 rounded-xl bg-white border border-brand-100 p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <img
+                    src={mascotCreating}
+                    alt="Aprovisionando servidor (huevo incubando)"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-navy-900">
+                    Incubando tu nuevo servidor...
+                  </p>
+                  <p className="text-[11px] text-[#64748b]">
+                    Aprovisionando contenedor Nginx, configurando puerto dinámico y aislando archivos.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-700">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />

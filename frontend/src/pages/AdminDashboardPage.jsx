@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 
 import { adminService } from '../services/api';
+import ServerMascot from '../components/mascot/ServerMascot';
 
 export default function AdminDashboardPage({ onBack }) {
   const [dashboardData, setDashboardData] = useState(null);
@@ -422,12 +423,20 @@ export default function AdminDashboardPage({ onBack }) {
                           className="transition hover:bg-[#f9fcfa]"
                         >
                           <td className="px-5 py-4">
-                            <div className="font-black text-[#172838]">
-                              {instance.name}
-                            </div>
+                            <div className="flex items-center gap-3">
+                              <ServerMascot
+                                status={instance.status}
+                                size="sm"
+                              />
+                              <div>
+                                <div className="font-black text-[#172838]">
+                                  {instance.name}
+                                </div>
 
-                            <div className="mt-1 font-mono text-[10px] text-[#94A3B8]">
-                              #{instance.id}
+                                <div className="mt-1 font-mono text-[10px] text-[#94A3B8]">
+                                  #{instance.id}
+                                </div>
+                              </div>
                             </div>
                           </td>
 
@@ -618,10 +627,13 @@ export default function AdminDashboardPage({ onBack }) {
                   <X className="h-4 w-4" />
                 </button>
 
-                <div className="flex items-start gap-3 pr-12">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-300">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
+                <div className="flex items-start gap-3.5 pr-12">
+                  <ServerMascot
+                    status={
+                      actionType === 'force_destroy' ? 'destroying' : 'stopped'
+                    }
+                    size="sm"
+                  />
 
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-300">
