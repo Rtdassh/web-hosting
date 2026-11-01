@@ -1,0 +1,117 @@
+import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
+import { authService } from '../services/api';
+
+vi.mock('../services/api', () => ({
+  authService: {
+    forgotPassword: vi.fn(),
+    resetPassword: vi.fn(),
+  },
+}));
+
+describe('Auth Password Recovery Flow (RF-05)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('ForgotPassword Component', () => {
+    it('debe validar que el correo no esté vacío', async () => {
+      render(<ForgotPassword onBack={vi.fn()} onGoToReset={vi.fn()} />);
+
+      const form = screen.getByRole('button', { name: /Generar enlace de recuperación/i }).closest('form');
+      fireEvent.submit(form);
+
+      expect(screen.getByText('Ingresa tu correo electrónico.')).toBeInTheDocument();
+      expect(authService.forgotPassword).not.toHaveBeenCalled();
+    });
+
+    it('debe solicitar el token temporal de 15 minutos y exhibirlo en entorno local', async () => {
+      authService.forgotPassword.mockResolvedValueOnce({
+        message: 'Instrucciones generadas',
+        reset_token_simulated: 'simulated-token-xyz-123',
+      });
+
+      render(<ForgotPassword onBack={vi.fn()} onGoToReset={vi.fn()} />);
+
+      const emailInput = screen.getByPlaceholderText('tu@correo.com');
+      fireEvent.change(emailInput, { target: { value: 'usuario@empresa.com' } });
+
+      const submitBtn = screen.getByRole('button', { name: /Generar enlace de recuperación/i });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(authService.forgotPassword).toHaveBeenCalledWith('usuario@empresa.com');
+        expect(screen.getByText('simulated-token-xyz-123')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('ResetPassword Component', () => {
+    it('debe exigir token y longitud mínima de contraseña', async () => {
+      render(
+        <ResetPassword
+          initialToken=""
+          onBack={vi.fn()}
+          onLoginSuccess={vi.fn()}
+        />
+      );
+
+      const form = screen.getByRole('button', { name: /Restablecer contraseña/i }).closest('form');
+      fireEvent.submit(form);
+
+      expect(screen.getByText('Ingresa el token de recuperación.')).toBeInTheDocument();
+    });
+
+    it('debe verificar que las contraseñas coincidan', async () => {
+      render(
+        <ResetPassword
+          initialToken="token-valido-123"
+          onBack={vi.fn()}
+          onLoginSuccess={vi.fn()}
+        />
+      );
+
+      const passInputs = screen.getAllByPlaceholderText('••••••••');
+      fireEvent.change(passInputs[0], { target: { value: 'claveSegura123' } });
+      fireEvent.change(passInputs[1], { target: { value: 'claveDiferente456' } });
+
+      const submitBtn = screen.getByRole('button', { name: /Restablecer contraseña/i });
+      fireEvent.click(submitBtn);
+
+      expect(screen.getByText('Las contraseñas no coinciden.')).toBeInTheDocument();
+      expect(authService.resetPassword).not.toHaveBeenCalled();
+    });
+
+    it('debe invocar authService.resetPassword cuando todos los requisitos son válidos', async () => {
+      authService.resetPassword.mockResolvedValueOnce({
+        message: 'Contraseña restablecida exitosamente.',
+      });
+
+      render(
+        <ResetPassword
+          initialToken="token-valido-123"
+          onBack={vi.fn()}
+          onLoginSuccess={vi.fn()}
+        />
+      );
+
+      const passInputs = screen.getAllByPlaceholderText('••••••••');
+      fireEvent.change(passInputs[0], { target: { value: 'nuevaClave123' } });
+      fireEvent.change(passInputs[1], { target: { value: 'nuevaClave123' } });
+
+      const submitBtn = screen.getByRole('button', { name: /Restablecer contraseña/i });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(authService.resetPassword).toHaveBeenCalledWith(
+          'token-valido-123',
+          'nuevaClave123'
+        );
+        expect(screen.getByText(/Contraseña actualizada/i)).toBeInTheDocument();
+      });
+    });
+  });
+});
