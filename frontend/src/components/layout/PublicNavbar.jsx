@@ -43,22 +43,51 @@ export default function PublicNavbar({
             LANDING
         ====================================================== */}
         {variant === 'landing' && (
-          <div className="flex items-center gap-8">
-            <button
-              type="button"
-              onClick={onLogin}
-              className="hidden sm:block text-[14px] font-semibold text-navy-900 hover:text-brand-600 transition-colors"
-            >
-              Iniciar sesión
-            </button>
+          <div className="flex items-center gap-6 lg:gap-8">
+            <nav className="hidden md:flex items-center gap-6 text-[13px] font-semibold text-[#64748b]">
+              <a
+                href="#como-funciona"
+                className="hover:text-brand-600 transition-colors"
+              >
+                Cómo funciona
+              </a>
+              <a
+                href="#caracteristicas"
+                className="hover:text-brand-600 transition-colors"
+              >
+                Características
+              </a>
+              <a
+                href="#planes"
+                className="hover:text-brand-600 transition-colors"
+              >
+                Planes
+              </a>
+              <a
+                href="#faq"
+                className="hover:text-brand-600 transition-colors"
+              >
+                FAQ
+              </a>
+            </nav>
 
-            <button
-              type="button"
-              onClick={onRegister}
-              className="h-[42px] px-6 rounded-[8px] bg-brand-500 hover:bg-brand-600 text-white text-[14px] font-semibold shadow-sm transition-colors"
-            >
-              Crear cuenta
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={onLogin}
+                className="text-[14px] font-semibold text-navy-900 hover:text-brand-600 transition-colors"
+              >
+                Iniciar sesión
+              </button>
+
+              <button
+                type="button"
+                onClick={onRegister}
+                className="h-[42px] px-6 rounded-[8px] bg-brand-500 hover:bg-brand-600 text-white text-[14px] font-semibold shadow-sm transition-colors"
+              >
+                Crear cuenta
+              </button>
+            </div>
           </div>
         )}
 
