@@ -41,7 +41,7 @@ async def safe_checkout_validation_error(request: Request, exc: RequestValidatio
     return await request_validation_exception_handler(request, exc)
 
 
-# Configuración de CORS con orígenes explícitos para compatibilidad con credenciales
+# Configuración de CORS con orígenes explícitos y soporte de red Tailscale (100.x.x.x)
 allowed_origins = list(dict.fromkeys([
     settings.FRONTEND_URL,
     "http://localhost:5173",
@@ -49,11 +49,13 @@ allowed_origins = list(dict.fromkeys([
     f"http://{settings.HOST_PUBLIC_IP}:5173",
     "http://100.121.210.57:5173",
     "http://100.112.65.75:5173",
+    "http://100.120.114.9:5173",
 ]))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|100\.\d+\.\d+\.\d+)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
