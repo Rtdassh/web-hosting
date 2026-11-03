@@ -313,6 +313,7 @@ def verify_complete_chain(connection, evidence, revision):
         for column in table["columns"]:
             valid_defaults = (None,) if column["name"] != "id" else (
                 f"nextval('{name}'::regclass)", f"nextval('public.{name}'::regclass)",
+                f"""nextval('"public".{name}'::regclass)""",
             )
             require(column.get("default") in valid_defaults
                     and not column.get("identity") and not column.get("computed"),

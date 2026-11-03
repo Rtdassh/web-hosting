@@ -191,3 +191,23 @@ def test_additional_preservation_checks(failure):
     elif failure=='legacy_trigger':
         original['triggers']=[dict(table_name='users',tgname='existing',tgenabled='O',definition='existing')]
     with pytest.raises(ReconciliationBlocked): verify(original,after,historical_hashes=hashes)
+
+
+def test_accepts_exact_postgres_17_quoted_public_serial_default():
+    original,after=snapshots()
+    column=next(c for c in after['tables']['admin_audit_logs']['columns'] if c['name']=='id')
+    column['default']='nextval(\'"public".admin_audit_logs_id_seq\'::regclass)'
+    verify(original,after)
+
+
+@pytest.mark.parametrize('change',['wrong_sequence','wrong_schema','identity','computed'])
+def test_quoted_public_default_does_not_relax_generator_checks(change):
+    original,after=snapshots()
+    column=next(c for c in after['tables']['admin_audit_logs']['columns'] if c['name']=='id')
+    column['default']='nextval(\'"public".admin_audit_logs_id_seq\'::regclass)'
+    if change=='wrong_sequence': column['default']=column['default'].replace('admin_audit_logs_id_seq','invoices_id_seq')
+    elif change=='wrong_schema': column['default']=column['default'].replace('"public"','"other"')
+    elif change=='identity': column['identity']={'always':True}
+    else: column['computed']={'sqltext':'42','persisted':True}
+    with pytest.raises(ReconciliationBlocked,match='Unexpected new-table column generator/default: admin_audit_logs.id'):
+        verify(original,after)
