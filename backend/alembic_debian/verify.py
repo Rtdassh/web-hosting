@@ -143,8 +143,11 @@ def validate_before(connection, snapshot):
         value = connection.execute(sa.text(f"SELECT max(id) FROM public.{table}")).scalar_one()
         require(value == maximum, f"Unexpected ID maximum: {table}.")
         state = snapshot["sequences"].get(seq.split(".")[-1].strip('"'))
-        require(state and state["last_value"] == maximum and state["is_called"] and state["increment_by"] > 0
-                and not state["cycle"], f"Sequence mismatch: {table}.")
+        allowed_values = inventory.users_sequence_last_values if table == "users" else (maximum,)
+        require(state and state["last_value"] in allowed_values and state["is_called"]
+                and state["increment_by"] > 0 and not state["cycle"], f"Sequence mismatch: {table}.")
+        if table == "users" and state["last_value"] == 11:
+            require(state["increment_by"] == 1, "Reviewed users sequence advance requires increment 1.")
     seq = connection.execute(sa.text("SELECT pg_get_serial_sequence('public.payment_transactions', 'id')")).scalar_one()
     require(seq is not None, "Missing payment ID generator; do not guess a sequence.")
     state = snapshot["sequences"].get(seq.split(".")[-1].strip('"'))

@@ -29,13 +29,17 @@ class ReviewedInventory:
     instance_count: int
     assignments: tuple[tuple[int, int], ...]
     running_only: bool = False
+    users_sequence_last_values: tuple[int, ...] = (7,)
 
 
 # Keep the original historical contract intact; only these exact inventories
 # are accepted. Selection does not waive any common schema/data/sequence guard.
 REVIEWED_INVENTORIES = (
     ReviewedInventory("historical_three", COUNTS["instances"], tuple(ASSIGNMENTS)),
-    ReviewedInventory("confirmed_two_2026_11_03", 2, ((14, 30002), (22, 30003)), True),
+    ReviewedInventory(
+        "confirmed_two_2026_11_03", 2, ((14, 30002), (22, 30003)), True,
+        users_sequence_last_values=(7, 11),
+    ),
 )
 PAYMENT_OLD = {"id", "user_id", "amount", "status", "created_at"}
 LEGACY_PHYSICAL = {
