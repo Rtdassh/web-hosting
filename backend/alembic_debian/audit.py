@@ -8,6 +8,7 @@ from app.core.migration_config import migration_url
 from .evidence import capture, fingerprint, canonical, session_settings
 from .verify import validate_before, validate_preserved, require, ReconciliationBlocked
 from .reconcile import verify_after
+from .contract import CORE, LEGACY, NEW, expected_metadata
 from alembic_billing_fields import row_fingerprint_without_new_columns
 from alembic_financial_history import (
     FUNCTION_NAME,
@@ -155,8 +156,18 @@ def verify_after_v4(connection, evidence):
             f"Financial-history migration changed preserved table data or schema: {table_name}.",
         )
 
+    _verify_financial_contract(connection, after, evidence["triggers"])
+    require(after["sequences"] == evidence["sequences"], "Sequence changed during V4.")
+    require(after["enums"] == evidence["enums"], "Enum changed during V4.")
+    require(
+        after.get("row_security") == evidence.get("row_security")
+        and after.get("event_triggers") == evidence.get("event_triggers"),
+        "RLS or event-trigger definitions changed during V4.",
+    )
+
+
+def _verify_financial_contract(connection, after, old_triggers):
     expected_trigger_names = set(ROW_TRIGGERS.values()) | set(TRUNCATE_TRIGGERS.values())
-    old_triggers = evidence["triggers"]
     require(
         all(trigger in after["triggers"] for trigger in old_triggers),
         "An existing trigger changed during V4.",
@@ -207,13 +218,6 @@ def verify_after_v4(connection, evidence):
         )).scalar_one() == 0,
         "V4 must not invent snapshots for historical purchases.",
     )
-    require(after["sequences"] == evidence["sequences"], "Sequence changed during V4.")
-    require(after["enums"] == evidence["enums"], "Enum changed during V4.")
-    require(
-        after.get("row_security") == evidence.get("row_security")
-        and after.get("event_triggers") == evidence.get("event_triggers"),
-        "RLS or event-trigger definitions changed during V4.",
-    )
     snapshot = {
         column["name"]: column
         for column in after["tables"]["payment_transactions"]["columns"]
@@ -224,6 +228,116 @@ def verify_after_v4(connection, evidence):
         and snapshot["nullable"],
         "V4 snapshot column does not match the reviewed contract.",
     )
+
+
+DEBIAN_STAGES = (
+    "d0001_adopt_debian", "d0002_admin_audit_set_null",
+    "d0003_subscription_period", "d0004_financial_history",
+)
+
+
+def _strip_nullable_fields(connection, normalized, table_name, fields):
+    table = normalized["tables"][table_name]
+    columns = {column["name"]: column for column in table["columns"]}
+    for name, sql_type in fields.items():
+        column = columns.get(name)
+        require(column is not None and column["type"] == sql_type
+                and column["nullable"] and column.get("default") is None
+                and not column.get("identity") and not column.get("computed"),
+                f"Unexpected cumulative field definition: {table_name}.{name}.")
+    # These columns were added nullable without backfill. Do not hide writes by
+    # merely removing them from a hash comparison.
+    condition = " OR ".join(f"{name} IS NOT NULL" for name in fields)
+    require(connection.execute(sa.text(
+        f"SELECT count(*) FROM public.{table_name} WHERE {condition}"
+    )).scalar_one() == 0, f"New fields contain unexpected data: {table_name}.")
+    table["columns"] = [column for column in table["columns"] if column["name"] not in fields]
+    table["rows"], table["digest"] = row_fingerprint_without_new_columns(connection, table_name)
+
+
+def verify_complete_chain(connection, evidence, revision):
+    """Compare a pre-d0001 manifest to V1-V4, reversing only verified additions.
+
+    Normalization is in memory only. Original evidence and DB remain untouched;
+    the d0001 frozen structural checker still validates the normalized result.
+    """
+    require(revision in DEBIAN_STAGES, "Unexpected Debian revision.")
+    require(set(evidence["tables"]) == CORE | LEGACY, "Expected pre-adoption evidence.")
+    stage = DEBIAN_STAGES.index(revision) + 1
+    after = capture(connection)
+    require(set(after["tables"]) == set(evidence["tables"]) | NEW,
+            "Unexpected cumulative table inventory.")
+    require(evidence["tables"]["payment_transactions"]["rows"] == 0,
+            "Original payment table must be empty for adoption.")
+    normalized = copy.deepcopy(after)
+
+    if stage >= 4:
+        _verify_financial_contract(connection, after, evidence["triggers"])
+        for table_name in USER_FK_NAMES:
+            _financial_user_fk(after["tables"][table_name], table_name)
+            table = normalized["tables"][table_name]
+            index = next(i for i, fk in enumerate(table["fk"]) if fk["constrained_columns"] == ["user_id"])
+            if table_name == "payment_transactions":
+                original = [fk for fk in evidence["tables"][table_name]["fk"] if fk["constrained_columns"] == ["user_id"]]
+                require(len(original) == 1, "Original evidence lacks the payment user FK.")
+                table["fk"][index] = copy.deepcopy(original[0])
+            else:
+                # invoices did not exist in the original manifest. Its d0001
+                # FK has NO ACTION, validated against the frozen definition below.
+                table["fk"][index]["options"] = {}
+        _strip_nullable_fields(connection, normalized, "payment_transactions", {"plan_name_snapshot": "VARCHAR(50)"})
+        names = set(ROW_TRIGGERS.values()) | set(TRUNCATE_TRIGGERS.values())
+        normalized["triggers"] = [t for t in normalized["triggers"] if t["tgname"] not in names]
+
+    if stage >= 3:
+        _strip_nullable_fields(connection, normalized, "subscriptions", {
+            "current_period_start": "TIMESTAMP WITH TIME ZONE",
+            "current_period_end": "TIMESTAMP WITH TIME ZONE",
+        })
+        _strip_nullable_fields(connection, normalized, "invoices", {"pdf_metadata": "JSONB"})
+    if stage >= 2:
+        _verify_audit_fk(after["tables"]["admin_audit_logs"])
+        fk = next(f for f in normalized["tables"]["admin_audit_logs"]["fk"] if f["constrained_columns"] == ["target_instance_id"])
+        fk["options"] = {}  # reverse only the validated SET NULL change
+
+    frozen = expected_metadata("debian")
+    new_sequences = set()
+    for table_name in NEW:
+        table = normalized["tables"][table_name]
+        require(table["rows"] == 0, f"New table contains unexpected rows: {table_name}.")
+        require(not table["checks"] and len(table["fk"]) == len(frozen.tables[table_name].foreign_keys),
+                f"Unexpected new-table constraints: {table_name}.")
+        sequence = connection.execute(sa.text("SELECT pg_get_serial_sequence(:table, 'id')"), {"table": "public." + table_name}).scalar_one()
+        require(sequence == "public." + table_name + "_id_seq", f"Unexpected new ID generator: {table_name}.")
+        name = table_name + "_id_seq"
+        for column in table["columns"]:
+            valid_defaults = (None,) if column["name"] != "id" else (
+                f"nextval('{name}'::regclass)", f"nextval('public.{name}'::regclass)",
+            )
+            require(column.get("default") in valid_defaults
+                    and not column.get("identity") and not column.get("computed"),
+                    f"Unexpected new-table column generator/default: {table_name}.{column['name']}.")
+        new_sequences.add(name)
+        state = after["sequences"].get(name, {})
+        require(state.get("last_value") == 1 and state.get("is_called") is False
+                and state.get("start_value") == 1 and state.get("min_value") == 1
+                and state.get("max_value") == 2147483647 and state.get("data_type") == "integer"
+                and state.get("increment_by") == 1 and state.get("cycle") is False,
+                f"Unexpected new sequence state: {name}.")
+    require(set(after["sequences"]) == set(evidence["sequences"]) | new_sequences,
+            "Unexpected cumulative sequence inventory.")
+    require(after["enums"] == evidence["enums"], "Unexpected cumulative enum change.")
+    for row in after.get("row_security", []):
+        if row["relname"] in NEW:
+            require(not row["relrowsecurity"] and not row["relforcerowsecurity"], "Unexpected RLS on new table.")
+
+    # Compare legacy data/columns/FKs/sequences to the ORIGINAL manifest, then
+    # validate every d0001 table/column/FK/index using the existing checker.
+    original = copy.deepcopy(evidence)
+    for snapshot in (original, normalized):
+        for table in snapshot["tables"].values():
+            table["fk"] = sorted(table["fk"], key=canonical)
+    verify_after(connection, original, after=normalized)
 
 
 def main():
@@ -252,7 +366,10 @@ def main():
                     validate_before(connection, evidence)
                 else:
                     revision = connection.execute(sa.text("SELECT version_num FROM public.alembic_version")).scalars().all()
-                    if revision == ["d0001_adopt_debian"]:
+                    if (set(evidence["tables"]) == CORE | LEGACY
+                            and revision in [[name] for name in DEBIAN_STAGES]):
+                        verify_complete_chain(connection, evidence, revision[0])
+                    elif revision == ["d0001_adopt_debian"]:
                         verify_after(connection, evidence)
                     elif revision == ["d0002_admin_audit_set_null"]:
                         verify_after_v2(connection, evidence)
