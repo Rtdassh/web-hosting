@@ -92,16 +92,7 @@ class TemplateService:
             Subscription.status == "active"
         ).first()
 
-        if sub is not None:
-            plan = require_current_subscription_plan(sub)
-        else:
-            free_plan = db.query(Plan).filter(Plan.name == "Free").first()
-            if free_plan is None:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="No tienes un plan activo disponible para desplegar instancias."
-                )
-            plan = free_plan
+        plan = require_current_subscription_plan(sub)
 
         max_instances = getattr(plan, "max_instances", 1)
 

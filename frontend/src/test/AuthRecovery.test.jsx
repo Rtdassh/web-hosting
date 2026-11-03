@@ -28,10 +28,9 @@ describe('Auth Password Recovery Flow (RF-05)', () => {
       expect(authService.forgotPassword).not.toHaveBeenCalled();
     });
 
-    it('debe solicitar el token temporal de 15 minutos y exhibirlo en entorno local', async () => {
+    it('debe confirmar la solicitud sin exponer un token', async () => {
       authService.forgotPassword.mockResolvedValueOnce({
         message: 'Instrucciones generadas',
-        reset_token_simulated: 'simulated-token-xyz-123',
       });
 
       render(<ForgotPassword onBack={vi.fn()} onGoToReset={vi.fn()} />);
@@ -44,7 +43,8 @@ describe('Auth Password Recovery Flow (RF-05)', () => {
 
       await waitFor(() => {
         expect(authService.forgotPassword).toHaveBeenCalledWith('usuario@empresa.com');
-        expect(screen.getByText('simulated-token-xyz-123')).toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent('Instrucciones generadas');
+        expect(screen.queryByText('Token de recuperación')).not.toBeInTheDocument();
       });
     });
   });

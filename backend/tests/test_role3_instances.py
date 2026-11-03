@@ -237,7 +237,9 @@ class Role3FailedLifecycleTests(unittest.TestCase):
         for action, method_name, initial_status in cases:
             with self.subTest(action=action):
                 instance = make_instance(initial_status)
-                db = make_db(instance)
+                subscription = SimpleNamespace(status="active", plan=SimpleNamespace(name="Free", max_instances=1))
+                db = make_db(instance, subscription)
+                db.query.return_value.filter.return_value.count.return_value = 1
                 request = instances.InstanceActionRequest(action=action)
 
                 with (

@@ -12,7 +12,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-paas_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-paas_secret_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-paas_db}
     # Solo expuesto en localhost para mantenimiento o pgAdmin local, bloqueado externamente
     ports:
@@ -44,9 +44,9 @@ services:
       - POSTGRES_SERVER=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER:-paas_admin}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-paas_secret_password}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-paas_db}
-      - SECRET_KEY=${SECRET_KEY:-clave_secreta_super_segura_desarrollo_cambiar_luego}
+      - SECRET_KEY=${SECRET_KEY:?Configure SECRET_KEY}
       - DOCKER_SOCKET_PATH=/var/run/docker.sock
       - DOCKER_IMAGE_NAME=cloudpaas/nginx-hosting:latest
       - DOCKER_NETWORK=paas_instances_network
@@ -55,6 +55,13 @@ services:
       - PORT_RANGE_START=30001
       - PORT_RANGE_END=30100
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - PASSWORD_RESET_SMTP_HOST=${PASSWORD_RESET_SMTP_HOST:-}
+      - PASSWORD_RESET_SMTP_PORT=${PASSWORD_RESET_SMTP_PORT:-1025}
+      - PASSWORD_RESET_SMTP_SECURITY=${PASSWORD_RESET_SMTP_SECURITY:-none}
+      - PASSWORD_RESET_FROM_EMAIL=${PASSWORD_RESET_FROM_EMAIL:-}
+      - PASSWORD_RESET_SMTP_USERNAME=${PASSWORD_RESET_SMTP_USERNAME:-}
+      - PASSWORD_RESET_SMTP_PASSWORD=${PASSWORD_RESET_SMTP_PASSWORD:-}
+      - PASSWORD_RESET_FRONTEND_URL=${PASSWORD_RESET_FRONTEND_URL:-http://localhost/}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /srv/hosting/instancias:/srv/hosting/instancias

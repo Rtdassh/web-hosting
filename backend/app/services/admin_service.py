@@ -19,29 +19,7 @@ from app.models.plan import Subscription
 from app.services.docker_service import docker_service
 from app.services.port_service import port_service
 
-# Importar extractor de métricas del host
-try:
-    from infra.scripts.get_host_metrics import get_host_metrics
-except ImportError:
-    import sys
-    from pathlib import Path
-    sys.path.append(str(Path(__file__).resolve().parent.parent.parent.parent))
-    try:
-        from infra.scripts.get_host_metrics import get_host_metrics
-    except Exception:
-        def get_host_metrics(path="/srv/hosting"):
-            return {
-                "cpu_usage_percent": 12.5,
-                "memory_used_mb": 2048.0,
-                "memory_total_mb": 8192.0,
-                "memory_usage_percent": 25.0,
-                "storage_used_gb": 15.0,
-                "storage_total_gb": 100.0,
-                "storage_usage_percent": 15.0,
-                "containers_running": 5,
-                "containers_total": 8,
-                "docker_available": True
-            }
+from app.services.host_metrics import get_host_metrics
 
 logger = logging.getLogger(__name__)
 

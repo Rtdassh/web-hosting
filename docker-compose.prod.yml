@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-paas_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-paas_prod_secret}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-paas_db}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
@@ -35,12 +35,19 @@ services:
       - POSTGRES_SERVER=paas_db
       - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER:-paas_admin}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-paas_prod_secret}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-paas_db}
-      - SECRET_KEY=${SECRET_KEY:-clave_super_segura_de_produccion_paas_2026}
+      - SECRET_KEY=${SECRET_KEY:?Configure SECRET_KEY}
       - DOCKER_SOCKET_PATH=/var/run/docker.sock
       - HOSTING_STORAGE_PATH=/srv/hosting/instancias
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      - PASSWORD_RESET_SMTP_HOST=${PASSWORD_RESET_SMTP_HOST:-}
+      - PASSWORD_RESET_SMTP_PORT=${PASSWORD_RESET_SMTP_PORT:-1025}
+      - PASSWORD_RESET_SMTP_SECURITY=${PASSWORD_RESET_SMTP_SECURITY:-none}
+      - PASSWORD_RESET_FROM_EMAIL=${PASSWORD_RESET_FROM_EMAIL:-}
+      - PASSWORD_RESET_SMTP_USERNAME=${PASSWORD_RESET_SMTP_USERNAME:-}
+      - PASSWORD_RESET_SMTP_PASSWORD=${PASSWORD_RESET_SMTP_PASSWORD:-}
+      - PASSWORD_RESET_FRONTEND_URL=${PASSWORD_RESET_FRONTEND_URL:-http://localhost/}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /srv/hosting:/srv/hosting

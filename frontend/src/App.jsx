@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Globe, Sparkles, FileText, ShieldCheck } from 'lucide-react';
 
 import Navbar from './components/layout/Navbar';
@@ -131,13 +131,24 @@ function AuthenticatedApp({ onLogout }) {
 }
 
 
-function AppContent() {
+export function AppContent() {
   const { isAuthenticated } = useAuth();
-  const [screen, setScreen] = useState('landing');
+  const [resetToken, setResetToken] = useState(() =>
+    new URLSearchParams(window.location.search).get('reset_token') || ''
+  );
+  const [screen, setScreen] = useState(() =>
+    new URLSearchParams(window.location.search).get('reset_token') ? 'reset-password' : 'landing'
+  );
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('reset_token')) {
+      url.searchParams.delete('reset_token');
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    }
+  }, []);
   const [verificationEmail, setVerificationEmail] = useState('');
-  const [resetToken, setResetToken] = useState('');
 
-  if (isAuthenticated) {
+  if (isAuthenticated && screen !== 'reset-password') {
     return <AuthenticatedApp onLogout={() => setScreen('landing')} />;
   }
 

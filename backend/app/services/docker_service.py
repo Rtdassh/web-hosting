@@ -25,7 +25,7 @@ class DockerService:
             self.client.ping()
             logger.info("Conexión con Docker Daemon establecida exitosamente.")
         except DockerException as e:
-            logger.warning(f"No se pudo conectar al Docker Daemon: {e}. Modo simulación disponible.")
+            logger.warning(f"No se pudo conectar al Docker Daemon: {e}. Operaciones de despliegue no disponibles.")
             self.client = None
 
     def _resolve_image(self) -> str:
@@ -35,14 +35,11 @@ class DockerService:
 
         try:
             self.client.images.get(settings.DOCKER_IMAGE_NAME)
-            return settings.DOCKER_IMAGE_NAME
-        except NotFound:
-            logger.warning(
-                f"Imagen '{settings.DOCKER_IMAGE_NAME}' no encontrada localmente. Usando fallback 'nginx:1.27-alpine'."
-            )
-            return "nginx:1.27-alpine"
-        except Exception:
-            return "nginx:1.27-alpine"
+        except NotFound as exc:
+            raise DockerOperationError(
+                "La imagen de hosting configurada no está instalada."
+            ) from exc
+        return settings.DOCKER_IMAGE_NAME
 
     def _resolve_network(self) -> Optional[str]:
         """Comprueba si la red aislada de la plataforma existe."""
@@ -74,8 +71,7 @@ class DockerService:
         - Conexión a red aislada paas_instances_network
         """
         if not self.client:
-            logger.warning("Docker client no disponible. Simulando ID de contenedor.")
-            return f"mock_container_{container_name}"
+            raise DockerUnavailableError("No hay conexión con Docker.")
 
         abs_storage_path = str(Path(host_storage_path).resolve())
         image_name = self._resolve_image()
@@ -133,8 +129,8 @@ class DockerService:
 
     def start_instance(self, container_id: str) -> bool:
         """Inicia un contenedor existente detenido (RF-16)."""
-        if not self.client or container_id.startswith("mock_"):
-            return True
+        if not self.client or not container_id or container_id.startswith("mock_"):
+            return False
         try:
             container = self.client.containers.get(container_id)
             container.start()
@@ -148,8 +144,8 @@ class DockerService:
 
     def stop_instance(self, container_id: str) -> bool:
         """Detiene un contenedor en ejecución (RF-16)."""
-        if not self.client or container_id.startswith("mock_"):
-            return True
+        if not self.client or not container_id or container_id.startswith("mock_"):
+            return False
         try:
             container = self.client.containers.get(container_id)
             container.stop(timeout=5)
@@ -163,8 +159,8 @@ class DockerService:
 
     def restart_instance(self, container_id: str) -> bool:
         """Reinicia un contenedor activo (RF-16)."""
-        if not self.client or container_id.startswith("mock_"):
-            return True
+        if not self.client or not container_id or container_id.startswith("mock_"):
+            return False
         try:
             container = self.client.containers.get(container_id)
             container.restart(timeout=5)
@@ -205,7 +201,7 @@ class DockerService:
         if not container_id:
             return "not_found"
         if not self.client or container_id.startswith("mock_"):
-            return "running"
+            return "error"
         try:
             container = self.client.containers.get(container_id)
             container.reload()

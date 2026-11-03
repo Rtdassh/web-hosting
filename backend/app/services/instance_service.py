@@ -99,64 +99,54 @@ class InstanceService:
 
         # 3. Directorio aislado en host: /srv/hosting/instancias/<user_id>_<instance_uuid>
         storage_dir = settings.RESOLVED_STORAGE_PATH / f"{current_user.id}_{instance_uuid}"
-        storage_dir.mkdir(parents=True, exist_ok=True)
-
-        try:
-            # Extraer el zip de manera segura con Anti-Zip Slip y comprobación de index.html
-            artifact_service.sanitize_and_extract_zip(file, str(storage_dir))
-        except Exception as e:
-            port_service.release_port(db, assigned_port)
-            shutil.rmtree(storage_dir, ignore_errors=True)
-            raise e
-
-        # 4. Levantar contenedor Docker con cgroups dinámicos
-        container_name = f"paas_web_{instance_uuid}"
         container_id = None
+        storage_created = False
         try:
+            storage_dir.mkdir(parents=True, exist_ok=False)
+            storage_created = True
+            artifact_service.sanitize_and_extract_zip(file, str(storage_dir))
             container_id = docker_service.run_nginx_instance(
-                container_name=container_name,
+                container_name=f"paas_web_{instance_uuid}",
                 host_port=assigned_port,
                 host_storage_path=str(storage_dir),
                 ram_limit_mb=ram_limit_mb,
                 cpu_quota=cpu_quota,
                 user_id=current_user.id,
-                instance_uuid=instance_uuid
+                instance_uuid=instance_uuid,
             )
-        except Exception as e:
-            port_service.release_port(db, assigned_port)
-            shutil.rmtree(storage_dir, ignore_errors=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Falla en el motor Docker al aprovisionar la instancia: {str(e)}"
-            )
-
-        # 5. Persistir en Base de Datos y asociar el puerto
-        try:
-            public_url = f"http://{settings.HOST_PUBLIC_IP}:{assigned_port}"
             db_instance = Instance(
-                uuid=instance_uuid,
-                name=name,
-                user_id=current_user.id,
-                container_id=container_id,
-                assigned_port=assigned_port,
-                public_url=public_url,
-                status=InstanceStatus.RUNNING,
-                storage_path=str(storage_dir)
+                uuid=instance_uuid, name=name, user_id=current_user.id,
+                container_id=container_id, assigned_port=assigned_port,
+                public_url=f"http://{settings.HOST_PUBLIC_IP}:{assigned_port}",
+                status=InstanceStatus.RUNNING, storage_path=str(storage_dir),
             )
             db.add(db_instance)
+            db.flush()
+            port_service.link_instance_to_port(db, assigned_port, db_instance.id, commit=False)
             db.commit()
-            db.refresh(db_instance)
-            port_service.link_instance_to_port(db, assigned_port, db_instance.id)
-        except Exception as e:
-            if container_id:
-                docker_service.remove_instance(container_id)
-            port_service.release_port(db, assigned_port)
-            shutil.rmtree(storage_dir, ignore_errors=True)
+        except Exception as exc:
             db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Falla al persistir la instancia en base de datos: {str(e)}"
-            )
+            removed = container_id is None
+            if container_id:
+                try:
+                    removed = docker_service.remove_instance(container_id)
+                except Exception:
+                    logger.exception("No se pudo compensar el contenedor del despliegue ZIP.")
+            if removed:
+                if storage_created:
+                    shutil.rmtree(storage_dir, ignore_errors=True)
+                try:
+                    port_service.release_port(db, assigned_port)
+                except Exception:
+                    db.rollback()
+                    logger.exception("Puerto pendiente de reconciliación tras despliegue fallido.")
+            else:
+                logger.error("Contenedor pendiente de limpieza; puerto %s conservado.", assigned_port)
+            if isinstance(exc, HTTPException):
+                raise
+            logger.exception("Despliegue ZIP fallido.")
+            raise HTTPException(status_code=503, detail="No se pudo completar el despliegue ZIP.") from None
+        db.refresh(db_instance)
 
         return db_instance
 
@@ -186,6 +176,18 @@ class InstanceService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Acción no soportada (usar: start, stop, restart)."
+            )
+
+        if action in ("start", "restart"):
+            sub = db.query(Subscription).filter(
+                Subscription.user_id == instance.user_id,
+                Subscription.status == "active",
+            ).first()
+            plan = require_current_subscription_plan(sub)
+            from app.services.quota_service import validate_quota_downgrade
+            validate_quota_downgrade(
+                db, instance.user_id, plan,
+                additional_sites=1 if instance.status == InstanceStatus.FAILED else 0,
             )
 
         operation, target_status = operations[action]
