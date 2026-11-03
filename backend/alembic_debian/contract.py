@@ -1,4 +1,5 @@
 """Read frozen revisions, not evolving ORM models, to build the adoption contract."""
+from dataclasses import dataclass
 import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
@@ -20,6 +21,22 @@ EXTRAS = {
 COUNTS = {"users": 7, "plans": 3, "subscriptions": 7, "instances": 3,
           "port_allocations": 100, "asignacion_puertos": 100, "payment_transactions": 0}
 ASSIGNMENTS = [(14, 30002), (19, 30001), (22, 30003)]
+
+
+@dataclass(frozen=True)
+class ReviewedInventory:
+    name: str
+    instance_count: int
+    assignments: tuple[tuple[int, int], ...]
+    running_only: bool = False
+
+
+# Keep the original historical contract intact; only these exact inventories
+# are accepted. Selection does not waive any common schema/data/sequence guard.
+REVIEWED_INVENTORIES = (
+    ReviewedInventory("historical_three", COUNTS["instances"], tuple(ASSIGNMENTS)),
+    ReviewedInventory("confirmed_two_2026_11_03", 2, ((14, 30002), (22, 30003)), True),
+)
 PAYMENT_OLD = {"id", "user_id", "amount", "status", "created_at"}
 LEGACY_PHYSICAL = {
     ("plans", "billing_period"): ("VARCHAR(20)", False, {"'monthly'::character varying", "'monthly'::text", "'monthly'"}),

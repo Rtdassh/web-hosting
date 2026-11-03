@@ -1,7 +1,7 @@
 """Fail-closed structural checks. Missing evidence is a blocker, not a guessed DDL."""
 import sqlalchemy as sa
 from .evidence import type_name
-from .contract import CORE, NEW, LEGACY, EXTRAS, COUNTS, ASSIGNMENTS, PAYMENT_OLD, LEGACY_PHYSICAL, expected_metadata
+from .contract import CORE, NEW, LEGACY, EXTRAS, COUNTS, PAYMENT_OLD, LEGACY_PHYSICAL, REVIEWED_INVENTORIES, expected_metadata
 from app.core.schema_profiles_v1 import fk_matches
 
 
@@ -51,8 +51,12 @@ def validate_before(connection, snapshot):
     require(not any(e["evtenabled"] != "D" for e in snapshot.get("event_triggers", [])), "Enabled DDL event triggers need explicit review.")
     require(set(tables) == CORE | LEGACY, "Expected the reviewed 21-table inventory; obtain fresh evidence.")
     require(not NEW & set(tables), "New tables already present; adoption route is not applicable.")
+    inventory = next((item for item in REVIEWED_INVENTORIES
+                      if item.instance_count == tables["instances"]["rows"]), None)
+    require(inventory is not None, "Unreviewed instance inventory; obtain fresh evidence.")
     for table, count in COUNTS.items():
-        require(tables[table]["rows"] == count, f"Row count changed for {table}; review again.")
+        expected_count = inventory.instance_count if table == "instances" else count
+        require(tables[table]["rows"] == expected_count, f"Row count changed for {table}; review again.")
     expected = expected_metadata("debian")
     for name in CORE:
         actual = {c["name"]: c for c in tables[name]["columns"]}
@@ -115,7 +119,12 @@ def validate_before(connection, snapshot):
           AND p.instance_id=i.id AND p.is_allocated=true
         WHERE i.template_id IS NULL ORDER BY i.id
     """))]
-    require(actual == ASSIGNMENTS, "Instance/port/template assignments do not match reviewed evidence.")
+    require(actual == list(inventory.assignments), "Instance/port/template assignments do not match reviewed evidence.")
+    if inventory.running_only:
+        invalid_states = connection.execute(sa.text(
+            "SELECT count(*) FROM public.instances WHERE status IS NULL OR status::text <> 'RUNNING'"
+        )).scalar_one()
+        require(invalid_states == 0, "Confirmed two-instance inventory requires both instances RUNNING.")
     duplicates = connection.execute(sa.text("SELECT user_id FROM public.subscriptions WHERE status='active' GROUP BY user_id HAVING count(*)>1")).first()
     require(duplicates is None, "Multiple active subscriptions found.")
     invalid = connection.execute(sa.text("SELECT count(*) FROM pg_constraint k JOIN pg_namespace n ON n.oid=k.connamespace WHERE n.nspname='public' AND NOT k.convalidated")).scalar_one()
