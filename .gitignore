@@ -54,3 +54,8 @@ Thumbs.db
 
 # Respaldos locales de bases de datos
 /backups/
+
+# Private diagnosis and database backups
+codrop-debian-*.json
+codrop-docker-*.json
+*.dump

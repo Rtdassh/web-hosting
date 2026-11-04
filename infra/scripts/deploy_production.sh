@@ -17,6 +17,10 @@ echo "       CloudPaaS - Despliegue Automatizado de Producción         "
 echo "================================================================="
 
 cd "$REPO_ROOT"
+# Fail before modifying host directories if required configuration is absent.
+: "${SECRET_KEY:?Configure SECRET_KEY in the deployment environment}"
+: "${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in the deployment environment}"
+docker compose -f docker-compose.prod.yml config --quiet
 
 # 1. Comprobación de requisitos en el Host
 echo "[1/6] Verificando dependencias del sistema anfitrión..."
@@ -82,8 +86,14 @@ docker compose -f docker-compose.prod.yml ps
 
 echo ""
 echo "================================================================="
+# Verify a business endpoint; startup deliberately never applies migrations/seed.
+command -v curl >/dev/null 2>&1 || { echo "[ERROR] curl es necesario para verificar la API."; exit 1; }
+curl --fail --silent --show-error --retry 5 --retry-connrefused --retry-delay 2 http://localhost/api/v1/plans > /dev/null || {
+    echo "[ERROR] API no preparada: revisar esquema, seed y configuración antes de anunciar el despliegue."
+    exit 1
+}
 echo "  [OK] Despliegue de Producción completado exitosamente."
 echo "  Plataforma Web Frontend: http://localhost"
-echo "  Documentación API REST:  http://localhost:8000/docs"
+echo "  Documentación API REST:  http://localhost/docs"
 echo "  Pool de Instancias:      http://localhost:30001 - 30100"
 echo "================================================================="

@@ -32,6 +32,8 @@ def require_current_subscription_plan(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes una suscripción activa y vigente para desplegar instancias.",
         )
+    if not getattr(plan, "is_active", True):
+        raise HTTPException(status_code=403, detail="Tu plan no está disponible actualmente.")
     if plan.name.casefold() == PlanType.FREE.value.casefold():
         return plan
     period_end = subscription.current_period_end

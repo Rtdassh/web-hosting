@@ -105,3 +105,12 @@ def test_alembic_project_url_uses_sqlalchemy_url_object():
 
     assert isinstance(url, URL)
     assert url.password == project_settings.POSTGRES_PASSWORD
+
+
+@pytest.mark.parametrize('secret,password', [
+    ('clave_super_segura_de_produccion_paas_2026','test-only-database-value'),
+    ('test-only-secret-value','paas_prod_secret'),
+])
+def test_known_compose_placeholders_rejected_in_production(secret,password):
+    with pytest.raises(RuntimeError):
+        isolated_settings(ENVIRONMENT='production',SECRET_KEY=secret,POSTGRES_PASSWORD=password)

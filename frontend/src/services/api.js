@@ -1,10 +1,7 @@
 import axios from 'axios';
 
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return `http://${window.location.hostname}:8000/api/v1`;
-  }
-  return import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+export const getApiBaseUrl = () => {
+  return import.meta.env.VITE_API_URL?.trim() || '/api/v1';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -12,25 +9,6 @@ const API_BASE_URL = getApiBaseUrl();
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
-
-export const ensureAuthenticated = async () => {
-  let token = localStorage.getItem('paas_token');
-  if (!token) {
-    try {
-      const res = await axios.post(`${API_BASE_URL}/auth/login`, {
-        email: 'dev@cloudpaas.local',
-        password: 'admin123'
-      });
-      if (res.data?.access_token) {
-        token = res.data.access_token;
-        localStorage.setItem('paas_token', token);
-      }
-    } catch (e) {
-      console.warn("Falla en sesión inicial:", e);
-    }
-  }
-  return token;
-};
 
 // Interceptor para inyectar token JWT automáticamente si existe sesión
 apiClient.interceptors.request.use((config) => {

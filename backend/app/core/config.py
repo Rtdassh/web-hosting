@@ -118,8 +118,12 @@ class Settings(BaseSettings):
         if (
             not self.SECRET_KEY.strip()
             or not self.POSTGRES_PASSWORD.strip()
-            or self.SECRET_KEY == secret_key_default
-            or self.POSTGRES_PASSWORD == postgres_password_default
+            or self.SECRET_KEY in {
+                secret_key_default,
+                "clave_super_segura_de_produccion_paas_2026",
+                "tu_clave_secreta_jwt_para_desarrollo_cambiar_en_produccion",
+            }
+            or self.POSTGRES_PASSWORD in {postgres_password_default, "paas_prod_secret"}
         ):
             raise RuntimeError(
                 "Production requires non-empty SECRET_KEY and POSTGRES_PASSWORD "

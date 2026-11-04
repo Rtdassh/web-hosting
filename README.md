@@ -112,10 +112,9 @@ uvicorn app.main:app --reload --port 8000
 
 - **API REST:** [http://localhost:8000](http://localhost:8000)
 - **Documentación Swagger UI interactiva:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Datos iniciales sembrados automáticamente al arrancar:**
-  - **Planes:** `Free` (1 sitio, 128MB RAM), `Developer` (3 sitios), `Pro` (10 sitios).
-  - **Puertos:** Pool TCP dinámico `30001` a `30100`.
-  - **Usuario demo:** `dev@cloudpaas.local` / `admin123` (con plan Free activo).
+- El arranque no crea tablas ni siembra datos. Revisa `docs/MIGRACIONES_ALEMBIC.md`.
+- En una base Debian existente primero se requiere diagnóstico, respaldo restaurado y autorización; no uses la línea Fresh ni `stamp` para saltar controles.
+- El seed explícito es aditivo y no crea una cuenta demo. Registra tu propia cuenta.
 
 ---
 

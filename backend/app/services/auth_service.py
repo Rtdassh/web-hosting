@@ -17,12 +17,21 @@ from app.models.user import User, UserRole
 from app.models.plan import Plan, Subscription
 from app.models.instance import Instance, InstanceStatus
 from app.schemas.user_schema import UserCreate, UserLogin, PlanInfo
+from app.services.subscription_service import require_current_subscription_plan
 from app.services.password_reset_delivery import (
     PasswordResetDeliveryProvider,
     create_password_reset_delivery_provider,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def subscription_is_current(subscription):
+    try:
+        require_current_subscription_plan(subscription)
+        return True
+    except HTTPException:
+        return False
 
 
 class AuthService:
@@ -119,7 +128,10 @@ class AuthService:
                 max_ram_mb=sub.plan.max_ram_mb,
                 cpu_quota=sub.plan.cpu_quota,
                 active_instances=active_count,
-                available_slots=max(0, sub.plan.max_instances - active_count)
+                available_slots=max(0, sub.plan.max_instances - active_count),
+                subscription_status=sub.status,
+                current_period_end=sub.current_period_end or sub.end_date,
+                is_current=subscription_is_current(sub),
             )
 
         return {
@@ -249,17 +261,12 @@ class AuthService:
 
     @staticmethod
     def verify_email(token: str, db: Session) -> dict:
-        """RF-02 (Hito 100%): Valida token y marca la cuenta como verificada."""
-        user = db.query(User).first()
-        if user:
-            user.is_verified = True
-            db.commit()
-            return {
-                "message": "Correo electrónico verificado exitosamente.",
-                "is_verified": True,
-                "email": user.email
-            }
-        raise HTTPException(status_code=400, detail="Token de activación no válido.")
+        """RF-02 (Hito 100%): deshabilitado hasta implementar validación real."""
+        raise HTTPException(
+            status_code=501,
+            detail="La verificación de correo todavía no está habilitada.",
+        )
+
 
 
 auth_service = AuthService(

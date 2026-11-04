@@ -44,11 +44,7 @@ cambios directos entre planes de pago de precio igual o menor queda pendiente
 de confirmación; por ahora se conserva ese comportamiento limitado porque no
 concede un plan de mayor precio.
 
-La validación de cuota de `change-plan` cuenta actualmente instancias `RUNNING`
-y `PENDING`. El contrato de T4.2 del Rol 4 define contar toda instancia cuyo
-estado no sea `destroyed`; hay que coordinar con Rol 4 cómo representar
-instancias destruidas y alinear esa validación. Este cambio de Rol 3 no modifica
-el conteo existente.
+La cuota cuenta sitios existentes salvo `FAILED`, incluyendo los detenidos, igual que el despliegue y el perfil. Destruir un sitio elimina su fila y libera la plaza. Detenerlo no libera cuota. Inicio y reinicio validan suscripción, vigencia y cuota antes de llamar a Docker. Esta decisión sigue T4.2 y evita liberar capacidad temporalmente para evadir el downgrade.
 
 ## Conservación del historial financiero
 

@@ -89,7 +89,7 @@ export default function PricingPage({
 }) {
   const { user, refreshUser } = useAuth();
 
-  const [plans, setPlans] = useState(DEFAULT_PLANS);
+  const [plans, setPlans] = useState([]);
   const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState(null);
   const [activePlanName, setActivePlanName] = useState(
     user?.plan?.name || currentPlan || 'Free'
@@ -112,22 +112,15 @@ export default function PricingPage({
     billingService
       .getPlans()
       .then((data) => {
-        if (!Array.isArray(data) || data.length === 0) return;
-
-        setPlans((previousPlans) =>
-          previousPlans.map((plan) => {
-            const match = data.find(
-              (item) =>
-                item.id === plan.id ||
-                item.name?.toLowerCase() === plan.name.toLowerCase()
-            );
-
-            return match ? { ...plan, ...match } : plan;
-          })
-        );
+        if (!Array.isArray(data)) throw new Error('Catálogo inválido');
+        setPlans(data.filter((plan) => plan.is_active !== false).map((plan) => ({
+          ...DEFAULT_PLANS.find((item) => item.name.toLowerCase() === plan.name?.toLowerCase()),
+          ...plan,
+        })));
       })
-      .catch((error) => {
-        console.log('Usando catálogo local de planes:', error);
+      .catch(() => {
+        setPlans([]);
+        setErrorMessage('No se pudo cargar el catálogo de planes. Inténtalo de nuevo.');
       });
   }, []);
 
@@ -194,6 +187,8 @@ export default function PricingPage({
     }
   };
 
+  const needsRenewal = user?.plan?.is_current === false;
+
   const handlePlanAction = async (plan) => {
     setActionMessage(null);
     setErrorMessage(null);
@@ -201,6 +196,7 @@ export default function PricingPage({
     const targetRank = PLAN_ORDER[plan.name?.toLowerCase()] ?? 0;
 
     if (targetRank === activePlanRank) {
+      if (needsRenewal && Number(plan.price) > 0) setSelectedPlanForCheckout(plan);
       return;
     }
 
@@ -232,7 +228,7 @@ export default function PricingPage({
     const rank = PLAN_ORDER[plan.name?.toLowerCase()] ?? 0;
 
     if (rank === activePlanRank) {
-      return 'Plan actual';
+      return needsRenewal && Number(plan.price) > 0 ? 'Renovar plan' : 'Plan actual';
     }
 
     if (rank > activePlanRank) {
@@ -487,10 +483,12 @@ export default function PricingPage({
                   <button
                     type="button"
                     onClick={() => handlePlanAction(plan)}
-                    disabled={isCurrent || isChangingPlan}
+                    disabled={(isCurrent && !(needsRenewal && Number(plan.price) > 0)) || isChangingPlan}
                     className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-xs font-black transition ${
                       isCurrent
-                        ? 'cursor-default border border-[#e2e8e5] bg-[#f3f6f4] text-[#94A3B8]'
+                        ? needsRenewal && Number(plan.price) > 0
+                          ? 'bg-[#172838] text-white hover:bg-[#1F3141]'
+                          : 'cursor-default border border-[#e2e8e5] bg-[#f3f6f4] text-[#94A3B8]'
                         : plan.popular
                         ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76]'
                         : 'bg-[#172838] text-white shadow-[0_10px_25px_rgba(23,40,56,0.12)] hover:bg-[#1F3141]'

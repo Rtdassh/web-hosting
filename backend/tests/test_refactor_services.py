@@ -173,7 +173,7 @@ def test_auth_service_get_user_profile():
         max_ram_mb=256,
         cpu_quota=0.5
     )
-    sub = SimpleNamespace(plan=plan)
+    sub = SimpleNamespace(plan=plan, status="active", current_period_end=None, end_date=None)
     db.query.return_value.filter.return_value.first.return_value = sub
     db.query.return_value.filter.return_value.count.return_value = 1
 
@@ -233,7 +233,9 @@ def test_instance_service_execute_action_unsupported():
 def test_instance_service_execute_action_success_with_injected_docker():
     db = MagicMock(name="db_session")
     instance = SimpleNamespace(id=1, user_id=5, container_id="c1", status=InstanceStatus.STOPPED)
-    db.query.return_value.filter.return_value.first.return_value = instance
+    subscription = SimpleNamespace(status="active", plan=SimpleNamespace(name="Free", max_instances=1))
+    db.query.return_value.filter.return_value.first.side_effect = [instance, subscription]
+    db.query.return_value.filter.return_value.count.return_value = 1
 
     user = SimpleNamespace(id=5, role=UserRole.CLIENT)
     mock_docker = MagicMock()

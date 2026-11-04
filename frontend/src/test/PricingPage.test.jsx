@@ -136,3 +136,32 @@ describe('PricingPage UI Component (RF-07, RF-08, RF-11 Gestión de Suscripcione
     confirmSpy.mockRestore();
   });
 });
+
+describe('Catalog and renewal regressions', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+  const plan = { id: 73, name: 'Pro', price: 24.99, max_instances: 10, max_ram_mb: 512, cpu_quota: 1, is_active: true };
+  const renderPage = (current = { name: 'Free', is_current: true }) => render(
+    <AuthContext.Provider value={{ user: { plan: current }, refreshUser: vi.fn() }}>
+      <PricingPage onBack={vi.fn()} onGoToBilling={vi.fn()} />
+    </AuthContext.Provider>
+  );
+  it('does not offer plans omitted from the live catalog', async () => {
+    billingService.getPlans.mockResolvedValue([{ ...plan, id: 8, name: 'Free', price: 0 }]);
+    renderPage();
+    await screen.findByRole('heading', { name: 'Free' });
+    expect(screen.queryByRole('heading', { name: 'Pro' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Developer' })).not.toBeInTheDocument();
+  });
+  it('enables checkout to renew the same expired plan', async () => {
+    billingService.getPlans.mockResolvedValue([plan]);
+    renderPage({ name: 'Pro', is_current: false });
+    fireEvent.click(await screen.findByRole('button', { name: 'Renovar plan' }));
+    expect(screen.getByText('Pago simulado seguro')).toBeInTheDocument();
+  });
+  it('shows failure without a purchasable invented catalog', async () => {
+    billingService.getPlans.mockRejectedValue(new Error('synthetic unavailable'));
+    renderPage();
+    await screen.findByText('No se pudo cargar el catálogo de planes. Inténtalo de nuevo.');
+    expect(screen.queryByRole('button', { name: /Mejorar a/ })).not.toBeInTheDocument();
+  });
+});

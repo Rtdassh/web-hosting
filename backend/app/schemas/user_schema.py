@@ -48,6 +48,9 @@ class PlanInfo(BaseModel):
     cpu_quota: float
     active_instances: int
     available_slots: int
+    subscription_status: str = "active"
+    current_period_end: Optional[datetime] = None
+    is_current: bool = True
 
 class UserMeResponse(UserResponse):
     plan: Optional[PlanInfo] = None

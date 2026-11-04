@@ -6,8 +6,8 @@ from .evidence import capture, fingerprint, type_name
 from app.core.schema_profiles_v1 import fk_matches
 
 
-def verify_after(connection, before):
-    after = capture(connection)
+def verify_after(connection, before, *, after=None):
+    after = capture(connection) if after is None else after
     validate_preserved(before, after)
     wanted = expected_metadata("debian")
     inspector = sa.inspect(connection)

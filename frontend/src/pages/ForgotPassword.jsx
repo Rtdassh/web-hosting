@@ -14,10 +14,10 @@ import {
 import PublicNavbar from '../components/layout/PublicNavbar';
 import { authService } from '../services/api';
 
-export default function ForgotPassword({ onBack, onGoToReset }) {
+export default function ForgotPassword({ onBack }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [simulatedToken, setSimulatedToken] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState(null);
 
   const handleSubmit = async (event) => {
@@ -36,9 +36,7 @@ export default function ForgotPassword({ onBack, onGoToReset }) {
     try {
       const response = await authService.forgotPassword(normalizedEmail);
 
-      if (response?.reset_token_simulated) {
-        setSimulatedToken(response.reset_token_simulated);
-      }
+      setConfirmation(response?.message || 'Solicitud recibida. Revisa las instrucciones en tu correo.');
     } catch (requestError) {
       setError(
         requestError.response?.data?.detail ||
@@ -161,52 +159,9 @@ export default function ForgotPassword({ onBack, onGoToReset }) {
                 </div>
               )}
 
-              {simulatedToken ? (
-                <div>
-                  <div className="rounded-[22px] border border-[#b9ddcd] bg-[#edf9f3] p-5">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#1C7F62] shadow-sm">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </div>
-
-                      <div>
-                        <h3 className="text-sm font-black text-[#176c53]">
-                          Token generado correctamente
-                        </h3>
-
-                        <p className="mt-1 text-xs font-medium leading-5 text-[#477567]">
-                          En el entorno local de desarrollo, este es tu token
-                          temporal de recuperación.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-xl border border-[#cfe4d6] bg-white px-4 py-3">
-                      <p className="mb-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-[#94A3B8]">
-                        Token de recuperación
-                      </p>
-
-                      <div className="break-all font-mono text-xs font-bold text-[#1C7F62] selection:bg-[#CFE4D6]">
-                        {simulatedToken}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex items-center gap-2 text-[10px] font-semibold text-[#64748B]">
-                      <Clock3 className="h-3.5 w-3.5" />
-                      Vigencia máxima indicada por el servicio: 15 minutos
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onGoToReset && onGoToReset(simulatedToken)
-                    }
-                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#172838] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(23,40,56,0.18)] transition hover:bg-[#1F3141]"
-                  >
-                    Continuar al restablecimiento
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
+              {confirmation ? (
+                <div role="status" className="rounded-2xl border border-green-200 bg-green-50 p-5 text-sm text-green-900">
+                  {confirmation}
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
