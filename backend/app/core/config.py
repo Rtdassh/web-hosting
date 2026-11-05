@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     # CORS
     FRONTEND_URL: str = "http://localhost:5173"
 
-    # Password reset email
+    # Password reset email (SMTP)
     PASSWORD_RESET_SMTP_HOST: str | None = None
     PASSWORD_RESET_SMTP_PORT: int = Field(default=1025, ge=1, le=65535)
     PASSWORD_RESET_SMTP_SECURITY: Literal["none", "starttls", "ssl"] = "none"
@@ -50,13 +50,22 @@ class Settings(BaseSettings):
     PASSWORD_RESET_FRONTEND_URL: str = "http://localhost:5173/"
     PASSWORD_RESET_SMTP_TIMEOUT_SECONDS: int = Field(default=10, gt=0)
 
+    # Brevo API (Envío Transaccional REST API)
+    BREVO_API_KEY: str | None = None
+    BREVO_SENDER_EMAIL: str | None = None
+    BREVO_SENDER_NAME: str = "CloudPaaS"
+    BREVO_TIMEOUT_SECONDS: int = Field(default=10, gt=0)
+
     @field_validator(
         "PASSWORD_RESET_SMTP_HOST",
         "PASSWORD_RESET_SMTP_USERNAME",
+        "BREVO_API_KEY",
+        "BREVO_SENDER_EMAIL",
+        "BREVO_SENDER_NAME",
         mode="before",
     )
     @classmethod
-    def strip_password_reset_smtp_text(cls, value: str | None) -> str | None:
+    def strip_email_config_text(cls, value: str | None) -> str | None:
         return value.strip() if isinstance(value, str) else value
 
     @field_validator("ENVIRONMENT")
@@ -106,6 +115,24 @@ class Settings(BaseSettings):
             and valid_sender
             and (has_username == has_password)
             and (not has_username or self.PASSWORD_RESET_SMTP_SECURITY != "none")
+        )
+
+    @property
+    def brevo_api_enabled(self) -> bool:
+        sender = self.BREVO_SENDER_EMAIL or self.PASSWORD_RESET_FROM_EMAIL or ""
+        sender_address = parseaddr(sender)[1]
+        local_part, separator, domain = sender.partition("@")
+        valid_sender = (
+            sender_address == sender
+            and bool(separator and local_part and domain)
+            and not any(character.isspace() for character in sender)
+            and "\r" not in sender
+            and "\n" not in sender
+        )
+        return bool(
+            self.BREVO_API_KEY
+            and self.BREVO_API_KEY.strip()
+            and valid_sender
         )
 
     def model_post_init(self, __context) -> None:
