@@ -69,13 +69,16 @@ class BrevoEmailService:
                 )
                 response.raise_for_status()
                 data = response.json() if response.content else {}
-                logger.info("Transac email sent successfully via Brevo to %s", to_email)
+                logger.info("Transactional email sent successfully via Brevo.")
                 return data
         except httpx.HTTPStatusError as exc:
-            error_detail = exc.response.text
-            logger.error("Brevo API responded with error %s: %s", exc.response.status_code, error_detail)
-            raise RuntimeError(f"Brevo API error ({exc.response.status_code}): {error_detail}") from exc
+            logger.error(
+                "Brevo API request failed with status %s.",
+                exc.response.status_code,
+            )
+            raise RuntimeError(
+                f"Brevo API error ({exc.response.status_code})."
+            ) from exc
         except httpx.RequestError as exc:
             logger.error("Failed to connect to Brevo API: %s", type(exc).__name__)
             raise RuntimeError("Network error connecting to Brevo email service.") from exc
-

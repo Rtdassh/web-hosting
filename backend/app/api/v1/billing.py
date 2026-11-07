@@ -28,7 +28,13 @@ def get_plans(db: Session = Depends(get_db)):
     return db.query(Plan).filter(Plan.is_active.is_(True)).order_by(Plan.id.asc()).all()
 
 
-@router.post("/billing/checkout", response_model=TransactionResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/billing/checkout",
+    response_model=TransactionResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Procesar un pago simulado",
+    responses={429: {"description": "Se excedió el límite de operaciones por IP."}},
+)
 def checkout(
     request: CheckoutRequest,
     current_user: User = Depends(get_current_user),
@@ -50,7 +56,11 @@ def get_invoices(
     return billing_service.get_user_invoices(current_user, db)
 
 
-@router.post("/subscriptions/change-plan")
+@router.post(
+    "/subscriptions/change-plan",
+    summary="Cambiar el plan de suscripción",
+    responses={429: {"description": "Se excedió el límite de operaciones por IP."}},
+)
 def change_plan(
     request: PlanChangeRequest,
     current_user: User = Depends(get_current_user),

@@ -292,6 +292,7 @@ def test_security_headers_injected_on_responses():
     assert response.headers.get("X-Content-Type-Options") == "nosniff"
     assert response.headers.get("X-Frame-Options") == "DENY"
     assert response.headers.get("X-XSS-Protection") == "1; mode=block"
+    assert "default-src 'self'" in response.headers.get("Content-Security-Policy", "")
 
 
 def test_rate_limit_middleware_blocks_login_abuse():

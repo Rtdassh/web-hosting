@@ -65,14 +65,14 @@ def test_brevo_service_sends_email_successfully():
         assert payload["textContent"] == "Hola texto"
 
 
-def test_brevo_service_handles_http_error():
+def test_brevo_service_handles_http_error_without_logging_response_body(caplog):
     config = get_test_settings()
     service = BrevoEmailService(config=config)
 
     mock_request = MagicMock(spec=httpx.Request)
     mock_response = MagicMock(spec=httpx.Response)
     mock_response.status_code = 401
-    mock_response.text = '{"message": "Key not found"}'
+    mock_response.text = '{"message": "sensitive provider response"}'
     http_error = httpx.HTTPStatusError(
         message="Client error '401 Unauthorized'",
         request=mock_request,
@@ -80,12 +80,14 @@ def test_brevo_service_handles_http_error():
     )
 
     with patch("httpx.Client.post", side_effect=http_error):
-        with pytest.raises(RuntimeError, match="Brevo API error"):
+        with pytest.raises(RuntimeError, match="Brevo API error") as raised:
             service.send_email(
                 to_email="dest@example.com",
                 subject="Error Test",
                 html_content="<p>test</p>",
             )
+    assert "sensitive provider response" not in str(raised.value)
+    assert "sensitive provider response" not in caplog.text
 
 
 def test_brevo_password_reset_delivery_formats_url_and_sends():
@@ -99,12 +101,62 @@ def test_brevo_password_reset_delivery_formats_url_and_sends():
         _, kwargs = mock_send.call_args
         assert kwargs["to_email"] == "client@example.com"
         assert kwargs["subject"] == "Restablece tu contraseña de CloudPaaS"
-        assert "#reset_token=secret-token-123" in kwargs["html_content"]
-        assert "#reset_token=secret-token-123" in kwargs["text_content"]
+        assert "?reset_token=secret-token-123" in kwargs["html_content"]
+        assert "?reset_token=secret-token-123" in kwargs["text_content"]
+
+
+def test_brevo_email_verification_delivery_formats_link_and_sends():
+    config = get_test_settings()
+    delivery = BrevoPasswordResetDelivery(config=config)
+
+    with patch.object(BrevoEmailService, "send_email") as mock_send:
+        delivery.send_email_verification(
+            "client@example.com",
+            "verification-token-456",
+        )
+
+    mock_send.assert_called_once()
+    _, kwargs = mock_send.call_args
+    assert kwargs["to_email"] == "client@example.com"
+    assert kwargs["subject"] == "Verifica tu correo de Codrop"
+    assert "?token=verification-token-456" in kwargs["html_content"]
+    assert "?token=verification-token-456" in kwargs["text_content"]
+    assert "24 horas" in kwargs["text_content"]
+
+
+def test_smtp_email_verification_delivery_builds_link_without_network(monkeypatch):
+    config = Settings(
+        _env_file=None,
+        PASSWORD_RESET_SMTP_HOST="mailpit",
+        PASSWORD_RESET_SMTP_PORT=1025,
+        PASSWORD_RESET_SMTP_SECURITY="starttls",
+        PASSWORD_RESET_FROM_EMAIL="no-reply@example.invalid",
+        PASSWORD_RESET_FRONTEND_URL="http://localhost:5173/",
+    )
+    smtp = type("SMTPStub", (), {
+        "__enter__": lambda self: self,
+        "__exit__": lambda self, exc_type, exc, traceback: False,
+        "ehlo": lambda self: None,
+        "starttls": lambda self, context: None,
+        "send_message": lambda self, message: setattr(self, "message", message),
+    })()
+    monkeypatch.setattr(
+        "app.services.password_reset_delivery.smtplib.SMTP",
+        lambda *args, **kwargs: smtp,
+    )
+
+    from app.services.password_reset_delivery import SMTPPasswordResetDelivery
+    SMTPPasswordResetDelivery(config).send_email_verification(
+        "client@example.invalid",
+        "verification-token",
+    )
+
+    assert smtp.message["To"] == "client@example.invalid"
+    assert "?token=verification-token" in smtp.message.get_content()
+    assert "24 horas" in smtp.message.get_content()
 
 
 def test_factory_returns_brevo_when_brevo_is_enabled():
     config = get_test_settings()
     provider = create_password_reset_delivery_provider(config)
     assert isinstance(provider, BrevoPasswordResetDelivery)
-

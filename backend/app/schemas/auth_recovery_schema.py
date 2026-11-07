@@ -1,11 +1,16 @@
 """
 Esquemas Pydantic para Recuperación de Contraseña y Verificación de Correo (RF-05, RF-02).
 """
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from app.schemas.user_schema import validate_bcrypt_password
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr = Field(..., description="Correo del usuario para enviar el token de restablecimiento")
+    email: EmailStr = Field(
+        ...,
+        description="Correo del usuario para enviar el enlace de recuperación.",
+        examples=["usuario@ejemplo.com"],
+    )
 
 
 class ForgotPasswordResponse(BaseModel):
@@ -13,8 +18,24 @@ class ForgotPasswordResponse(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
-    token: str = Field(..., description="Token de un solo uso recibido")
-    new_password: str = Field(..., min_length=6, description="Nueva contraseña segura")
+    token: str = Field(
+        ...,
+        min_length=1,
+        max_length=256,
+        description="Token de recuperación de un solo uso, recibido por correo.",
+    )
+    new_password: str = Field(
+        ...,
+        min_length=8,
+        max_length=72,
+        description="Nueva contraseña (8 a 72 caracteres).",
+        examples=["ClaveSegura123!"],
+    )
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_bytes(cls, value: str) -> str:
+        return validate_bcrypt_password(value)
 
 
 class ResetPasswordResponse(BaseModel):
@@ -26,3 +47,15 @@ class VerifyEmailResponse(BaseModel):
     message: str
     is_verified: bool
     email: str
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr = Field(
+        ...,
+        description="Correo asociado a la cuenta que requiere verificación.",
+        examples=["usuario@ejemplo.com"],
+    )
+
+
+class ResendVerificationResponse(BaseModel):
+    message: str

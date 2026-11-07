@@ -43,7 +43,13 @@ def list_instances(
     return instance_service.list_instances(current_user, db)
 
 
-@router.post("/deploy", response_model=InstanceResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/deploy",
+    response_model=InstanceResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Desplegar un sitio desde ZIP",
+    responses={429: {"description": "Se excedió el límite de despliegues por IP."}},
+)
 def deploy_instance(
     name: str = Form(..., description="Nombre comercial del proyecto web"),
     file: UploadFile = File(..., description="Archivo .zip con el sitio web estático"),
@@ -54,7 +60,12 @@ def deploy_instance(
     return instance_service.deploy(name, file, current_user, db)
 
 
-@router.post("/{instance_id}/action", response_model=InstanceActionResponse)
+@router.post(
+    "/{instance_id}/action",
+    response_model=InstanceActionResponse,
+    summary="Controlar el ciclo de vida de una instancia",
+    responses={429: {"description": "Se excedió el límite de acciones por IP."}},
+)
 def instance_action(
     instance_id: int,
     action_data: InstanceActionRequest,
@@ -72,7 +83,12 @@ def instance_action(
     )
 
 
-@router.delete("/{instance_id}", response_model=InstanceDestroyResponse)
+@router.delete(
+    "/{instance_id}",
+    response_model=InstanceDestroyResponse,
+    summary="Eliminar una instancia",
+    responses={429: {"description": "Se excedió el límite de acciones por IP."}},
+)
 def destroy_instance(
     instance_id: int,
     current_user: User = Depends(get_current_user),
@@ -123,7 +139,12 @@ def get_instance_logs(
     )
 
 
-@router.post("/{instance_id}/sync", response_model=InstanceSyncResponse)
+@router.post(
+    "/{instance_id}/sync",
+    response_model=InstanceSyncResponse,
+    summary="Sincronizar estado de una instancia",
+    responses={429: {"description": "Se excedió el límite de acciones por IP."}},
+)
 def sync_instance_status(
     instance_id: int,
     current_user: User = Depends(get_current_user),

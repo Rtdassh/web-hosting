@@ -21,7 +21,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    version="1.0.0",
+    description=(
+        "API REST de Codrop CloudPaaS para registro, autenticación, verificación de correo, "
+        "administración de instancias y suscripciones. "
+        "Los endpoints protegidos requieren un JWT Bearer válido."
+    ),
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "Autenticación",
+            "description": "Registro, activación de correo, inicio de sesión y recuperación.",
+        },
+        {
+            "name": "Health Check",
+            "description": "Comprobación de disponibilidad de la API.",
+        },
+    ],
     lifespan=lifespan
 )
 
