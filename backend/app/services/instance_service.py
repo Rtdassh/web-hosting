@@ -29,6 +29,24 @@ logger = logging.getLogger(__name__)
 class InstanceService:
 
     @staticmethod
+    def build_public_url(name: str, instance_uuid: str, assigned_port: int) -> str:
+        """
+        Construye la URL pública asignada a la instancia.
+        Soporta subdominios RFC 6761 (*.localhost) si SUBDOMAIN_ENABLED está activo (RF-19).
+        De lo contrario, retorna la URL canónica con HOST_PUBLIC_IP y el puerto asignado.
+        """
+        if getattr(settings, "SUBDOMAIN_ENABLED", False):
+            import re
+            slug = re.sub(r"[^a-z0-9-]", "", name.lower().replace(" ", "-")).strip("-")
+            if not slug:
+                slug = f"app-{instance_uuid[:8]}"
+            host = getattr(settings, "HOST_PUBLIC_IP", "localhost")
+            if host in ("localhost", "127.0.0.1"):
+                return f"http://{slug}.localhost:{assigned_port}"
+            return f"http://{slug}.{host}:{assigned_port}"
+        return f"http://{settings.HOST_PUBLIC_IP}:{assigned_port}"
+
+    @staticmethod
     def list_instances(current_user: User, db: Session) -> list[Instance]:
         """Lista las instancias del usuario autenticado (o todas si es Administrador)."""
         if current_user.role == UserRole.ADMIN:
@@ -117,7 +135,7 @@ class InstanceService:
             db_instance = Instance(
                 uuid=instance_uuid, name=name, user_id=current_user.id,
                 container_id=container_id, assigned_port=assigned_port,
-                public_url=f"http://{settings.HOST_PUBLIC_IP}:{assigned_port}",
+                public_url=InstanceService.build_public_url(name, instance_uuid, assigned_port),
                 status=InstanceStatus.RUNNING, storage_path=str(storage_dir),
             )
             db.add(db_instance)

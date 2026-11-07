@@ -39,6 +39,10 @@ if [ -w "/srv" ] || [ "$EUID" -eq 0 ] || command -v sudo > /dev/null 2>&1; then
     $SUDO_CMD mkdir -p "${HOSTING_DIR}/instancias"
     $SUDO_CMD mkdir -p "${HOSTING_DIR}/plantillas"
     $SUDO_CMD mkdir -p "${HOSTING_DIR}/logs"
+    $SUDO_CMD mkdir -p "${HOSTING_DIR}/infra/scripts"
+    $SUDO_CMD cp -r "$INFRA_DIR/scripts/"* "${HOSTING_DIR}/infra/scripts/" 2>/dev/null || true
+    $SUDO_CMD chmod +x "${HOSTING_DIR}/infra/scripts/"*.sh "${HOSTING_DIR}/infra/scripts/"*.py 2>/dev/null || true
+    $SUDO_CMD ln -sf "${HOSTING_DIR}/infra/scripts/cron_cleanup_orphans.sh" /usr/local/bin/cloudpaas-cleanup 2>/dev/null || true
     $SUDO_CMD chmod -R 755 "${HOSTING_DIR}"
     echo "  [OK] Directorios creados en ${HOSTING_DIR} con permisos 755."
 else

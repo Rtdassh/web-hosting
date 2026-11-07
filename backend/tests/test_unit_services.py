@@ -147,6 +147,50 @@ def test_docker_status_not_found():
     assert status == "not_found"
 
 
+def test_docker_resolve_network_existing():
+    service = DockerService()
+    service.client = MagicMock()
+    mock_net = MagicMock()
+    service.client.networks.get.return_value = mock_net
+
+    net_name = service._resolve_network()
+    assert net_name == "paas_instances_network"
+    service.client.networks.get.assert_called_once_with("paas_instances_network")
+    service.client.networks.create.assert_not_called()
+
+
+def test_docker_resolve_network_auto_create_on_not_found():
+    from docker.errors import NotFound
+    service = DockerService()
+    service.client = MagicMock()
+    service.client.networks.get.side_effect = NotFound("Network paas_instances_network not found")
+    mock_created_net = MagicMock()
+    service.client.networks.create.return_value = mock_created_net
+
+    net_name = service._resolve_network()
+    assert net_name == "paas_instances_network"
+    service.client.networks.get.assert_called_once_with("paas_instances_network")
+    service.client.networks.create.assert_called_once_with(
+        name="paas_instances_network",
+        driver="bridge",
+        labels={
+            "managed_by": "cloudpaas",
+            "purpose": "hosting_instances_isolation"
+        }
+    )
+
+
+def test_docker_resolve_network_create_failure_fallback_none():
+    from docker.errors import NotFound
+    service = DockerService()
+    service.client = MagicMock()
+    service.client.networks.get.side_effect = NotFound("Not found")
+    service.client.networks.create.side_effect = Exception("Docker daemon error")
+
+    net_name = service._resolve_network()
+    assert net_name is None
+
+
 # ==============================================================================
 # Pruebas Unitarias de Seguridad: Anti-Zip Slip en ArtifactService (RNF-05)
 # ==============================================================================
@@ -187,4 +231,36 @@ def test_legitimate_zip_extraction(tmp_path):
 
     assert (dest_dir / "index.html").exists()
     assert (dest_dir / "css" / "style.css").exists()
+
+
+# ==============================================================================
+# Pruebas Unitarias de Red y Formato de URL (RF-19)
+# ==============================================================================
+def test_build_public_url_standard():
+    from app.services.instance_service import InstanceService
+    from app.core.config import settings
+
+    with patch.object(settings, "SUBDOMAIN_ENABLED", False):
+        with patch.object(settings, "HOST_PUBLIC_IP", "localhost"):
+            url = InstanceService.build_public_url("Mi App Web", "abc-12345", 30005)
+            assert url == "http://localhost:30005"
+
+
+def test_build_public_url_subdomain_rfc6761():
+    from app.services.instance_service import InstanceService
+    from app.core.config import settings
+
+    with patch.object(settings, "SUBDOMAIN_ENABLED", True):
+        with patch.object(settings, "HOST_PUBLIC_IP", "localhost"):
+            url = InstanceService.build_public_url("Mi Proyecto Increíble!!", "abc-12345", 30005)
+            assert url == "http://mi-proyecto-increble.localhost:30005"
+
+        with patch.object(settings, "HOST_PUBLIC_IP", "192.168.1.100"):
+            url2 = InstanceService.build_public_url("Portfolio", "def-67890", 30010)
+            assert url2 == "http://portfolio.192.168.1.100:30010"
+
+        with patch.object(settings, "HOST_PUBLIC_IP", "localhost"):
+            url3 = InstanceService.build_public_url("!!!", "abcde123-uuid", 30015)
+            assert url3 == "http://app-abcde123.localhost:30015"
+
 

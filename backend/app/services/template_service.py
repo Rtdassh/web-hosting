@@ -18,6 +18,7 @@ from app.models.instance import Instance, InstanceStatus
 from app.models.instance_status_history import InstanceStatusHistory
 from app.services.port_service import port_service
 from app.services.docker_service import docker_service
+from app.services.instance_service import InstanceService
 from app.services.subscription_service import require_current_subscription_plan
 
 logger = logging.getLogger(__name__)
@@ -159,8 +160,7 @@ class TemplateService:
         
         # 6. Creación y Despliegue de Contenedor Docker
         container_name = f"paas_{user.id}_{instance_uuid}"
-        host_ip = getattr(settings, "HOST_PUBLIC_IP", "localhost")
-        public_url = f"http://{host_ip}:{assigned_port}"
+        public_url = InstanceService.build_public_url(name, instance_uuid, assigned_port)
 
         try:
             container_id = docker_service.run_nginx_instance(

@@ -18,7 +18,7 @@ import time
 import requests
 from pathlib import Path
 
-BASE_URL = os.environ.get("PAAS_API_URL", "http://100.112.65.75:8000/api/v1")
+BASE_URL = os.environ.get("PAAS_API_URL", "http://localhost:8000/api/v1")
 SAMPLES_DIR = Path(__file__).resolve().parent
 
 def run_tests():
@@ -91,7 +91,7 @@ def run_tests():
     # 4. Verificación de visualización HTTP en vivo
     print(f"\n[4/10] Verificando respuesta web en {public_url}...")
     time.sleep(1.5)
-    test_urls = [f"http://100.112.65.75:{assigned_port}", public_url]
+    test_urls = [public_url, f"http://localhost:{assigned_port}", f"http://127.0.0.1:{assigned_port}"]
     verified = False
     for url in test_urls:
         try:
@@ -123,7 +123,7 @@ def run_tests():
     # 6. Visor de Logs del Servidor Web Nginx (RF-21, T3.1, T4.2)
     print(f"\n[6/10] Generando tráfico y consultando logs de Nginx (GET /instances/{instance_id}/logs)...")
     try:
-        requests.get(f"http://100.112.65.75:{assigned_port}/test-traffic-check", timeout=2)
+        requests.get(f"{public_url}/test-traffic-check", timeout=2)
     except Exception:
         pass
     time.sleep(0.5)

@@ -32,10 +32,11 @@ class Settings(BaseSettings):
     DOCKER_SOCKET_PATH: str = "/var/run/docker.sock"
     DOCKER_IMAGE_NAME: str = "cloudpaas/nginx-hosting:latest"
     DOCKER_NETWORK: str = "paas_instances_network"
-    HOST_PUBLIC_IP: str = "100.112.65.75"
+    HOST_PUBLIC_IP: str = "localhost"
     HOSTING_STORAGE_PATH: str = "/srv/hosting/instancias"
     PORT_RANGE_START: int = 30001
     PORT_RANGE_END: int = 30100
+    SUBDOMAIN_ENABLED: bool = False
     
     # CORS
     FRONTEND_URL: str = "http://localhost:5173"

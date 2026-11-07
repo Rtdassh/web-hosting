@@ -108,6 +108,10 @@ bash "$INFRA_DIR/scripts/build_hosting_image.sh"
 # 8. Instalación del Temporizador Systemd de Limpieza de Huérfanos (T1.4)
 echo ""
 echo -e "${BLUE}[7/8] Instalando servicio de mantenimiento y saneamiento de huérfanos...${NC}"
+mkdir -p /srv/hosting/infra/scripts
+cp -r "$INFRA_DIR/scripts/"* /srv/hosting/infra/scripts/
+chmod +x /srv/hosting/infra/scripts/*.sh /srv/hosting/infra/scripts/*.py 2>/dev/null || true
+ln -sf /srv/hosting/infra/scripts/cron_cleanup_orphans.sh /usr/local/bin/cloudpaas-cleanup
 if [ -d "/etc/systemd/system" ]; then
     cp "$INFRA_DIR/systemd/cloudpaas-cleanup.service" /etc/systemd/system/
     cp "$INFRA_DIR/systemd/cloudpaas-cleanup.timer" /etc/systemd/system/
@@ -116,7 +120,7 @@ if [ -d "/etc/systemd/system" ]; then
     systemctl enable --now cloudpaas-cleanup.timer
     echo -e "  ${GREEN}[OK] Temporizador systemd 'cloudpaas-cleanup.timer' activado (cada 15 minutos).${NC}"
 else
-    echo -e "  ${YELLOW}[INFO] Systemd no disponible. Se puede programar con 'infra/scripts/cron_cleanup_orphans.sh'.${NC}"
+    echo -e "  ${YELLOW}[INFO] Systemd no disponible. Se puede programar con '/usr/local/bin/cloudpaas-cleanup'.${NC}"
 fi
 
 # 9. Ejecución de Pruebas de Verificación (Smoke Tests)

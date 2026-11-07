@@ -42,15 +42,38 @@ class DockerService:
         return settings.DOCKER_IMAGE_NAME
 
     def _resolve_network(self) -> Optional[str]:
-        """Comprueba si la red aislada de la plataforma existe."""
+        """
+        Comprueba si la red aislada de la plataforma existe o la crea dinámicamente.
+        Garantiza el cumplimiento estricto de RNF-04 y RNF-07 evitando la degradación
+        insegura a la red bridge por defecto.
+        """
         if not self.client:
             return None
         try:
             self.client.networks.get(settings.DOCKER_NETWORK)
             return settings.DOCKER_NETWORK
         except NotFound:
-            logger.info(f"Red '{settings.DOCKER_NETWORK}' no encontrada, utilizando red bridge por defecto.")
-            return None
+            logger.warning(
+                f"Red aislada '{settings.DOCKER_NETWORK}' no encontrada en Docker Daemon. "
+                "Creándola automáticamente..."
+            )
+            try:
+                self.client.networks.create(
+                    name=settings.DOCKER_NETWORK,
+                    driver="bridge",
+                    labels={
+                        "managed_by": "cloudpaas",
+                        "purpose": "hosting_instances_isolation"
+                    }
+                )
+                logger.info(f"Red aislada '{settings.DOCKER_NETWORK}' creada exitosamente.")
+                return settings.DOCKER_NETWORK
+            except Exception as exc:
+                logger.error(
+                    f"No se pudo crear automáticamente la red aislada '{settings.DOCKER_NETWORK}': {exc}. "
+                    "Degradando temporalmente a red bridge por defecto."
+                )
+                return None
 
     def run_nginx_instance(
         self,
