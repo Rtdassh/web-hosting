@@ -250,34 +250,25 @@ export default function DeployModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/70 p-3 backdrop-blur-md sm:p-4">
-        <div className="relative my-auto flex max-h-[92vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.32)]">
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/60 p-3 backdrop-blur-md sm:p-4 modal-backdrop-animate">
+        <div className="relative my-auto flex max-h-[92vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[28px] border border-[#dce7e2] bg-white shadow-[0_35px_90px_rgba(9,24,34,0.18)] modal-dialog-animate">
           {/* Header */}
-          <div className="relative shrink-0 overflow-hidden border-b border-[#dce7e2] bg-[#172838] px-6 py-5 text-white">
-            <div
-              className="pointer-events-none absolute inset-0 opacity-[0.055]"
-              style={{
-                backgroundImage:
-                  'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-                backgroundSize: '28px 28px',
-              }}
-            />
-
-            <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#28B586]/20 blur-3xl" />
+          <div className="relative shrink-0 overflow-hidden border-b border-[#dce7e2] bg-gradient-to-r from-brand-50/90 via-[#f4faf7] to-white px-6 py-5">
+            <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#28B586]/15 blur-3xl" />
 
             <div className="relative flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#28B586]/25 bg-[#28B586]/10 text-[#7de0bd]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#b8dfce] bg-white text-[#28B586] shadow-sm">
                   <Rocket className="h-5 w-5" />
                 </div>
 
                 <div>
-                  <div className="mb-1 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#7de0bd]">
+                  <div className="mb-1 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#1C7F62]">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#28B586]" />
                     Nuevo despliegue
                   </div>
 
-                  <h2 className="text-xl font-black tracking-[-0.02em]">
+                  <h2 className="text-xl font-black tracking-[-0.02em] text-[#172838]">
                     Publica con Codrop
                   </h2>
                 </div>
@@ -288,7 +279,7 @@ export default function DeployModal({
                 onClick={handleClose}
                 disabled={loading}
                 aria-label="Cerrar modal"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-40"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#d6e5dd] bg-white text-slate-500 transition duration-150 hover:bg-slate-50 hover:text-navy-900 btn-tactile cursor-pointer disabled:opacity-40 shadow-sm"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -359,7 +350,7 @@ export default function DeployModal({
                   setActiveTab('zip');
                   setError('');
                 }}
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-black transition ${
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-black transition duration-150 btn-tactile cursor-pointer ${
                   activeTab === 'zip'
                     ? 'bg-white text-[#172838] shadow-sm'
                     : 'text-[#64748B] hover:text-[#172838]'
@@ -375,7 +366,7 @@ export default function DeployModal({
                   setActiveTab('template');
                   setError('');
                 }}
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-black transition ${
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-black transition duration-150 btn-tactile cursor-pointer ${
                   activeTab === 'template'
                     ? 'bg-white text-[#1C7F62] shadow-sm'
                     : 'text-[#64748B] hover:text-[#172838]'
@@ -427,26 +418,17 @@ export default function DeployModal({
                           }
                           className="block w-full text-left"
                         >
-                          <div className="relative h-28 overflow-hidden border-b border-[#e5ece8] bg-[#172838] p-3">
-                            <div
-                              className="absolute inset-0 opacity-[0.06]"
-                              style={{
-                                backgroundImage:
-                                  'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-                                backgroundSize: '20px 20px',
-                              }}
-                            />
-
-                            <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[#28B586]/25 blur-2xl" />
+                          <div className="relative h-28 overflow-hidden border-b border-[#e5ece8] bg-gradient-to-br from-[#f3f9f6] to-[#e8f4ee] p-3">
+                            <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-[#28B586]/15 blur-2xl pointer-events-none" />
 
                             <div className="relative">
                               <div className="flex items-center justify-between">
-                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#28B586]/15 text-[#7de0bd]">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-[#c2e4d4] text-[#1C7F62] shadow-sm">
                                   <Icon className="h-3.5 w-3.5" />
                                 </span>
 
                                 {isSelected && (
-                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#28B586] text-white">
+                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#28B586] text-white shadow-sm">
                                     <Check className="h-3.5 w-3.5" />
                                   </span>
                                 )}
@@ -650,7 +632,7 @@ export default function DeployModal({
                 type="button"
                 onClick={handleClose}
                 disabled={loading}
-                className="rounded-xl border border-[#dfe7e4] bg-white px-4 py-2.5 text-xs font-black text-[#64748B] transition hover:bg-[#f8fbf9]"
+                className="rounded-xl border border-[#dfe7e4] bg-white px-4 py-2.5 text-xs font-black text-[#64748B] transition duration-150 btn-tactile cursor-pointer hover:bg-[#f8fbf9]"
               >
                 Cancelar
               </button>
@@ -659,7 +641,7 @@ export default function DeployModal({
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-xl bg-[#28B586] px-4 py-2.5 text-xs font-black text-white shadow-[0_10px_25px_rgba(40,181,134,0.2)] transition hover:bg-[#239C76] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-xl bg-[#28B586] px-4 py-2.5 text-xs font-black text-white shadow-[0_10px_25px_rgba(40,181,134,0.2)] transition duration-150 btn-tactile cursor-pointer hover:bg-[#239C76] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -699,8 +681,8 @@ function TemplatePreviewModal({ template, onClose, onSelect }) {
   const Icon = template.icon;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md">
-      <div className="w-full max-w-[720px] overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.38)]">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md modal-backdrop-animate">
+      <div className="w-full max-w-[720px] overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.38)] modal-dialog-animate">
         <div className="flex items-center justify-between border-b border-[#e5ece8] px-6 py-4">
           <div>
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#28B586]">
@@ -715,7 +697,7 @@ function TemplatePreviewModal({ template, onClose, onSelect }) {
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f3f6f4] text-[#64748B] transition hover:text-[#172838]"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f3f6f4] text-[#64748B] transition duration-150 btn-tactile cursor-pointer hover:text-[#172838]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -723,31 +705,24 @@ function TemplatePreviewModal({ template, onClose, onSelect }) {
 
         <div className="bg-[#eef5f2] p-5 sm:p-7">
           <div className="overflow-hidden rounded-[22px] border border-[#dce7e2] bg-white shadow-[0_18px_45px_rgba(23,40,56,0.09)]">
-            <div className="relative overflow-hidden bg-[#172838] px-6 py-8 text-white sm:px-9 sm:py-10">
-              <div
-                className="absolute inset-0 opacity-[0.05]"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-                  backgroundSize: '26px 26px',
-                }}
-              />
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#f2f8f5] via-[#eaf5ef] to-[#e4f2ea] border-b border-[#dce8e1] px-6 py-8 text-slate-800 sm:px-9 sm:py-10">
+              <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#28B586]/15 blur-2xl" />
 
               <div className="relative max-w-lg">
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#28B586]/30 bg-[#28B586]/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#7de0bd]">
-                  <Icon className="h-3.5 w-3.5" />
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                  <Icon className="h-3.5 w-3.5 text-emerald-600" />
                   {template.preview.eyebrow}
                 </span>
 
-                <h4 className="mt-5 text-3xl font-black tracking-[-0.035em]">
+                <h4 className="mt-5 text-3xl font-black tracking-[-0.035em] text-[#172838]">
                   {template.preview.title}
                 </h4>
 
-                <p className="mt-3 max-w-md text-xs font-medium leading-5 text-slate-300">
+                <p className="mt-3 max-w-md text-xs font-medium leading-5 text-[#64748B]">
                   {template.preview.text}
                 </p>
 
-                <div className="mt-6 inline-flex rounded-xl bg-[#28B586] px-4 py-2.5 text-xs font-black text-white">
+                <div className="mt-6 inline-flex rounded-xl bg-[#28B586] px-4 py-2.5 text-xs font-black text-white shadow-sm">
                   Empezar ahora
                 </div>
               </div>
@@ -779,7 +754,7 @@ function TemplatePreviewModal({ template, onClose, onSelect }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition hover:bg-[#f3f6f4]"
+            className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition duration-150 btn-tactile cursor-pointer hover:bg-[#f3f6f4]"
           >
             Volver
           </button>
@@ -787,7 +762,7 @@ function TemplatePreviewModal({ template, onClose, onSelect }) {
           <button
             type="button"
             onClick={onSelect}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#28B586] px-5 py-2.5 text-xs font-black text-white transition hover:bg-[#239C76]"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#28B586] px-5 py-2.5 text-xs font-black text-white transition duration-150 btn-tactile cursor-pointer hover:bg-[#239C76]"
           >
             <Check className="h-4 w-4" />
             Usar esta plantilla

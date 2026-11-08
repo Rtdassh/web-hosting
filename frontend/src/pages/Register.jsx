@@ -17,6 +17,7 @@ export default function Register({
   onHome,
   onLogin,
   onVerification,
+  onNavigateSection,
 }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -81,6 +82,7 @@ export default function Register({
         variant="register"
         onHome={onHome}
         onLogin={onLogin}
+        onNavigateSection={onNavigateSection}
       />
 
 
@@ -310,7 +312,7 @@ export default function Register({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.18)] transition-all hover:-translate-y-[1px]"
+                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.18)] transition duration-150 btn-tactile cursor-pointer"
                   >
 
                     {loading ? (
@@ -335,7 +337,7 @@ export default function Register({
                     <button
                       type="button"
                       onClick={onLogin}
-                      className="font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile cursor-pointer"
                     >
                       Iniciar sesión
                     </button>

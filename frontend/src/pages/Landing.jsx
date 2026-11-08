@@ -26,7 +26,7 @@ import {
 import codropIsotipo from '../assets/codrop-isotipo.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
 
-export default function Landing({ onLogin, onRegister }) {
+export default function Landing({ onLogin, onRegister, onNavigateSection }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   const toggleFaq = (index) => {
@@ -48,6 +48,7 @@ export default function Landing({ onLogin, onRegister }) {
         }
         onLogin={onLogin}
         onRegister={onRegister}
+        onNavigateSection={onNavigateSection}
       />
 
       {/* =====================================================
@@ -115,7 +116,7 @@ export default function Landing({ onLogin, onRegister }) {
                 <button
                   type="button"
                   onClick={onRegister}
-                  className="h-[52px] px-8 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_12px_28px_rgba(40,181,134,0.28)] flex items-center justify-center gap-3 transition-colors"
+                  className="h-[52px] px-8 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_12px_28px_rgba(40,181,134,0.28)] flex items-center justify-center gap-3 transition duration-150 btn-tactile cursor-pointer"
                 >
                   Empezar gratis en 1 minuto
                   <ArrowRight className="w-4 h-4" />
@@ -123,7 +124,7 @@ export default function Landing({ onLogin, onRegister }) {
 
                 <a
                   href="#planes"
-                  className="h-[52px] px-8 rounded-[10px] border border-[#d6dfdb] hover:border-[#b9d8ca] bg-white text-navy-900 hover:text-brand-600 text-[15px] font-semibold flex items-center justify-center transition-colors shadow-sm"
+                  className="h-[52px] px-8 rounded-[10px] border border-[#d6dfdb] hover:border-[#b9d8ca] bg-white text-navy-900 hover:text-brand-600 text-[15px] font-semibold flex items-center justify-center transition duration-150 btn-tactile shadow-sm cursor-pointer"
                 >
                   Ver planes y precios
                 </a>
@@ -183,7 +184,7 @@ export default function Landing({ onLogin, onRegister }) {
                   <button
                     type="button"
                     onClick={onRegister}
-                    className="w-full h-[50px] rounded-[10px] bg-brand-50 hover:bg-brand-100 text-brand-700 text-[14px] font-semibold flex items-center justify-center gap-3 transition-colors"
+                    className="w-full h-[50px] rounded-[10px] bg-brand-50 hover:bg-brand-100 text-brand-700 text-[14px] font-semibold flex items-center justify-center gap-3 transition duration-150 btn-tactile cursor-pointer"
                   >
                     Crear mi cuenta gratuita
                     <ArrowRight className="w-4 h-4" />
@@ -448,49 +449,56 @@ export default function Landing({ onLogin, onRegister }) {
       {/* =====================================================
           BANNER FINAL / LLAMADA A LA ACCIÓN
       ====================================================== */}
-      <section className="py-20 bg-navy-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none opacity-[0.06]"
-          style={{
-            backgroundImage:
-              'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-            backgroundSize: '32px 32px',
-          }}
-        />
-        <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-brand-500/20 blur-3xl pointer-events-none" />
-        <div className="absolute -left-20 -top-20 w-80 h-80 rounded-full bg-brand-500/10 blur-3xl pointer-events-none" />
+      <section className="py-20 bg-white border-t border-[#edf2f0] relative overflow-hidden">
+        <div className="max-w-[1380px] mx-auto px-6 lg:px-12">
+          <div className="relative rounded-[28px] bg-gradient-to-br from-[#f4f9f7] via-[#ecf6f1] to-[#e4f2eb] border border-[#dce7e2] p-10 sm:p-16 text-center overflow-hidden shadow-[0_20px_60px_rgba(23,40,56,0.06)]">
+            {/* Cuadrícula sutil decorativa clara */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-[0.04]"
+              style={{
+                backgroundImage:
+                  'linear-gradient(#172838 1px, transparent 1px), linear-gradient(90deg, #172838 1px, transparent 1px)',
+                backgroundSize: '32px 32px',
+              }}
+            />
+            {/* Destellos de color esmeralda suaves */}
+            <div className="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-brand-500/15 blur-3xl pointer-events-none" />
+            <div className="absolute -left-16 -top-16 w-80 h-80 rounded-full bg-brand-300/25 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-[1380px] mx-auto px-6 lg:px-12 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-100 text-[11px] font-bold tracking-[0.16em] uppercase">
-            <Rocket className="w-3.5 h-3.5 text-brand-500" />
-            Tu web en internet hoy
-          </div>
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EAF7F1] border border-[#CFE4D6] text-[#1C7F62] text-[11px] font-black tracking-[0.18em] uppercase shadow-sm">
+                <Rocket className="w-3.5 h-3.5 text-brand-500" />
+                Tu web en internet hoy
+              </div>
 
-          <h2 className="mt-5 text-3xl sm:text-5xl font-bold tracking-[-0.03em] max-w-3xl mx-auto">
-            Publica tus sitios web hoy mismo sin complicaciones
-          </h2>
+              <h2 className="mt-5 text-3xl sm:text-5xl font-black tracking-[-0.035em] text-navy-900 leading-[1.12]">
+                Publica tus sitios web hoy mismo sin complicaciones
+              </h2>
 
-          <p className="mt-5 text-[17px] text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Sin servidores complejos, sin esperas y con recursos dedicados.
-            Comienza gratis y dale a tus proyectos el hogar en línea que se merecen.
-          </p>
+              <p className="mt-5 text-[16px] sm:text-[17px] text-[#64748b] max-w-2xl mx-auto leading-relaxed font-medium">
+                Sin servidores complejos, sin esperas y con recursos dedicados.
+                Comienza gratis y dale a tus proyectos el hogar en línea que se merecen.
+              </p>
 
-          <div className="mt-9 flex flex-col sm:flex-row justify-center items-center gap-4">
-            <button
-              type="button"
-              onClick={onRegister}
-              className="h-[52px] px-8 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_12px_30px_rgba(40,181,134,0.35)] flex items-center justify-center gap-3 transition-colors"
-            >
-              Crear cuenta gratuita
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              <div className="mt-9 flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button
+                  type="button"
+                  onClick={onRegister}
+                  className="h-[52px] px-8 rounded-[12px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_12px_28px_rgba(40,181,134,0.32)] flex items-center justify-center gap-3 transition duration-150 btn-tactile cursor-pointer"
+                >
+                  Crear cuenta gratuita
+                  <ArrowRight className="w-4 h-4" />
+                </button>
 
-            <button
-              type="button"
-              onClick={onLogin}
-              className="h-[52px] px-8 rounded-[10px] bg-navy-800 hover:bg-navy-700 border border-white/10 text-white text-[15px] font-semibold transition-colors"
-            >
-              Iniciar sesión
-            </button>
+                <button
+                  type="button"
+                  onClick={onLogin}
+                  className="h-[52px] px-8 rounded-[12px] bg-white hover:bg-brand-50 border border-[#d6dfdb] hover:border-brand-200 text-navy-900 text-[15px] font-semibold transition duration-150 btn-tactile shadow-sm cursor-pointer"
+                >
+                  Iniciar sesión
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -637,8 +645,8 @@ function PricingCard({
   return (
     <div
       className={`relative rounded-[24px] p-8 flex flex-col justify-between transition-all duration-300 ${popular
-          ? 'bg-white border-2 border-brand-500 shadow-[0_20px_50px_rgba(40,181,134,0.14)] lg:-translate-y-2'
-          : 'bg-[#fbfdfc] border border-[#dfe7e4] shadow-[0_10px_30px_rgba(23,40,56,0.04)] hover:shadow-md'
+        ? 'bg-white border-2 border-brand-500 shadow-[0_20px_50px_rgba(40,181,134,0.14)] lg:-translate-y-2'
+        : 'bg-[#fbfdfc] border border-[#dfe7e4] shadow-[0_10px_30px_rgba(23,40,56,0.04)] hover:shadow-md'
         }`}
     >
       {popular && (
@@ -695,9 +703,9 @@ function PricingCard({
         <button
           type="button"
           onClick={onAction}
-          className={`w-full h-[48px] rounded-[10px] text-[14px] font-semibold flex items-center justify-center gap-2 transition-colors ${popular
-              ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-[0_8px_20px_rgba(40,181,134,0.25)]'
-              : 'bg-navy-900 hover:bg-navy-800 text-white'
+          className={`w-full h-[48px] rounded-[10px] text-[14px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile cursor-pointer ${popular
+            ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-[0_8px_20px_rgba(40,181,134,0.25)]'
+            : 'bg-navy-900 hover:bg-navy-800 text-white'
             }`}
         >
           {buttonLabel}
@@ -714,19 +722,19 @@ function FaqItem({ question, answer, isOpen, onToggle }) {
       <button
         type="button"
         onClick={onToggle}
-        className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 hover:bg-[#fafcfb] transition-colors"
+        className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 hover:bg-[#fafcfb] transition-colors cursor-pointer"
       >
         <span className="text-[15px] sm:text-[16px] font-bold text-navy-900">
           {question}
         </span>
         <ChevronDown
-          className={`w-5 h-5 text-brand-600 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+          className={`w-5 h-5 text-brand-600 flex-shrink-0 transition-transform duration-200 ease-emil-out ${isOpen ? 'rotate-180' : ''
             }`}
         />
       </button>
 
       {isOpen && (
-        <div className="px-6 pb-6 pt-1 text-[14px] leading-relaxed text-[#64748b] border-t border-[#f1f5f3]">
+        <div className="px-6 pb-6 pt-1 text-[14px] leading-relaxed text-[#64748b] border-t border-[#f1f5f3] animate-fade-in">
           {answer}
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -18,10 +18,20 @@ import { authService } from '../services/api';
 
 export default function ResetPassword({
   initialToken = '',
+  onHome,
+  onLogin,
+  onRegister,
+  onNavigateSection,
   onBack,
   onLoginSuccess,
 }) {
   const [token, setToken] = useState(initialToken);
+
+  useEffect(() => {
+    if (initialToken) {
+      setToken(initialToken);
+    }
+  }, [initialToken]);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -75,7 +85,7 @@ export default function ResetPassword({
     } catch (requestError) {
       setError(
         requestError.response?.data?.detail ||
-          'El token es inválido o ha expirado.'
+        'El token es inválido o ha expirado.'
       );
     } finally {
       setLoading(false);
@@ -84,7 +94,13 @@ export default function ResetPassword({
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f5f9f7] text-[#172838]">
-      <PublicNavbar />
+      <PublicNavbar
+        variant="reset-password"
+        onHome={onHome}
+        onLogin={onLogin || onBack || onLoginSuccess}
+        onRegister={onRegister}
+        onNavigateSection={onNavigateSection}
+      />
 
       {/* Background */}
       <div className="pointer-events-none absolute inset-0">
@@ -104,49 +120,40 @@ export default function ResetPassword({
       <main className="relative mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-7xl items-center px-5 py-10 sm:px-6 lg:px-8">
         <div className="grid w-full overflow-hidden rounded-[30px] border border-[#dce7e2] bg-white shadow-[0_28px_80px_rgba(23,40,56,0.11)] lg:grid-cols-[0.9fr_1.1fr]">
           {/* Brand side */}
-          <section className="relative hidden overflow-hidden bg-[#172838] p-10 text-white lg:flex lg:flex-col lg:justify-between">
-            <div
-              className="absolute inset-0 opacity-[0.06]"
-              style={{
-                backgroundImage:
-                  'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-                backgroundSize: '30px 30px',
-              }}
-            />
-
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#28B586]/20 blur-3xl" />
+          <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#f4f9f7] via-[#ecf6f1] to-[#e4f2eb] border-r border-[#dce7e2] p-10 text-[#172838] lg:flex lg:flex-col lg:justify-between">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#28B586]/15 blur-3xl" />
 
             <div className="relative">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#28B586]/30 bg-[#28B586]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-[#7de0bd]">
-                <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-emerald-700">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                 Seguridad Codrop
               </span>
 
-              <h1 className="mt-6 max-w-md text-4xl font-black leading-[1.08] tracking-[-0.045em]">
+              <h1 className="mt-6 max-w-md text-4xl font-black leading-[1.08] tracking-[-0.045em] text-[#172838]">
                 Una nueva clave.
-                <span className="text-[#55d3a6]">
+                <span className="text-[#28B586]">
                   {' '}El mismo control.
                 </span>
               </h1>
 
-              <p className="mt-5 max-w-md text-sm font-medium leading-7 text-slate-300">
+              <p className="mt-5 max-w-md text-sm font-medium leading-7 text-[#64748B]">
                 Usa tu token temporal para establecer una nueva contraseña
                 y recuperar el acceso a todos tus despliegues.
               </p>
             </div>
 
-            <div className="relative rounded-[22px] border border-white/[0.08] bg-white/[0.045] p-5">
+            <div className="relative rounded-[22px] border border-[#d6e5dd] bg-white/85 backdrop-blur-sm p-5 shadow-sm">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#28B586]/10 text-[#55d3a6]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-200 text-emerald-600">
                   <KeyRound className="h-4 w-4" />
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-black">
+                  <h3 className="text-sm font-black text-[#172838]">
                     Restablecimiento protegido
                   </h3>
 
-                  <p className="mt-1 text-xs font-medium leading-6 text-slate-400">
+                  <p className="mt-1 text-xs font-medium leading-6 text-[#64748B]">
                     El token de recuperación es temporal y solo debe utilizarse
                     para completar este proceso.
                   </p>
@@ -160,7 +167,7 @@ export default function ResetPassword({
             <button
               type="button"
               onClick={onBack}
-              className="mb-9 inline-flex items-center gap-2 text-xs font-black text-[#64748B] transition hover:text-[#1C7F62]"
+              className="mb-9 inline-flex items-center gap-2 text-xs font-black text-[#64748B] transition duration-150 btn-tactile cursor-pointer hover:text-[#1C7F62]"
             >
               <ArrowLeft className="h-4 w-4" />
               Cancelar y volver
@@ -213,7 +220,7 @@ export default function ResetPassword({
                   <button
                     type="button"
                     onClick={onLoginSuccess}
-                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#172838] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(23,40,56,0.18)] transition hover:bg-[#1F3141]"
+                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#172838] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(23,40,56,0.18)] transition duration-150 btn-tactile hover:bg-[#1F3141] cursor-pointer"
                   >
                     Ir a iniciar sesión
                     <ArrowRight className="h-4 w-4" />
@@ -290,7 +297,7 @@ export default function ResetPassword({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28B586] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(40,181,134,0.24)] transition hover:bg-[#239C76] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28B586] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(40,181,134,0.24)] transition duration-150 btn-tactile hover:bg-[#239C76] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                   >
                     {loading ? (
                       <>
@@ -368,16 +375,14 @@ function PasswordField({
 function PasswordCheck({ valid, label }) {
   return (
     <div
-      className={`flex items-center gap-2 text-[11px] font-bold ${
-        valid ? 'text-[#1C7F62]' : 'text-[#94A3B8]'
-      }`}
+      className={`flex items-center gap-2 text-[11px] font-bold ${valid ? 'text-[#1C7F62]' : 'text-[#94A3B8]'
+        }`}
     >
       <span
-        className={`flex h-4 w-4 items-center justify-center rounded-full ${
-          valid
+        className={`flex h-4 w-4 items-center justify-center rounded-full ${valid
             ? 'bg-[#CFE4D6] text-[#1C7F62]'
             : 'bg-[#e8eeeb] text-[#94A3B8]'
-        }`}
+          }`}
       >
         <Check className="h-2.5 w-2.5" />
       </span>

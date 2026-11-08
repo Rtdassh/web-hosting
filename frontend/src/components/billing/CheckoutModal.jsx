@@ -215,52 +215,43 @@ export default function CheckoutModal({
       : 'MM/AA';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/75 p-4 backdrop-blur-md">
-      <div className="relative my-auto w-full max-w-[920px] overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.38)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/60 p-4 backdrop-blur-md modal-backdrop-animate">
+      <div className="relative my-auto w-full max-w-[920px] overflow-hidden rounded-[28px] border border-[#dce8e1] bg-white shadow-[0_35px_90px_rgba(9,24,34,0.18)] modal-dialog-animate">
         {/* Close */}
         <button
           type="button"
           onClick={onClose}
           disabled={status === 'processing'}
           aria-label="Cerrar modal"
-          className="absolute right-5 top-5 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+          className="absolute right-5 top-5 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-[#d6e5dd] bg-white text-slate-500 transition duration-150 btn-tactile cursor-pointer hover:bg-slate-50 hover:text-navy-900 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
         >
           <X className="h-4 w-4" />
         </button>
 
         <div className="grid lg:grid-cols-[0.92fr_1.08fr]">
           {/* Left / Codrop payment experience */}
-          <section className="relative overflow-hidden bg-[#172838] px-6 py-7 text-white sm:px-8 sm:py-8">
-            <div
-              className="pointer-events-none absolute inset-0 opacity-[0.055]"
-              style={{
-                backgroundImage:
-                  'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-                backgroundSize: '28px 28px',
-              }}
-            />
-
-            <div className="absolute -bottom-16 -left-16 h-52 w-52 rounded-full bg-[#28B586]/20 blur-3xl" />
-            <div className="absolute -right-14 top-16 h-48 w-48 rounded-full bg-[#28B586]/10 blur-3xl" />
+          <section className="relative overflow-hidden bg-gradient-to-br from-[#f3f9f6] via-[#eaf5ef] to-[#e4f2ea] border-r border-[#dce8e1] px-6 py-7 text-slate-800 sm:px-8 sm:py-8">
+            <div className="pointer-events-none absolute -bottom-16 -left-16 h-52 w-52 rounded-full bg-[#28B586]/15 blur-3xl" />
+            <div className="pointer-events-none absolute -right-14 top-16 h-48 w-48 rounded-full bg-[#28B586]/10 blur-3xl" />
 
             <div className="relative">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#28B586]/30 bg-[#28B586]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.17em] text-[#7de0bd]">
-                <ShieldCheck className="h-3.5 w-3.5" />
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.17em] text-emerald-700">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                 Pago simulado seguro
               </div>
 
-              <h2 className="max-w-sm text-2xl font-black tracking-[-0.025em] sm:text-3xl">
+              <h2 className="max-w-sm text-2xl font-black tracking-[-0.025em] text-[#172838] sm:text-3xl">
                 Mejora tu cuenta
-                <span className="text-[#55d3a6]"> sin salir de Codrop.</span>
+                <span className="text-[#28B586]"> sin salir de Codrop.</span>
               </h2>
 
-              <p className="mt-3 max-w-sm text-xs font-medium leading-5 text-slate-300">
+              <p className="mt-3 max-w-sm text-xs font-medium leading-5 text-[#64748B]">
                 La tarjeta se valida matemáticamente en tiempo real antes de
                 enviar la operación al backend.
               </p>
 
               {/* Interactive Card */}
-              <div className="relative mt-8 overflow-hidden rounded-[24px] border border-white/15 bg-gradient-to-br from-[#263f4f] via-[#203746] to-[#132532] p-5 shadow-[0_25px_60px_rgba(0,0,0,0.28)]">
+              <div className="relative mt-8 overflow-hidden rounded-[24px] border border-white/20 bg-gradient-to-br from-[#1b342b] via-[#162e26] to-[#11211b] p-5 shadow-[0_20px_50px_rgba(27,52,43,0.25)] text-white">
                 <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#28B586]/20 blur-2xl" />
 
                 <div className="relative">
@@ -316,13 +307,13 @@ export default function CheckoutModal({
                 className={`mt-4 flex items-center justify-between rounded-xl border px-4 py-3 transition ${
                   cardNumber
                     ? isLuhnValid
-                      ? 'border-[#28B586]/35 bg-[#28B586]/10'
-                      : 'border-red-400/25 bg-red-400/10'
-                    : 'border-white/10 bg-white/[0.05]'
+                      ? 'border-emerald-300 bg-emerald-50/90 text-emerald-900'
+                      : 'border-red-300 bg-red-50 text-red-900'
+                    : 'border-[#d6e6dc] bg-white/80 text-slate-700'
                 }`}
               >
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">
+                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#71887e]">
                     Validación matemática
                   </p>
 
@@ -330,9 +321,9 @@ export default function CheckoutModal({
                     className={`mt-1 text-xs font-black ${
                       cardNumber
                         ? isLuhnValid
-                          ? 'text-[#7de0bd]'
-                          : 'text-red-300'
-                        : 'text-slate-300'
+                          ? 'text-[#1C7F62]'
+                          : 'text-red-700'
+                        : 'text-slate-600'
                     }`}
                   >
                     {!cardNumber
@@ -346,8 +337,10 @@ export default function CheckoutModal({
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full ${
                     cardNumber && isLuhnValid
-                      ? 'bg-[#28B586]/20 text-[#7de0bd]'
-                      : 'bg-white/[0.07] text-slate-400'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : cardNumber && !isLuhnValid
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-slate-100 text-slate-400'
                   }`}
                 >
                   {cardNumber && isLuhnValid ? (
@@ -445,7 +438,7 @@ export default function CheckoutModal({
                   <button
                     type="button"
                     onClick={handleUseDemoCard}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#CFE4D6] bg-[#EAF7F1] px-2.5 py-1.5 text-[10px] font-black text-[#1C7F62] transition hover:bg-[#dff3e9]"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#CFE4D6] bg-[#EAF7F1] px-2.5 py-1.5 text-[10px] font-black text-[#1C7F62] transition duration-150 btn-tactile cursor-pointer hover:bg-[#dff3e9]"
                   >
                     <Sparkles className="h-3 w-3" />
                     Auto-completar
@@ -623,7 +616,7 @@ export default function CheckoutModal({
                     type="button"
                     onClick={onClose}
                     disabled={status === 'processing'}
-                    className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition hover:bg-[#f3f6f4] disabled:opacity-40"
+                    className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition duration-150 btn-tactile cursor-pointer hover:bg-[#f3f6f4] disabled:opacity-40"
                   >
                     Cancelar
                   </button>
@@ -631,9 +624,9 @@ export default function CheckoutModal({
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className={`inline-flex min-w-[190px] items-center justify-center gap-2 rounded-xl px-5 py-3 text-xs font-black transition ${
+                    className={`inline-flex min-w-[190px] items-center justify-center gap-2 rounded-xl px-5 py-3 text-xs font-black transition duration-150 btn-tactile ${
                       canSubmit
-                        ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76]'
+                        ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76] cursor-pointer'
                         : 'cursor-not-allowed bg-[#e8eeeb] text-[#94A3B8]'
                     }`}
                   >

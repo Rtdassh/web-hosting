@@ -47,6 +47,43 @@ describe('Auth Password Recovery Flow (RF-05)', () => {
         expect(screen.queryByText('Token de recuperación')).not.toBeInTheDocument();
       });
     });
+
+    it('debe permitir navegar a la pantalla de restablecimiento si ya cuenta con un token', () => {
+      const onGoToResetMock = vi.fn();
+      render(<ForgotPassword onBack={vi.fn()} onGoToReset={onGoToResetMock} />);
+
+      const directLink = screen.getByRole('button', { name: /¿Ya tienes un token temporal\? Ir a restablecer contraseña/i });
+      fireEvent.click(directLink);
+
+      expect(onGoToResetMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('debe permitir ingresar el token temporal tras recibir la confirmación de solicitud', async () => {
+      const onGoToResetMock = vi.fn();
+      authService.forgotPassword.mockResolvedValueOnce({
+        message: 'Instrucciones generadas',
+      });
+
+      render(<ForgotPassword onBack={vi.fn()} onGoToReset={onGoToResetMock} />);
+
+      const emailInput = screen.getByPlaceholderText('tu@correo.com');
+      fireEvent.change(emailInput, { target: { value: 'usuario@empresa.com' } });
+
+      const submitBtn = screen.getByRole('button', { name: /Generar enlace de recuperación/i });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText(/¿Ya recibiste tu token temporal\?/i)).toBeInTheDocument();
+      });
+
+      const tokenInput = screen.getByPlaceholderText(/Pega tu token aquí/i);
+      fireEvent.change(tokenInput, { target: { value: 'mi-token-123' } });
+
+      const continueBtn = screen.getByRole('button', { name: /Continuar y restablecer contraseña/i });
+      fireEvent.click(continueBtn);
+
+      expect(onGoToResetMock).toHaveBeenCalledWith('mi-token-123');
+    });
   });
 
   describe('ResetPassword Component', () => {

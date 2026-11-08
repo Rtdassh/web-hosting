@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -14,4 +20,100 @@ body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================
+   EMIL KOWALSKI MOTION DESIGN SYSTEM
+   - Responsive press feedback (scale 0.97 - 0.98 on :active)
+   - Custom ease-out cubic-bezier curves (no sluggish ease-in)
+   - Origin-aware transforms
+   - Hardware-accelerated transform & opacity only
+   ========================================================= */
+
+/* Button press tactile response */
+.btn-tactile {
+  transition: transform 150ms var(--ease-out), background-color 150ms var(--ease-out), border-color 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+  will-change: transform;
+}
+
+.btn-tactile:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-tactile-lift {
+    transition: transform 160ms var(--ease-out), background-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  }
+  .btn-tactile-lift:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  .btn-tactile-lift:active:not(:disabled) {
+    transform: scale(0.97) translateY(0);
+  }
+}
+
+/* Modal and dialog transitions */
+.modal-backdrop-animate {
+  animation: backdrop-fade-in 180ms var(--ease-out) forwards;
+}
+
+.modal-dialog-animate {
+  animation: dialog-pop-in 220ms var(--ease-out) forwards;
+  transform-origin: center center;
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Smooth input focus */
+input, textarea, select {
+  transition: border-color 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+}
+
+/* Accordion smooth expansion */
+.accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms var(--ease-out), opacity 180ms var(--ease-out);
+  opacity: 0;
+}
+
+.accordion-content.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.accordion-inner {
+  overflow: hidden;
+}
+
+/* Accessibility: prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .modal-dialog-animate {
+    animation: backdrop-fade-in 180ms ease forwards;
+    transform: none !important;
+  }
 }

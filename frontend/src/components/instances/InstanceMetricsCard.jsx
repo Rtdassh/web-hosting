@@ -248,8 +248,9 @@ function MetricItem({
           className={`
             h-full
             rounded-full
-            transition-all
-            duration-500
+            transition-[width]
+            duration-300
+            ease-out
             ${progressClass}
           `}
           style={{

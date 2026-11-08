@@ -37,33 +37,30 @@ function AuthenticatedApp({ onLogout }) {
         <div className="flex items-center space-x-1 sm:space-x-4">
           <button
             onClick={() => setCurrentView('dashboard')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
-              currentView === 'dashboard'
-                ? 'bg-brand-50 text-brand-700'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'dashboard'
+                ? 'bg-brand-50 text-brand-700 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
           >
             <Globe className="w-3.5 h-3.5" />
             Mis Sitios
           </button>
           <button
             onClick={() => setCurrentView('pricing')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
-              currentView === 'pricing'
-                ? 'bg-indigo-50 text-indigo-700'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'pricing'
+                ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
             Planes & Suscripciones
           </button>
           <button
             onClick={() => setCurrentView('billing')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
-              currentView === 'billing'
-                ? 'bg-indigo-50 text-indigo-700'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'billing'
+                ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
           >
             <FileText className="w-3.5 h-3.5" />
             Facturación & Recibos
@@ -71,11 +68,10 @@ function AuthenticatedApp({ onLogout }) {
           {user?.role === 'admin' && (
             <button
               onClick={() => setCurrentView('admin')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
-                currentView === 'admin'
-                  ? 'bg-amber-50 text-amber-700'
-                  : 'text-amber-600 hover:text-amber-700'
-              }`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'admin'
+                  ? 'bg-amber-50 text-amber-700 shadow-sm'
+                  : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50/50'
+                }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               Consola Admin
@@ -148,6 +144,32 @@ export function AppContent() {
   }, []);
   const [verificationEmail, setVerificationEmail] = useState('');
 
+  const navigateToSection = (sectionId) => {
+    if (screen !== 'landing') {
+      setScreen('landing');
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 80);
+    } else {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleGoHome = () => {
+    if (screen !== 'landing') {
+      setScreen('landing');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   if (isAuthenticated && screen !== 'reset-password') {
     return <AuthenticatedApp onLogout={() => setScreen('landing')} />;
   }
@@ -155,8 +177,9 @@ export function AppContent() {
   if (screen === 'register') {
     return (
       <Register
-        onHome={() => setScreen('landing')}
+        onHome={handleGoHome}
         onLogin={() => setScreen('login')}
+        onNavigateSection={navigateToSection}
         onVerification={(email) => {
           setVerificationEmail(email);
           setScreen('verification');
@@ -169,8 +192,9 @@ export function AppContent() {
     return (
       <Verification
         email={verificationEmail}
-        onHome={() => setScreen('landing')}
+        onHome={handleGoHome}
         onLogin={() => setScreen('login')}
+        onNavigateSection={navigateToSection}
       />
     );
   }
@@ -178,6 +202,10 @@ export function AppContent() {
   if (screen === 'forgot-password') {
     return (
       <ForgotPassword
+        onHome={handleGoHome}
+        onLogin={() => setScreen('login')}
+        onRegister={() => setScreen('register')}
+        onNavigateSection={navigateToSection}
         onBack={() => setScreen('login')}
         onGoToReset={(token) => {
           setResetToken(token);
@@ -191,7 +219,11 @@ export function AppContent() {
     return (
       <ResetPassword
         initialToken={resetToken}
-        onBack={() => setScreen('login')}
+        onHome={handleGoHome}
+        onLogin={() => setScreen('login')}
+        onRegister={() => setScreen('register')}
+        onNavigateSection={navigateToSection}
+        onBack={() => setScreen('forgot-password')}
         onLoginSuccess={() => setScreen('login')}
       />
     );
@@ -200,9 +232,10 @@ export function AppContent() {
   if (screen === 'login') {
     return (
       <Login
-        onHome={() => setScreen('landing')}
+        onHome={handleGoHome}
         onRegister={() => setScreen('register')}
         onForgotPassword={() => setScreen('forgot-password')}
+        onNavigateSection={navigateToSection}
       />
     );
   }
@@ -211,6 +244,7 @@ export function AppContent() {
     <Landing
       onLogin={() => setScreen('login')}
       onRegister={() => setScreen('register')}
+      onNavigateSection={navigateToSection}
     />
   );
 }

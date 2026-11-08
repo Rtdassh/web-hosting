@@ -261,7 +261,7 @@ export default function PricingPage({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition hover:border-[#b9d8ca] hover:text-[#1C7F62]"
+            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:text-[#1C7F62]"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver a mis proyectos
@@ -271,7 +271,7 @@ export default function PricingPage({
             <button
               type="button"
               onClick={onGoToBilling}
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition hover:border-[#b9d8ca] hover:text-[#1C7F62]"
+              className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:text-[#1C7F62]"
             >
               <FileText className="h-4 w-4 text-[#28B586]" />
               Ver facturación
@@ -484,14 +484,14 @@ export default function PricingPage({
                     type="button"
                     onClick={() => handlePlanAction(plan)}
                     disabled={(isCurrent && !(needsRenewal && Number(plan.price) > 0)) || isChangingPlan}
-                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-xs font-black transition ${
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-xs font-black transition duration-150 ${
                       isCurrent
                         ? needsRenewal && Number(plan.price) > 0
-                          ? 'bg-[#172838] text-white hover:bg-[#1F3141]'
+                          ? 'bg-[#172838] text-white hover:bg-[#1F3141] btn-tactile cursor-pointer'
                           : 'cursor-default border border-[#e2e8e5] bg-[#f3f6f4] text-[#94A3B8]'
                         : plan.popular
-                        ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76]'
-                        : 'bg-[#172838] text-white shadow-[0_10px_25px_rgba(23,40,56,0.12)] hover:bg-[#1F3141]'
+                        ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76] btn-tactile cursor-pointer'
+                        : 'bg-[#172838] text-white shadow-[0_10px_25px_rgba(23,40,56,0.12)] hover:bg-[#1F3141] btn-tactile cursor-pointer'
                     }`}
                   >
                     {getPlanActionLabel(plan)}

@@ -15,6 +15,7 @@ export default function Verification({
   email,
   onHome,
   onLogin,
+  onNavigateSection,
 }) {
   const [resent, setResent] = useState(false);
 
@@ -58,6 +59,7 @@ export default function Verification({
         variant="verification"
         onHome={onHome}
         onLogin={onLogin}
+        onNavigateSection={onNavigateSection}
       />
 
 
@@ -315,10 +317,9 @@ function ProgressCard({
         border
         p-3.5
         min-h-[105px]
-        ${
-          completed
-            ? 'bg-brand-50 border-brand-100'
-            : active
+        ${completed
+          ? 'bg-brand-50 border-brand-100'
+          : active
             ? 'bg-white border-brand-500 shadow-[0_6px_18px_rgba(40,181,134,0.07)]'
             : 'bg-[#fbfcfc] border-[#e8eeeb]'
         }
@@ -333,10 +334,9 @@ function ProgressCard({
           flex
           items-center
           justify-center
-          ${
-            completed
-              ? 'bg-brand-500 text-white'
-              : active
+          ${completed
+            ? 'bg-brand-500 text-white'
+            : active
               ? 'bg-brand-50 text-brand-600 border border-brand-100'
               : 'bg-white text-[#94a3b8] border border-[#e2e8f0]'
           }

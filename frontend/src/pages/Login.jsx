@@ -18,6 +18,7 @@ export default function Login({
   onHome,
   onRegister,
   onForgotPassword,
+  onNavigateSection,
 }) {
   const { login } = useAuth();
 
@@ -88,6 +89,7 @@ export default function Login({
         variant="login"
         onHome={onHome}
         onRegister={onRegister}
+        onNavigateSection={onNavigateSection}
       />
 
 
@@ -359,7 +361,7 @@ export default function Login({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.20)] transition-all hover:-translate-y-[1px]"
+                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.20)] transition duration-150 btn-tactile cursor-pointer"
                   >
 
                     {loading ? (
@@ -383,7 +385,7 @@ export default function Login({
                   <button
                     type="button"
                     onClick={handleTestAccount}
-                    className="w-full h-[40px] rounded-[9px] border border-brand-100 bg-brand-50/80 hover:bg-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition-colors"
+                    className="w-full h-[40px] rounded-[9px] border border-brand-100 bg-brand-50/80 hover:bg-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile cursor-pointer"
                   >
                     <Zap className="w-3.5 h-3.5" />
 
@@ -403,7 +405,7 @@ export default function Login({
                     <button
                       type="button"
                       onClick={onRegister}
-                      className="font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile cursor-pointer"
                     >
                       Crear cuenta
                     </button>

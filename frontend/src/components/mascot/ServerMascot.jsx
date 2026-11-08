@@ -106,8 +106,12 @@ export default function ServerMascot({
       title={`${meta.label}: ${meta.description}`}
     >
       <div
-        className={`${sizeStyles} rounded-[13px] bg-gradient-to-br from-brand-50/70 to-white border border-brand-100/70 p-1 flex items-center justify-center shadow-sm overflow-hidden ${
-          animated && meta === MASCOT_STATUS_META.running ? 'hover:scale-105 transition-transform' : ''
+        className={`${sizeStyles} rounded-[13px] bg-gradient-to-br from-brand-50/70 to-white border border-brand-100/70 p-1 flex items-center justify-center shadow-sm overflow-hidden transition duration-150 ${
+          animated && meta === MASCOT_STATUS_META.running
+            ? 'hover:scale-105 transition-transform duration-200 ease-out'
+            : animated && (meta === MASCOT_STATUS_META.creating || meta === MASCOT_STATUS_META.pending)
+            ? 'animate-subtle-pulse'
+            : ''
         }`}
       >
         <img

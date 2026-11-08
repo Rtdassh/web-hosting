@@ -241,7 +241,7 @@ export default function DashboardPage({
                   setSearchQuery('');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition text-left cursor-pointer ${
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${
                   activeNav === 'dashboard'
                     ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
                     : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
@@ -258,7 +258,7 @@ export default function DashboardPage({
                   setActiveNav('deployments');
                   onDeployClick();
                 }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition text-left cursor-pointer ${
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${
                   activeNav === 'deployments'
                     ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
                     : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
@@ -278,7 +278,7 @@ export default function DashboardPage({
                   setActiveNav('instances');
                   document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition text-left cursor-pointer ${
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${
                   activeNav === 'instances'
                     ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
                     : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
@@ -307,12 +307,12 @@ export default function DashboardPage({
               <button
                 type="button"
                 onClick={() => setIsSystemModalOpen(true)}
-                className="mt-4 w-full p-3 rounded-[13px] bg-white hover:bg-brand-50/40 border border-[#e2e8f0] hover:border-brand-200 shadow-[0_5px_20px_rgba(23,40,56,0.025)] transition group text-left cursor-pointer"
+                className="mt-4 w-full p-3 rounded-[13px] bg-white hover:bg-brand-50/40 border border-[#e2e8f0] hover:border-brand-200 shadow-[0_5px_20px_rgba(23,40,56,0.025)] transition duration-150 btn-tactile group text-left cursor-pointer"
               >
 
                 <div className="flex items-center gap-3">
 
-                  <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 group-hover:scale-105 transition-transform duration-150">
                     <Activity className="w-4 h-4" />
                   </div>
 
@@ -502,7 +502,7 @@ export default function DashboardPage({
               <button
                 type="button"
                 onClick={onDeployClick}
-                className="h-[46px] px-5 rounded-[11px] bg-brand-500 hover:bg-brand-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-[0_12px_28px_rgba(40,181,134,0.22)] transition-all hover:-translate-y-[1px] flex-shrink-0"
+                className="h-[46px] px-5 rounded-[11px] bg-brand-500 hover:bg-brand-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-[0_12px_28px_rgba(40,181,134,0.22)] transition duration-150 btn-tactile cursor-pointer flex-shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 Nuevo despliegue
@@ -626,7 +626,7 @@ export default function DashboardPage({
                     <button
                       type="button"
                       onClick={onDeployClick}
-                      className="h-9 px-4 rounded-[9px] bg-brand-50 hover:bg-brand-100 border border-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                      className="h-9 px-4 rounded-[9px] bg-brand-50 hover:bg-brand-100 border border-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Nuevo proyecto
@@ -642,7 +642,7 @@ export default function DashboardPage({
                       <button
                         type="button"
                         onClick={() => setStatusFilter('all')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${
                           statusFilter === 'all'
                             ? 'bg-navy-900 text-white shadow-sm'
                             : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
@@ -653,7 +653,7 @@ export default function DashboardPage({
                       <button
                         type="button"
                         onClick={() => setStatusFilter('running')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${
                           statusFilter === 'running'
                             ? 'bg-brand-500 text-white shadow-sm'
                             : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
@@ -664,7 +664,7 @@ export default function DashboardPage({
                       <button
                         type="button"
                         onClick={() => setStatusFilter('stopped')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${
                           statusFilter === 'stopped'
                             ? 'bg-slate-700 text-white shadow-sm'
                             : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
@@ -675,13 +675,13 @@ export default function DashboardPage({
                     </div>
 
                     <div className="relative min-w-[210px]">
-                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
                       <input
                         type="text"
                         placeholder="Buscar por nombre o puerto..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 font-medium"
+                        className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 font-medium transition duration-150"
                       />
                     </div>
                   </div>
@@ -906,7 +906,7 @@ export default function DashboardPage({
                                   title="Detener servidor"
                                   disabled={Boolean(actionLoading[inst.id])}
                                   onClick={() => handleAction(inst.id, 'stop')}
-                                  className="h-8 px-2.5 rounded-[8px] bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-[11px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                                  className="h-8 px-2.5 rounded-[8px] bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
                                 >
                                   {actionLoading[inst.id] === 'stop' ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -926,7 +926,7 @@ export default function DashboardPage({
                                   title="Iniciar servidor"
                                   disabled={Boolean(actionLoading[inst.id])}
                                   onClick={() => handleAction(inst.id, 'start')}
-                                  className="h-8 px-2.5 rounded-[8px] bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-100 text-[11px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                                  className="h-8 px-2.5 rounded-[8px] bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-100 text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
                                 >
 
                                   {actionLoading[inst.id] === 'start' ? (
@@ -949,7 +949,7 @@ export default function DashboardPage({
                                 title="Reiniciar servidor"
                                 disabled={Boolean(actionLoading[inst.id])}
                                 onClick={() => handleAction(inst.id, 'restart')}
-                                className="h-8 px-2.5 rounded-[8px] bg-[#f5f8f7] hover:bg-[#edf3f0] text-[#47675b] border border-[#dce7e2] text-[11px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                                className="h-8 px-2.5 rounded-[8px] bg-[#f5f8f7] hover:bg-[#edf3f0] text-[#47675b] border border-[#dce7e2] text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
                               >
 
                                 <RotateCcw
@@ -975,7 +975,7 @@ export default function DashboardPage({
                                 title="Sincronizar estado con Docker Engine"
                                 disabled={Boolean(actionLoading[inst.id])}
                                 onClick={() => handleSync(inst.id)}
-                                className="h-8 px-2.5 rounded-[8px] bg-white hover:bg-[#f8faf9] text-[#64748b] border border-[#dfe7e4] text-[11px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                                className="h-8 px-2.5 rounded-[8px] bg-white hover:bg-[#f8faf9] text-[#64748b] border border-[#dfe7e4] text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
                               >
 
                                 <RefreshCw
@@ -1000,7 +1000,7 @@ export default function DashboardPage({
                                 type="button"
                                 title="Ver registros"
                                 onClick={() => setSelectedLogInstance(inst)}
-                                className="h-8 px-2.5 rounded-[8px] bg-navy-900 hover:bg-navy-800 text-white text-[11px] font-medium flex items-center gap-1.5 transition-colors shadow-[0_5px_14px_rgba(23,40,56,0.15)]"
+                                className="h-8 px-2.5 rounded-[8px] bg-navy-900 hover:bg-navy-800 text-white text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer shadow-[0_5px_14px_rgba(23,40,56,0.15)]"
                               >
 
                                 <Terminal className="w-3.5 h-3.5 text-brand-500" />
@@ -1017,7 +1017,7 @@ export default function DashboardPage({
                                 title="Eliminar proyecto"
                                 disabled={Boolean(actionLoading[inst.id])}
                                 onClick={() => setDestroyConfirmInstance(inst)}
-                                className="h-8 w-8 rounded-[8px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 flex items-center justify-center transition-colors disabled:opacity-50"
+                                className="h-8 w-8 rounded-[8px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 flex items-center justify-center transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
                               >
 
                                 {actionLoading[inst.id] === 'destroy' ? (
@@ -1075,10 +1075,13 @@ export default function DashboardPage({
 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 
-          <div className="absolute inset-0 bg-navy-900/50 backdrop-blur-[3px]" />
+          <div
+            className="absolute inset-0 bg-navy-900/50 backdrop-blur-[3px] modal-backdrop-animate"
+            onClick={() => setDestroyConfirmInstance(null)}
+          />
 
 
-          <div className="relative bg-white rounded-[22px] border border-red-200 max-w-[470px] w-full p-7 shadow-[0_30px_80px_rgba(23,40,56,0.2)]">
+          <div className="relative bg-white rounded-[22px] border border-red-200 max-w-[470px] w-full p-7 shadow-[0_30px_80px_rgba(23,40,56,0.2)] modal-dialog-animate">
 
 
             <div className="flex items-center gap-4">
@@ -1087,7 +1090,7 @@ export default function DashboardPage({
                 <img
                   src={mascotDestroying}
                   alt="Cocodrilo fuera de servicio"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain select-none"
                 />
               </div>
 
@@ -1133,7 +1136,7 @@ export default function DashboardPage({
                   actionLoading[destroyConfirmInstance.id]
                 )}
                 onClick={() => setDestroyConfirmInstance(null)}
-                className="h-10 px-4 rounded-[9px] text-[12px] font-semibold text-[#64748b] hover:bg-[#f5f8f7] transition-colors"
+                className="h-10 px-4 rounded-[9px] text-[12px] font-semibold text-[#64748b] hover:bg-[#f5f8f7] transition duration-150 btn-tactile cursor-pointer"
               >
                 Cancelar
               </button>
@@ -1147,7 +1150,7 @@ export default function DashboardPage({
                 onClick={() =>
                   handleDestroy(destroyConfirmInstance.id)
                 }
-                className="h-10 px-4 rounded-[9px] text-[12px] font-semibold bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 transition-colors disabled:opacity-50"
+                className="h-10 px-4 rounded-[9px] text-[12px] font-semibold bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
               >
 
                 {actionLoading[destroyConfirmInstance.id] === 'destroy' ? (

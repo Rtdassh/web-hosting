@@ -84,14 +84,14 @@ export default function Navbar({ onLogout }) {
             <button
               type="button"
               onClick={() => setShowLogoutModal(true)}
-              className="group h-[42px] pl-2 pr-3 rounded-[12px] border border-[#e2e8f0] bg-white hover:bg-[#f8fbfa] flex items-center gap-2.5 transition-colors"
+              className="group h-[42px] pl-2 pr-3 rounded-[12px] border border-[#e2e8f0] bg-white hover:bg-[#f8fbfa] flex items-center gap-2.5 transition duration-150 btn-tactile cursor-pointer"
             >
 
               <div className="w-8 h-8 rounded-[9px] bg-brand-50 border border-brand-100 flex items-center justify-center text-[12px] font-bold text-brand-700">
                 {getInitial()}
               </div>
 
-              <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] group-hover:text-navy-900 transition-colors" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#94a3b8] group-hover:text-navy-900 transition-transform duration-150 group-hover:translate-y-0.5" />
 
             </button>
 
@@ -107,18 +107,18 @@ export default function Navbar({ onLogout }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
 
           <div
-            className="absolute inset-0 bg-navy-900/40 backdrop-blur-[3px]"
+            className="absolute inset-0 bg-navy-900/40 backdrop-blur-[3px] modal-backdrop-animate"
             onClick={() => setShowLogoutModal(false)}
           />
 
 
-          <div className="relative w-full max-w-[430px] bg-white border border-[#e2e8f0] rounded-[22px] shadow-[0_30px_80px_rgba(23,40,56,0.18)] p-7">
+          <div className="relative w-full max-w-[430px] bg-white border border-[#e2e8f0] rounded-[22px] shadow-[0_30px_80px_rgba(23,40,56,0.18)] p-7 modal-dialog-animate">
 
             <button
               type="button"
               onClick={() => setShowLogoutModal(false)}
               aria-label="Cerrar"
-              className="absolute top-5 right-5 w-8 h-8 rounded-lg flex items-center justify-center text-[#64748b] hover:text-navy-900 hover:bg-[#f1f5f4] transition-colors"
+              className="absolute top-5 right-5 w-8 h-8 rounded-lg flex items-center justify-center text-[#64748b] hover:text-navy-900 hover:bg-[#f1f5f4] transition duration-150 btn-tactile cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -144,7 +144,7 @@ export default function Navbar({ onLogout }) {
               <button
                 type="button"
                 onClick={() => setShowLogoutModal(false)}
-                className="h-10 px-4 rounded-[9px] bg-white border border-[#e2e8f0] hover:bg-[#f8faf9] text-navy-900 text-[13px] font-semibold transition-colors"
+                className="h-10 px-4 rounded-[9px] bg-white border border-[#e2e8f0] hover:bg-[#f8faf9] text-navy-900 text-[13px] font-semibold transition duration-150 btn-tactile cursor-pointer"
               >
                 Cancelar
               </button>
@@ -153,7 +153,7 @@ export default function Navbar({ onLogout }) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="h-10 px-4 rounded-[9px] bg-brand-500 hover:bg-brand-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(40,181,134,0.18)] transition-colors"
+                className="h-10 px-4 rounded-[9px] bg-brand-500 hover:bg-brand-600 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(40,181,134,0.18)] transition duration-150 btn-tactile cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 Cerrar sesión

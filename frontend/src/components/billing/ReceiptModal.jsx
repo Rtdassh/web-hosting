@@ -49,69 +49,61 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/75 p-4 backdrop-blur-md">
-      <div className="my-auto w-full max-w-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.38)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/60 p-4 backdrop-blur-md modal-backdrop-animate">
+      <div className="my-auto w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#dce8e1] bg-white shadow-[0_35px_90px_rgba(9,24,34,0.16)] modal-dialog-animate">
         {/* Header */}
-        <div className="relative overflow-hidden bg-[#172838] px-6 py-6 text-white sm:px-7">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.055]"
-            style={{
-              backgroundImage:
-                'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-              backgroundSize: '28px 28px',
-            }}
-          />
-
-          <div className="absolute -right-10 -top-14 h-44 w-44 rounded-full bg-[#28B586]/20 blur-3xl" />
+        <div className="relative overflow-hidden bg-gradient-to-b from-[#f2f8f5] via-[#eaf5ef] to-white border-b border-[#dce8e1] px-6 py-6 sm:px-7">
+          <div className="pointer-events-none absolute -right-12 -top-14 h-44 w-44 rounded-full bg-[#28B586]/15 blur-3xl" />
 
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar comprobante"
-            className="absolute right-5 top-5 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition hover:bg-white/20"
+            className="absolute right-5 top-5 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-[#d6e5dd] bg-white text-slate-500 transition duration-150 btn-tactile cursor-pointer hover:bg-slate-50 hover:text-navy-900 shadow-sm"
           >
             <X className="h-4 w-4" />
           </button>
 
           <div className="relative pr-12">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#28B586]/30 bg-[#28B586]/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.17em] text-[#7de0bd]">
-              <ShieldCheck className="h-3.5 w-3.5" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.17em] text-emerald-700">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
               Transacción aprobada
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#28B586]/15 text-[#7de0bd]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-200 text-emerald-600 shadow-sm">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
 
               <div>
-                <h2 className="text-xl font-black tracking-[-0.02em]">
+                <h2 className="text-xl font-black tracking-[-0.02em] text-[#172838]">
                   Comprobante Codrop
                 </h2>
 
-                <p className="mt-1 text-xs font-medium text-slate-400">
+                <p className="mt-0.5 text-xs font-medium text-[#64748B]">
                   Registro digital de tu cambio de suscripción
                 </p>
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3">
+            <div className="mt-5 flex items-center justify-between rounded-2xl border border-[#d6e6dc] bg-white/90 backdrop-blur-sm px-4 py-3 shadow-sm">
               <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#71887e]">
                   Factura
                 </p>
 
-                <p className="mt-1 font-mono text-xs font-black text-[#7de0bd]">
+                <p className="mt-1 font-mono text-xs font-black text-[#1C7F62]">
                   {invoiceNumber}
                 </p>
               </div>
 
               <div className="text-right">
-                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#71887e]">
                   Estado
                 </p>
 
-                <p className="mt-1 text-xs font-black text-white">
+                <p className="mt-1 text-xs font-black text-[#1C7F62] inline-flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#28B586]" />
                   Aprobada
                 </p>
               </div>
@@ -208,7 +200,7 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d6dfdb] bg-white px-4 py-3 text-xs font-black text-[#334e5e] transition hover:border-[#b9d8ca] hover:bg-[#f8fbf9] hover:text-[#1C7F62]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d6dfdb] bg-white px-4 py-3 text-xs font-black text-[#334e5e] transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:bg-[#f8fbf9] hover:text-[#1C7F62]"
             >
               <Printer className="h-4 w-4" />
               Imprimir / PDF
@@ -217,7 +209,7 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl bg-[#172838] px-4 py-3 text-xs font-black text-white transition hover:bg-[#1F3141]"
+              className="rounded-xl bg-[#28B586] hover:bg-[#239C76] px-4 py-3 text-xs font-black text-white shadow-[0_8px_20px_rgba(40,181,134,0.22)] transition duration-150 btn-tactile cursor-pointer"
             >
               Cerrar
             </button>

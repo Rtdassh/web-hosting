@@ -65,8 +65,8 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
     .map((i) => i.assigned_port);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-navy-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-white border border-[#dfe7e4] rounded-2xl shadow-[0_20px_60px_rgba(23,40,56,0.18)] flex flex-col overflow-hidden text-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-navy-900/60 backdrop-blur-sm modal-backdrop-animate">
+      <div className="relative w-full max-w-lg bg-white border border-[#dfe7e4] rounded-2xl shadow-[0_20px_60px_rgba(23,40,56,0.18)] flex flex-col overflow-hidden text-slate-900 modal-dialog-animate">
         
         {/* Header */}
         <div className="relative px-6 py-4 bg-gradient-to-r from-brand-50/90 to-white border-b border-brand-100 flex items-center justify-between">
@@ -90,7 +90,7 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
             type="button"
             onClick={onClose}
             aria-label="Cerrar modal"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-navy-900 hover:bg-slate-100 transition"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-navy-900 hover:bg-slate-100 transition duration-150 btn-tactile cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -227,7 +227,7 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
             type="button"
             onClick={handleTestConnection}
             disabled={testing}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-xs font-bold text-slate-700 shadow-sm transition disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-xs font-bold text-slate-700 shadow-sm transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
           >
             {testing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
             Probar Conectividad
@@ -235,7 +235,7 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-sm"
+            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition duration-150 btn-tactile cursor-pointer shadow-sm"
           >
             Cerrar Diagnóstico
           </button>

@@ -202,7 +202,7 @@ export default function AdminDashboardPage({ onBack }) {
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-black text-[#334e5e] shadow-sm transition hover:border-[#b9d8ca] hover:text-[#1C7F62]"
+            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-black text-[#334e5e] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:text-[#1C7F62]"
           >
             <ArrowLeft className="h-4 w-4" />
             Salir de administración
@@ -219,7 +219,7 @@ export default function AdminDashboardPage({ onBack }) {
               onClick={fetchData}
               disabled={loading}
               title="Actualizar consola"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce7e2] bg-white text-[#1C7F62] shadow-sm transition hover:bg-[#f8fbf9] disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce7e2] bg-white text-[#1C7F62] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:bg-[#f8fbf9] disabled:opacity-50"
             >
               <RefreshCw
                 className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
@@ -229,30 +229,21 @@ export default function AdminDashboardPage({ onBack }) {
         </div>
 
         {/* Hero */}
-        <section className="relative mb-7 overflow-hidden rounded-[28px] border border-[#dce7e2] bg-[#172838] px-6 py-8 text-white shadow-[0_22px_60px_rgba(23,40,56,0.13)] md:px-9">
-          <div
-            className="absolute inset-0 opacity-[0.055]"
-            style={{
-              backgroundImage:
-                'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
-              backgroundSize: '30px 30px',
-            }}
-          />
-
-          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#28B586]/20 blur-3xl" />
+        <section className="relative mb-7 overflow-hidden rounded-[28px] border border-[#dce7e2] bg-gradient-to-r from-amber-50/60 via-[#fdfefd] to-white px-6 py-8 text-[#172838] shadow-[0_20px_50px_rgba(23,40,56,0.06)] md:px-9">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#28B586]/10 blur-3xl" />
 
           <div className="relative max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#28B586]/30 bg-[#28B586]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.17em] text-[#7de0bd]">
-              <Gauge className="h-3.5 w-3.5" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.17em] text-amber-800">
+              <Gauge className="h-3.5 w-3.5 text-amber-700" />
               Gobernanza Codrop
             </div>
 
-            <h1 className="text-3xl font-black tracking-[-0.035em] sm:text-4xl lg:text-[44px]">
+            <h1 className="text-3xl font-black tracking-[-0.035em] text-[#172838] sm:text-4xl lg:text-[44px]">
               Visibilidad global para
-              <span className="text-[#55d3a6]"> mantener el control.</span>
+              <span className="text-[#28B586]"> mantener el control.</span>
             </h1>
 
-            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-slate-300">
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[#64748B]">
               Supervisa usuarios, facturación simulada, contenedores y
               recursos del host desde una única consola administrativa.
             </p>
@@ -514,7 +505,7 @@ export default function AdminDashboardPage({ onBack }) {
                                 disabled={
                                   instance.status !== 'running'
                                 }
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] font-black text-amber-700 transition duration-150 btn-tactile cursor-pointer hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 <Square className="h-3 w-3" />
                                 Forzar detención
@@ -528,7 +519,7 @@ export default function AdminDashboardPage({ onBack }) {
                                     'force_destroy'
                                   )
                                 }
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-black text-red-600 transition hover:bg-red-100"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-black text-red-600 transition duration-150 btn-tactile cursor-pointer hover:bg-red-100"
                               >
                                 <Trash2 className="h-3 w-3" />
                                 Forzar eliminación
@@ -613,8 +604,8 @@ export default function AdminDashboardPage({ onBack }) {
 
         {/* Force action modal */}
         {selectedInstanceForAction && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md">
-            <div className="w-full max-w-[500px] overflow-hidden rounded-[26px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.4)]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md modal-backdrop-animate">
+            <div className="w-full max-w-[500px] overflow-hidden rounded-[26px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.4)] modal-dialog-animate">
               <div className="relative bg-[#172838] px-6 py-5 text-white">
                 <button
                   type="button"
@@ -622,7 +613,8 @@ export default function AdminDashboardPage({ onBack }) {
                     setSelectedInstanceForAction(null)
                   }
                   disabled={actionLoading}
-                  className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20"
+                  aria-label="Cerrar modal"
+                  className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 transition duration-150 btn-tactile cursor-pointer hover:bg-white/20"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -691,7 +683,7 @@ export default function AdminDashboardPage({ onBack }) {
                       setSelectedInstanceForAction(null)
                     }
                     disabled={actionLoading}
-                    className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition hover:bg-[#f3f6f4]"
+                    className="rounded-xl px-4 py-2.5 text-xs font-black text-[#64748B] transition duration-150 btn-tactile cursor-pointer hover:bg-[#f3f6f4]"
                   >
                     Cancelar
                   </button>
@@ -702,7 +694,7 @@ export default function AdminDashboardPage({ onBack }) {
                     disabled={
                       actionLoading || !actionReason.trim()
                     }
-                    className={`inline-flex min-w-[175px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white transition disabled:opacity-50 ${
+                    className={`inline-flex min-w-[175px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white transition duration-150 btn-tactile cursor-pointer disabled:opacity-50 ${
                       actionType === 'force_destroy'
                         ? 'bg-red-600 hover:bg-red-700'
                         : 'bg-amber-500 hover:bg-amber-600'

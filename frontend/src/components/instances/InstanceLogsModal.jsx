@@ -140,13 +140,13 @@ export default function InstanceLogsModal({
 
       {/* Fondo */}
       <div
-        className="absolute inset-0 bg-navy-900/60 backdrop-blur-[4px]"
+        className="absolute inset-0 bg-navy-900/60 backdrop-blur-[4px] modal-backdrop-animate"
         onClick={onClose}
       />
 
 
       {/* Modal */}
-      <div className="relative w-full max-w-[980px] h-[650px] max-h-[88vh] rounded-[22px] border border-[#263d49] bg-[#101d27] shadow-[0_35px_100px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-[980px] h-[650px] max-h-[88vh] rounded-[22px] border border-[#263d49] bg-[#101d27] shadow-[0_35px_100px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col modal-dialog-animate">
 
 
         {/* =====================================================
@@ -232,7 +232,7 @@ export default function InstanceLogsModal({
               type="button"
               onClick={onClose}
               aria-label="Cerrar"
-              className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#78909c] hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#78909c] hover:text-white hover:bg-white/10 transition duration-150 btn-tactile cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -276,7 +276,9 @@ export default function InstanceLogsModal({
                 rounded-[6px]
                 text-[10px]
                 font-semibold
-                transition-colors
+                transition duration-150
+                btn-tactile
+                cursor-pointer
                 ${
                   filterStream === 'error'
                     ? 'bg-rose-500 text-white'
@@ -306,7 +308,9 @@ export default function InstanceLogsModal({
                 flex
                 items-center
                 gap-1.5
-                transition-colors
+                transition duration-150
+                btn-tactile
+                cursor-pointer
                 ${
                   autoScroll
                     ? 'bg-brand-500/10 border-brand-500/25 text-brand-500'
@@ -328,7 +332,7 @@ export default function InstanceLogsModal({
               type="button"
               onClick={handleCopy}
               disabled={logs.length === 0}
-              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-40"
+              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-40"
             >
 
               {copied ? (
@@ -348,7 +352,7 @@ export default function InstanceLogsModal({
               type="button"
               onClick={fetchLogs}
               disabled={loading}
-              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-40"
+              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-40"
             >
 
               <RefreshCw
@@ -512,7 +516,9 @@ function FilterButton({
         rounded-[6px]
         text-[10px]
         font-semibold
-        transition-colors
+        transition duration-150
+        btn-tactile
+        cursor-pointer
         ${
           active
             ? 'bg-brand-500 text-white'

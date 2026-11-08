@@ -90,7 +90,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition hover:border-[#b9d8ca] hover:text-[#1C7F62]"
+            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:text-[#1C7F62]"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver a mis proyectos
@@ -100,7 +100,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
             <button
               type="button"
               onClick={onGoToPricing}
-              className="inline-flex w-fit items-center gap-2 rounded-xl bg-[#172838] px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-[#1F3141]"
+              className="inline-flex w-fit items-center gap-2 rounded-xl bg-[#172838] px-4 py-2.5 text-xs font-black text-white shadow-sm transition duration-150 btn-tactile cursor-pointer hover:bg-[#1F3141]"
             >
               Explorar planes
               <ArrowRight className="h-4 w-4" />
@@ -168,7 +168,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
             onClick={fetchInvoices}
             disabled={loading}
             title="Actualizar historial"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce7e2] bg-white text-[#1C7F62] shadow-sm transition hover:border-[#b9d8ca] hover:bg-[#f8fbf9] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce7e2] bg-white text-[#1C7F62] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:bg-[#f8fbf9] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw
               className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
@@ -207,7 +207,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
               <button
                 type="button"
                 onClick={fetchInvoices}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#172838] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#1F3141]"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#172838] px-4 py-2.5 text-xs font-black text-white transition duration-150 btn-tactile cursor-pointer hover:bg-[#1F3141]"
               >
                 <RefreshCw className="h-4 w-4" />
                 Intentar nuevamente
@@ -236,7 +236,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
                 <button
                   type="button"
                   onClick={onGoToPricing}
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#28B586] px-5 py-3 text-xs font-black text-white shadow-[0_10px_25px_rgba(40,181,134,0.2)] transition hover:bg-[#239C76]"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#28B586] px-5 py-3 text-xs font-black text-white shadow-[0_10px_25px_rgba(40,181,134,0.2)] transition duration-150 btn-tactile cursor-pointer hover:bg-[#239C76]"
                 >
                   Explorar planes
                   <ArrowRight className="h-4 w-4" />
@@ -319,7 +319,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
                         <button
                           type="button"
                           onClick={() => setSelectedInvoice(invoice)}
-                          className="inline-flex items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-3.5 py-2 text-[11px] font-black text-[#334e5e] transition hover:border-[#b9d8ca] hover:bg-[#f8fbf9] hover:text-[#1C7F62]"
+                          className="inline-flex items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-3.5 py-2 text-[11px] font-black text-[#334e5e] transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:bg-[#f8fbf9] hover:text-[#1C7F62]"
                         >
                           <FileText className="h-3.5 w-3.5" />
                           Ver recibo
