@@ -11,10 +11,10 @@ La base antigua `paas_db` no se migro durante esta validacion.
 
 Comando: `python -m pytest tests -q --cov=app --cov-report=term-missing`.
 
-- 353 pruebas y 36 subpruebas aprobadas.
+- 356 pruebas y 36 subpruebas aprobadas.
 - 4 pruebas omitidas: requieren habilitar PostgreSQL aislado para migraciones.
 - 1 advertencia de deprecacion de TestClient.
-- Cobertura global de lineas: 82%; `sync_worker.py`: 94%.
+- Cobertura global de lineas: 82%; `sync_worker.py`: 95%.
 - Estos porcentajes no acreditan rendimiento, cobertura de ramas ni seguridad completa.
 
 ## Prueba real observada
@@ -38,10 +38,14 @@ consulta. No se midio la latencia exacta; no acredita un limite estricto <30s.
 
 ## Pendientes de integracion
 
-- Coordinar ejecucion con los 4 workers ASGI de `docker-compose.prod.yml`:
-  cada proceso inicia su propio reconciliador; falta controlar concurrencia.
-- Revisar contenedores eliminados cuando la BD ya indica `stopped`: el ciclo
-  actual consulta solamente instancias `running`.
+- Se incorporo `pg_try_advisory_xact_lock(7304100)` para excluir ciclos
+  simultaneos en la misma base. Una prueba local con dos conexiones reales
+  confirmo que el segundo ciclo se omite mientras existe el bloqueo y puede
+  ejecutarse al liberarlo. Falta probar el despliegue productivo con 4 procesos.
+- El ciclo ahora consulta `running` y `stopped`. Pruebas automatizadas
+  verifican `stopped -> failed` cuando desaparece el contenedor y que no se
+  duplique el historial si continua detenido. Este caso adicional aun no se
+  repitio con Docker real.
 - Verificar recuperacion despues de indisponibilidad real de Docker.
 - Repetir las pruebas relevantes si se modifica el worker y actualizar esta evidencia.
 - Completar documento de arquitectura, guion de sustentacion y revision del equipo.

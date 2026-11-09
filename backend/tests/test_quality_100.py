@@ -45,6 +45,7 @@ def test_sync_cycle_always_closes_database_session(fails):
 
     worker = SyncWorker()
     db = Mock()
+    db.execute.return_value.scalar.return_value = True
 
     with patch.object(module, "SessionLocal", return_value=db), \
          patch.object(worker, "reconcile_states") as reconcile:
@@ -176,3 +177,72 @@ def test_worker_rolls_back_when_commit_fails():
 
         db.commit.assert_called_once()
         db.rollback.assert_called_once()
+
+@pytest.mark.parametrize(
+    "docker_status,changed",
+    [("exited", False), ("not_found", True)]
+)
+def test_worker_checks_stopped_instances(docker_status, changed):
+    from types import SimpleNamespace
+    from unittest.mock import Mock, patch
+    from app.models.instance import InstanceStatus
+    from app.services.sync_worker import SyncWorker
+    from app.services import sync_worker as module
+
+    instance = SimpleNamespace(
+        id=5,
+        container_id="contenedor-prueba",
+        assigned_port=30001,
+        status=InstanceStatus.STOPPED
+    )
+    db = Mock()
+    db.query.return_value.filter.return_value.all.return_value = [instance]
+
+    with patch.object(module, "docker_service") as docker_mock, \
+         patch.object(module, "port_service") as port_mock:
+        docker_mock.get_container_status.return_value = docker_status
+
+        result = SyncWorker().reconcile_states(db)
+
+        assert result["discrepancies_found"] == int(changed)
+
+        if changed:
+            assert instance.status == InstanceStatus.FAILED
+            history = db.add.call_args.args[0]
+            assert history.previous_status == "stopped"
+            assert history.new_status == "failed"
+            port_mock.release_port.assert_called_once_with(
+                db, 30001, commit=False
+            )
+            db.commit.assert_called_once()
+        else:
+            assert instance.status == InstanceStatus.STOPPED
+            db.add.assert_not_called()
+            db.commit.assert_not_called()
+            port_mock.release_port.assert_not_called()
+
+def test_sync_cycle_skips_when_another_worker_holds_lock():
+    from unittest.mock import Mock, patch
+    from app.services.sync_worker import SyncWorker
+    from app.services import sync_worker as module
+
+    worker = SyncWorker()
+    db = Mock()
+    db.execute.return_value.scalar.return_value = False
+
+    with patch.object(module, "SessionLocal", return_value=db), \
+         patch.object(worker, "reconcile_states") as reconcile:
+        result = worker._run_sync_cycle()
+
+    assert result == {
+        "status": "skipped",
+        "reason": "another_worker_running"
+    }
+    reconcile.assert_not_called()
+    db.query.assert_not_called()
+    db.commit.assert_not_called()
+    db.close.assert_called_once()
+
+    statement, parameters = db.execute.call_args.args
+    assert "pg_try_advisory_xact_lock" in str(statement)
+    assert parameters == {"lock_id": 7304100}

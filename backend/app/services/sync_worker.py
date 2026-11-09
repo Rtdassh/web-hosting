@@ -4,6 +4,8 @@ Mantiene la consistencia del sistema ante fallas externas o detenciones manuales
 """
 import asyncio
 import logging
+from sqlalchemy import text
+
 from typing import Dict, Any
 from sqlalchemy.orm import Session
 
@@ -34,13 +36,18 @@ class SyncWorker:
             return {"status": "skipped", "reason": "docker_unavailable"}
 
         try:
-            # Consultar instancias que la base de datos cree que están corriendo
+            # Revisar instancias activas y detenidas.
             running_instances = db.query(Instance).filter(
-                Instance.status == InstanceStatus.RUNNING
+                Instance.status.in_([
+                    InstanceStatus.RUNNING,
+                    InstanceStatus.STOPPED
+                ])
             ).all()
 
             for inst in running_instances:
+                previous_status = inst.status
                 docker_status = docker_service.get_container_status(inst.container_id)
+
 
                 # Si el contenedor ya no existe en Docker
                 if docker_status == "not_found":
@@ -52,7 +59,7 @@ class SyncWorker:
                     port_service.release_port(db, inst.assigned_port, commit=False)
                     db.add(InstanceStatusHistory(
                         instance_id=inst.id,
-                        previous_status=InstanceStatus.RUNNING.value,
+                        previous_status=previous_status.value,
                         new_status=InstanceStatus.FAILED.value,
                         reason="Contenedor no encontrado en Docker durante reconciliación periódica (SyncWorker)"
                     ))
@@ -60,7 +67,10 @@ class SyncWorker:
                     reconciled_instances.append(inst.id)
 
                 # Si el contenedor está detenido en Docker pero corriendo en BD
-                elif docker_status in ["exited", "stopped", "dead"]:
+                elif (
+                    docker_status in ["exited", "stopped", "dead"]
+                    and previous_status != InstanceStatus.STOPPED
+                ):
                     logger.warning(
                         f"[RECONCILIATION] Contenedor '{inst.container_id}' (instancia {inst.id}) "
                         f"detenido en Docker ({docker_status}). Marcando como STOPPED."
@@ -68,7 +78,7 @@ class SyncWorker:
                     inst.status = InstanceStatus.STOPPED
                     db.add(InstanceStatusHistory(
                         instance_id=inst.id,
-                        previous_status=InstanceStatus.RUNNING.value,
+                        previous_status=previous_status.value,
                         new_status=InstanceStatus.STOPPED.value,
                         reason=f"Contenedor detenido externamente en Docker [{docker_status}] (SyncWorker)"
                     ))
@@ -92,9 +102,20 @@ class SyncWorker:
         }
 
     def _run_sync_cycle(self):
-        """Ejecuta un ciclo y cierra siempre su sesión de base de datos."""
+        """Ejecuta un ciclo exclusivo y cierra siempre la sesión."""
         db = SessionLocal()
         try:
+            acquired = db.execute(
+                text("SELECT pg_try_advisory_xact_lock(:lock_id)"),
+                {"lock_id": 7304100}
+            ).scalar()
+
+            if acquired is not True:
+                return {
+                    "status": "skipped",
+                    "reason": "another_worker_running"
+                }
+
             return self.reconcile_states(db)
         finally:
             db.close()
