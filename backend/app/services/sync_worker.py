@@ -20,6 +20,7 @@ class SyncWorker:
     def __init__(self, interval_seconds: int = 30):
         self.interval_seconds = interval_seconds
         self.is_running = False
+        self._stop_event = None
 
     def reconcile_states(self, db: Session) -> Dict[str, Any]:
         """
@@ -78,31 +79,57 @@ class SyncWorker:
                 db.commit()
                 logger.info(f"[RECONCILIATION] Se reconciliaron {discrepancies_found} instancias.")
 
-        except Exception as e:
-            logger.error(f"[RECONCILIATION] Error durante el ciclo de sincronización: {e}")
-            if db:
-                db.rollback()
+        except Exception:
+            logger.exception(
+                "[RECONCILIATION] No se pudo completar el ciclo."
+            )
+            db.rollback()
+            raise
 
         return {
             "discrepancies_found": discrepancies_found,
             "reconciled_instances": reconciled_instances
         }
 
+    def _run_sync_cycle(self):
+        """Ejecuta un ciclo y cierra siempre su sesión de base de datos."""
+        db = SessionLocal()
+        try:
+            return self.reconcile_states(db)
+        finally:
+            db.close()
+
     async def start_periodic_sync(self):
-        """Loop asíncrono para ejecutar la reconciliación periódica en background."""
+        """Ejecuta la reconciliación sin bloquear el bucle de la API."""
+        self._stop_event = asyncio.Event()
         self.is_running = True
-        logger.info(f"SyncWorker iniciado con intervalo de {self.interval_seconds}s.")
-        while self.is_running:
-            try:
-                db = SessionLocal()
-                self.reconcile_states(db)
-                db.close()
-            except Exception as e:
-                logger.error(f"Error en loop de SyncWorker: {e}")
-            await asyncio.sleep(self.interval_seconds)
+        logger.info(
+            "SyncWorker iniciado con intervalo de %ss.",
+            self.interval_seconds
+        )
+
+        try:
+            while self.is_running:
+                try:
+                    await asyncio.to_thread(self._run_sync_cycle)
+                except Exception:
+                    logger.exception("Error en el ciclo de SyncWorker.")
+
+                if self.is_running:
+                    try:
+                        await asyncio.wait_for(
+                            self._stop_event.wait(),
+                            timeout=self.interval_seconds
+                        )
+                    except asyncio.TimeoutError:
+                        pass  # Timeout esperado, continuar con el siguiente ciclo
+        finally:
+            self.is_running = False
 
     def stop(self):
         self.is_running = False
+        if self._stop_event is not None:
+            self._stop_event.set()
 
 
 sync_worker = SyncWorker()
