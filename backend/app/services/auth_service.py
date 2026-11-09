@@ -25,6 +25,9 @@ from app.services.password_reset_delivery import (
 
 logger = logging.getLogger(__name__)
 
+EMAIL_VERIFICATION_TOKEN_PREFIX = "email-verification:"
+EMAIL_VERIFICATION_TOKEN_TTL = timedelta(hours=24)
+
 
 def subscription_is_current(subscription):
     try:
@@ -39,12 +42,18 @@ class AuthService:
     def __init__(self, password_reset_delivery: PasswordResetDeliveryProvider | None = None):
         self.password_reset_delivery = password_reset_delivery
 
-    @staticmethod
-    def register_user(user_in: UserCreate, db: Session) -> User:
+    def register_user(self, user_in: UserCreate, db: Session) -> User:
         """
         RF-01: Registro de nuevos usuarios con rol Cliente y asignación de Plan Free.
-        Raises HTTPException 400 si el correo ya existe.
+        Creates an unverified account and delivers a single-use verification link.
         """
+        delivery = self.password_reset_delivery
+        if delivery is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="La verificación por correo no está configurada.",
+            )
+
         existing_user = db.query(User).filter(User.email == user_in.email).first()
         if existing_user:
             raise HTTPException(
@@ -68,19 +77,45 @@ class AuthService:
             full_name=user_in.full_name,
             role=UserRole.CLIENT,
             is_active=True,
-            is_verified=True  # Simulado para entorno local (RF-02)
+            is_verified=False,
         )
         db.add(db_user)
-        db.flush()
-        db.add(Subscription(
-            user_id=db_user.id,
-            plan_id=free_plan.id,
-            status="active",
-            auto_renew=False,
-        ))
-        db.commit()
-        db.refresh(db_user)
+        try:
+            db.flush()
+            db.add(Subscription(
+                user_id=db_user.id,
+                plan_id=free_plan.id,
+                status="active",
+                auto_renew=False,
+            ))
+            raw_token, token_record = self._create_email_verification_token(
+                db_user.id,
+                db,
+                commit=False,
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
 
+        try:
+            delivery.send_email_verification(db_user.email, raw_token)
+        except Exception as delivery_error:
+            self._invalidate_email_verification_token(token_record.id, db)
+            logger.warning(
+                "Email verification delivery failed during registration "
+                "(error_type=%s).",
+                type(delivery_error).__name__,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "La cuenta se creó, pero no se pudo enviar el correo. "
+                    "Solicita un nuevo enlace de verificación."
+                ),
+            ) from None
+
+        db.refresh(db_user)
         return db_user
 
     @staticmethod
@@ -99,7 +134,16 @@ class AuthService:
             )
 
         if not user.is_active:
-            raise HTTPException(status_code=400, detail="Usuario inactivo.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales de acceso incorrectas.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Debes verificar tu correo antes de iniciar sesión.",
+            )
 
         access_token = create_access_token(subject=user.id, role=user.role.value)
         return {
@@ -140,6 +184,7 @@ class AuthService:
             "full_name": current_user.full_name,
             "role": current_user.role,
             "is_active": current_user.is_active,
+            "is_verified": current_user.is_verified,
             "created_at": current_user.created_at,
             "plan": plan_info
         }
@@ -215,6 +260,104 @@ class AuthService:
                 )
         return generic_response
 
+    def resend_email_verification(self, email: str, db: Session) -> dict:
+        """Issue a fresh 24-hour verification token without disclosing account state."""
+        generic_response = {
+            "message": (
+                "Si la cuenta existe y aún requiere verificación, recibirás un nuevo enlace."
+            )
+        }
+        delivery = self.password_reset_delivery
+        if delivery is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="La verificación por correo no está configurada.",
+            )
+
+        user = db.query(User).filter(User.email == email).first()
+        if user is None or user.is_verified:
+            return generic_response
+
+        raw_token, token_record = self._create_email_verification_token(user.id, db)
+        try:
+            delivery.send_email_verification(email, raw_token)
+        except Exception as delivery_error:
+            self._invalidate_email_verification_token(token_record.id, db)
+            logger.warning(
+                "Email verification delivery failed during resend (error_type=%s).",
+                type(delivery_error).__name__,
+            )
+        return generic_response
+
+    @staticmethod
+    def _create_email_verification_token(
+        user_id: int,
+        db: Session,
+        commit: bool = True,
+    ):
+        from app.models.token import PasswordResetToken
+
+        db.execute(
+            update(PasswordResetToken)
+            .where(
+                PasswordResetToken.user_id == user_id,
+                PasswordResetToken.token_hash.like(
+                    f"{EMAIL_VERIFICATION_TOKEN_PREFIX}%"
+                ),
+                PasswordResetToken.used.is_(False),
+            )
+            .values(used=True)
+        )
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = EMAIL_VERIFICATION_TOKEN_PREFIX + hashlib.sha256(
+            raw_token.encode("utf-8")
+        ).hexdigest()
+        token_record = PasswordResetToken(
+            user_id=user_id,
+            token_hash=token_hash,
+            expires_at=datetime.now(timezone.utc) + EMAIL_VERIFICATION_TOKEN_TTL,
+            used=False,
+        )
+        db.add(token_record)
+        if commit:
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+                raise
+        return raw_token, token_record
+
+    @staticmethod
+    def _invalidate_email_verification_token(token_id: int, db: Session) -> None:
+        from app.models.token import PasswordResetToken
+
+        try:
+            invalidated_id = db.execute(
+                update(PasswordResetToken)
+                .where(PasswordResetToken.id == token_id)
+                .values(used=True)
+                .returning(PasswordResetToken.id)
+            ).scalar_one_or_none()
+            if invalidated_id is None:
+                raise RuntimeError("The email verification token was not invalidated.")
+            db.commit()
+        except Exception as invalidation_error:
+            try:
+                db.rollback()
+            except Exception as rollback_error:
+                logger.critical(
+                    "Email verification token invalidation failed "
+                    "(invalidation_error_type=%s, rollback_error_type=%s).",
+                    type(invalidation_error).__name__,
+                    type(rollback_error).__name__,
+                )
+            else:
+                logger.critical(
+                    "Email verification token invalidation failed "
+                    "(error_type=%s).",
+                    type(invalidation_error).__name__,
+                )
+
     @staticmethod
     def reset_password(token: str, new_password: str, db: Session) -> dict:
         """Atomically consume a valid reset token and change its user's password."""
@@ -261,11 +404,62 @@ class AuthService:
 
     @staticmethod
     def verify_email(token: str, db: Session) -> dict:
-        """RF-02 (Hito 100%): deshabilitado hasta implementar validación real."""
-        raise HTTPException(
-            status_code=501,
-            detail="La verificación de correo todavía no está habilitada.",
-        )
+        """Atomically consume a valid 24-hour token and verify its account."""
+        from app.models.token import PasswordResetToken
+
+        now = datetime.now(timezone.utc)
+        token_hash = EMAIL_VERIFICATION_TOKEN_PREFIX + hashlib.sha256(
+            token.encode("utf-8")
+        ).hexdigest()
+        try:
+            user_id = db.execute(
+                update(PasswordResetToken)
+                .where(
+                    PasswordResetToken.token_hash == token_hash,
+                    PasswordResetToken.used.is_(False),
+                    PasswordResetToken.expires_at > now,
+                )
+                .values(used=True)
+                .returning(PasswordResetToken.user_id)
+            ).scalar_one_or_none()
+            if user_id is None:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token de verificación inválido, expirado o ya utilizado.",
+                )
+
+            verified_user_id = db.execute(
+                update(User)
+                .where(User.id == user_id, User.is_verified.is_(False))
+                .values(is_verified=True)
+                .returning(User.id)
+            ).scalar_one_or_none()
+            if verified_user_id is None:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token de verificación inválido, expirado o ya utilizado.",
+                )
+
+            user = db.query(User).filter(User.id == verified_user_id).first()
+            if user is None:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token de verificación inválido, expirado o ya utilizado.",
+                )
+            db.commit()
+            return {
+                "message": "Correo verificado exitosamente.",
+                "is_verified": True,
+                "email": user.email,
+            }
+        except HTTPException:
+            raise
+        except Exception:
+            db.rollback()
+            raise
 
 
 

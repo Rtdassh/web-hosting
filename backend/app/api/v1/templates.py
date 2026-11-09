@@ -25,7 +25,13 @@ def get_templates():
     return template_service.get_catalog()
 
 
-@router.post("/instances/deploy-template", response_model=DeployTemplateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/instances/deploy-template",
+    response_model=DeployTemplateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Desplegar una plantilla",
+    responses={429: {"description": "Se excedió el límite de despliegues por IP."}},
+)
 def deploy_template(
     request: DeployTemplateRequest,
     current_user: User = Depends(get_current_user),

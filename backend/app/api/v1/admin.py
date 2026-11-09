@@ -41,7 +41,15 @@ def get_all_instances(
     return admin_service.list_all_instances(db)
 
 
-@router.post("/instances/{instance_id}/force-action", response_model=ForceActionResponse)
+@router.post(
+    "/instances/{instance_id}/force-action",
+    response_model=ForceActionResponse,
+    summary="Ejecutar una acción administrativa de emergencia",
+    responses={
+        403: {"description": "Se requiere rol de administrador."},
+        429: {"description": "Se excedió el límite de acciones administrativas por IP."},
+    },
+)
 def force_instance_action(
     instance_id: int,
     request: ForceActionRequest,

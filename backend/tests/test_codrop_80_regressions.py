@@ -108,10 +108,11 @@ def test_profile_exposes_expired_period(db):
 
 def test_verification_token_never_verifies_arbitrary_user():
     db = Mock()
+    db.execute.return_value.scalar_one_or_none.return_value = None
     with pytest.raises(HTTPException) as error:
         AuthService.verify_email('invalid-token', db)
-    assert error.value.status_code == 501
-    assert not db.mock_calls
+    assert error.value.status_code == 400
+    db.rollback.assert_called_once()
 
 
 @pytest.mark.parametrize('action', ['start_instance', 'stop_instance', 'restart_instance'])
@@ -209,6 +210,7 @@ def test_isolated_application_flow_to_http_200(db, tmp_path, monkeypatch):
     from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
     from app.main import app
     from app.core.rate_limit import RateLimitMiddleware
+    from app.services.auth_service import auth_service
     from app.services import instance_service as module
     RateLimitMiddleware.reset_limits()
     free=Plan(name='Free',price=0,max_instances=1)
@@ -218,6 +220,13 @@ def test_isolated_application_flow_to_http_200(db, tmp_path, monkeypatch):
         sock.bind(('127.0.0.1',0)); available_port=sock.getsockname()[1]
     db.add(PortAllocation(port_number=available_port,is_allocated=False)); db.commit()
     monkeypatch.setattr(module,'settings',NS(RESOLVED_STORAGE_PATH=tmp_path,HOST_PUBLIC_IP='127.0.0.1'))
+    class CapturingDelivery:
+        def __init__(self):
+            self.tokens = []
+        def send_email_verification(self, email, token):
+            self.tokens.append((email, token))
+    delivery = CapturingDelivery()
+    monkeypatch.setattr(auth_service, 'password_reset_delivery', delivery)
     servers=[]
     def serve(**kwargs):
         server=ThreadingHTTPServer(('127.0.0.1',kwargs['host_port']),partial(SimpleHTTPRequestHandler,directory=kwargs['host_storage_path']))
@@ -230,6 +239,12 @@ def test_isolated_application_flow_to_http_200(db, tmp_path, monkeypatch):
         with TestClient(app) as client:
             response=client.post('/api/v1/auth/register',json={'email':'flow@example.invalid','password':'SyntheticPass123!','full_name':'Synthetic Flow'})
             assert response.status_code==201,response.text
+            assert response.json()['is_verified'] is False
+            delivered_email, verification_token = delivery.tokens[0]
+            assert delivered_email == 'flow@example.invalid'
+            verified=client.get('/api/v1/auth/verify-email',params={'token':verification_token})
+            assert verified.status_code==200,verified.text
+            assert verified.json()['is_verified'] is True
             response=client.post('/api/v1/auth/login',json={'email':'flow@example.invalid','password':'SyntheticPass123!'})
             assert response.status_code==200,response.text
             client.headers['Authorization']='Bearer '+response.json()['access_token']

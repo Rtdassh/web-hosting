@@ -2,6 +2,7 @@ import smtplib
 import ssl
 from dataclasses import dataclass
 from email.message import EmailMessage
+from html import escape
 from typing import Protocol
 from urllib.parse import urlencode, urlsplit, urlunsplit
 
@@ -11,6 +12,9 @@ from app.core.config import Settings, settings
 class PasswordResetDeliveryProvider(Protocol):
     def send_password_reset(self, email: str, token: str) -> None:
         """Deliver a reset token without exposing it through the API."""
+
+    def send_email_verification(self, email: str, token: str) -> None:
+        """Deliver an email-verification token without exposing it through the API."""
 
 
 @dataclass(frozen=True)
@@ -28,10 +32,9 @@ class SMTPPasswordResetDelivery:
             frontend.scheme,
             frontend.netloc,
             frontend.path,
-            "",
             urlencode({"reset_token": token}),
+            "",
         ))
-
         message = EmailMessage()
         message["Subject"] = "Restablece tu contraseña de Codrop"
         message["From"] = sender
@@ -42,6 +45,38 @@ class SMTPPasswordResetDelivery:
             "Si no solicitaste este cambio, puedes ignorar este mensaje."
         )
 
+        self._send_message(message)
+
+    def send_email_verification(self, email: str, token: str) -> None:
+        host = self.config.PASSWORD_RESET_SMTP_HOST
+        sender = self.config.PASSWORD_RESET_FROM_EMAIL
+        if not host or not sender or not self.config.password_reset_smtp_enabled:
+            raise RuntimeError("Email verification SMTP delivery is not configured.")
+
+        frontend = urlsplit(self.config.PASSWORD_RESET_FRONTEND_URL)
+        verification_url = urlunsplit((
+            frontend.scheme,
+            frontend.netloc,
+            frontend.path,
+            urlencode({"token": token}),
+            "",
+        ))
+
+        message = EmailMessage()
+        message["Subject"] = "Verifica tu correo de Codrop"
+        message["From"] = sender
+        message["To"] = email
+        message.set_content(
+            "Creaste una cuenta de Codrop.\n\n"
+            f"Abre este enlace dentro de las próximas 24 horas:\n{verification_url}\n\n"
+            "Si no creaste esta cuenta, puedes ignorar este mensaje."
+        )
+        self._send_message(message)
+
+    def _send_message(self, message: EmailMessage) -> None:
+        host = self.config.PASSWORD_RESET_SMTP_HOST
+        if not host:
+            raise RuntimeError("Email delivery SMTP host is not configured.")
         context = ssl.create_default_context()
         smtp_class = (
             smtplib.SMTP_SSL
@@ -54,11 +89,7 @@ class SMTPPasswordResetDelivery:
         if self.config.PASSWORD_RESET_SMTP_SECURITY == "ssl":
             smtp_options["context"] = context
 
-        with smtp_class(
-            host,
-            self.config.PASSWORD_RESET_SMTP_PORT,
-            **smtp_options,
-        ) as client:
+        with smtp_class(host, self.config.PASSWORD_RESET_SMTP_PORT, **smtp_options) as client:
             if self.config.PASSWORD_RESET_SMTP_SECURITY == "starttls":
                 client.ehlo()
                 client.starttls(context=context)
@@ -67,11 +98,8 @@ class SMTPPasswordResetDelivery:
             password = self.config.PASSWORD_RESET_SMTP_PASSWORD
             if username:
                 if password is None:
-                    raise RuntimeError("Password reset SMTP authentication is incomplete.")
-                client.login(
-                    username,
-                    password,
-                )
+                    raise RuntimeError("Email delivery SMTP authentication is incomplete.")
+                client.login(username, password)
             client.send_message(message)
 
 
@@ -79,20 +107,29 @@ class SMTPPasswordResetDelivery:
 class BrevoPasswordResetDelivery:
     config: Settings
 
-    def send_password_reset(self, email: str, token: str) -> None:
+    def _send_email(self, email: str, subject: str, html_content: str, text_content: str) -> None:
         from app.services.brevo_service import BrevoEmailService
 
         if not self.config.brevo_api_enabled:
-            raise RuntimeError("Password reset Brevo API delivery is not configured.")
+            raise RuntimeError("Brevo API email delivery is not configured.")
+        service = BrevoEmailService(config=self.config)
+        service.send_email(
+            to_email=email,
+            subject=subject,
+            html_content=html_content,
+            text_content=text_content,
+        )
 
+    def send_password_reset(self, email: str, token: str) -> None:
         frontend = urlsplit(self.config.PASSWORD_RESET_FRONTEND_URL)
         reset_url = urlunsplit((
             frontend.scheme,
             frontend.netloc,
             frontend.path,
-            "",
             urlencode({"reset_token": token}),
+            "",
         ))
+        safe_reset_url = escape(reset_url, quote=True)
 
         html_content = (
             "<!DOCTYPE html>"
@@ -116,8 +153,8 @@ class BrevoPasswordResetDelivery:
             "<h2>Restablece tu contraseña</h2>"
             "<p>Solicitaste restablecer tu contraseña para acceder a la plataforma.</p>"
             "<p>Haz clic en el siguiente enlace dentro de los próximos <strong>15 minutos</strong>:</p>"
-            f'<div class="btn-wrapper"><a href="{reset_url}" class="btn">Restablecer mi contraseña</a></div>'
-            f'<p style="font-size: 13px; color: #94a3b8; word-break: break-all;">Si el botón no funciona, ingresa a:<br>{reset_url}</p>'
+            f'<div class="btn-wrapper"><a href="{safe_reset_url}" class="btn">Restablecer mi contraseña</a></div>'
+            f'<p style="font-size: 13px; color: #94a3b8; word-break: break-all;">Si el botón no funciona, ingresa a:<br>{safe_reset_url}</p>'
             '<div class="footer">Si no solicitaste este cambio, puedes ignorar este mensaje. Tu cuenta permanece segura.</div>'
             "</div>"
             "</body>"
@@ -130,12 +167,43 @@ class BrevoPasswordResetDelivery:
             "Si no solicitaste este cambio, puedes ignorar este mensaje."
         )
 
-        service = BrevoEmailService(config=self.config)
-        service.send_email(
-            to_email=email,
-            subject="Restablece tu contraseña de CloudPaaS",
-            html_content=html_content,
-            text_content=text_content,
+        self._send_email(
+            email,
+            "Restablece tu contraseña de CloudPaaS",
+            html_content,
+            text_content,
+        )
+
+    def send_email_verification(self, email: str, token: str) -> None:
+        frontend = urlsplit(self.config.PASSWORD_RESET_FRONTEND_URL)
+        verification_url = urlunsplit((
+            frontend.scheme,
+            frontend.netloc,
+            frontend.path,
+            urlencode({"token": token}),
+            "",
+        ))
+        safe_verification_url = escape(verification_url, quote=True)
+        html_content = (
+            "<!DOCTYPE html><html><body>"
+            "<h2>Verifica tu correo de Codrop</h2>"
+            "<p>Confirma tu dirección de correo para activar tu cuenta.</p>"
+            "<p>El enlace caduca en 24 horas y solo se puede usar una vez.</p>"
+            f'<p><a href="{safe_verification_url}">Verificar correo</a></p>'
+            f"<p>Si el enlace no funciona, copia esta dirección: {safe_verification_url}</p>"
+            "<p>Si no creaste esta cuenta, ignora este mensaje.</p>"
+            "</body></html>"
+        )
+        text_content = (
+            "Confirma tu dirección de correo para activar tu cuenta de Codrop.\n\n"
+            f"El enlace caduca en 24 horas y solo se puede usar una vez:\n{verification_url}\n\n"
+            "Si no creaste esta cuenta, ignora este mensaje."
+        )
+        self._send_email(
+            email,
+            "Verifica tu correo de Codrop",
+            html_content,
+            text_content,
         )
 
 

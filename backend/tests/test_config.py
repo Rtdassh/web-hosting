@@ -71,11 +71,22 @@ def test_production_rejects_insecure_defaults():
 def test_production_accepts_nonempty_configured_secrets():
     settings = isolated_settings(
         ENVIRONMENT="production",
-        SECRET_KEY="test-only-signing-value-long-enough",
+        SECRET_KEY="test-only-signing-value-that-is-at-least-32-bytes",
         POSTGRES_PASSWORD="test-only-database-value",
     )
 
     assert settings.ENVIRONMENT == "production"
+
+
+def test_jwt_configuration_is_hs256_and_limited_to_24_hours():
+    settings = isolated_settings()
+    assert settings.ALGORITHM == "HS256"
+    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 60 * 24
+
+    with pytest.raises(ValueError):
+        isolated_settings(ACCESS_TOKEN_EXPIRE_MINUTES=60 * 25)
+    with pytest.raises(ValueError):
+        isolated_settings(ALGORITHM="HS512")
 
 
 def test_database_url_preserves_password_with_special_characters():
