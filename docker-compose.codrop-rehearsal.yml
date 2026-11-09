@@ -1,0 +1,19 @@
+# New rehearsal project only. Never uses the real Debian DB, host storage, or Docker socket.
+services:
+  postgres-copy:
+    image: postgres:${CODROP_REHEARSAL_POSTGRES_MAJOR:?Set 16 or 17 matching source}-alpine
+    environment:
+      POSTGRES_USER: codrop_rehearsal
+      POSTGRES_PASSWORD: ${CODROP_REHEARSAL_PASSWORD:?Set a separate rehearsal password}
+      POSTGRES_DB: codrop_restore_80
+    ports:
+      - "127.0.0.1:55439:5432"
+    volumes:
+      - rehearsal_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codrop_rehearsal -d codrop_restore_80"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  rehearsal_data:

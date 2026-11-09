@@ -1,0 +1,266 @@
+import pytest
+from unittest.mock import MagicMock, patch
+from pathlib import Path
+import zipfile
+import io
+
+from app.schemas.instance_schema import (
+    InstanceMetricsResponse,
+    InstanceLogsResponse,
+    InstanceSyncResponse,
+    InstanceActionRequest,
+)
+from app.services.docker_service import DockerService
+from app.services.artifact_service import ArtifactService
+
+
+# ==============================================================================
+# Pruebas Unitarias de Esquemas Pydantic DTO (Hito 50%)
+# ==============================================================================
+def test_instance_metrics_schema():
+    payload = {
+        "instance_id": 1,
+        "status": "running",
+        "cpu_percent": 1.25,
+        "memory_usage_mb": 7.82,
+        "memory_limit_mb": 128.0,
+        "memory_percent": 6.11,
+        "updated_at": "2026-10-07T12:00:00Z"
+    }
+    schema = InstanceMetricsResponse(**payload)
+    assert schema.instance_id == 1
+    assert schema.cpu_percent == 1.25
+    assert schema.memory_usage_mb == 7.82
+    assert schema.memory_limit_mb == 128.0
+    assert schema.memory_percent == 6.11
+    assert schema.status == "running"
+
+
+def test_instance_logs_schema():
+    payload = {
+        "instance_id": 1,
+        "container_id": "abcdef123456",
+        "total_lines": 2,
+        "lines": [
+            "2026-10-07T12:00:00Z GET / 200 OK",
+            "2026-10-07T12:00:01Z GET /style.css 200 OK"
+        ]
+    }
+    schema = InstanceLogsResponse(**payload)
+    assert schema.total_lines == 2
+    assert len(schema.lines) == 2
+    assert schema.container_id == "abcdef123456"
+
+
+def test_instance_sync_schema():
+    payload = {
+        "instance_id": 1,
+        "previous_status": "running",
+        "current_status": "stopped",
+        "synced": True
+    }
+    schema = InstanceSyncResponse(**payload)
+    assert schema.instance_id == 1
+    assert schema.previous_status == "running"
+    assert schema.current_status == "stopped"
+    assert schema.synced is True
+
+
+# ==============================================================================
+# Pruebas Unitarias de DockerService (T4.1, T4.2, T4.3)
+# ==============================================================================
+def test_docker_stats_no_connection_raises_503():
+    from fastapi import HTTPException
+    service = DockerService()
+    service.client = None  # Simular entorno sin daemon
+    with pytest.raises(HTTPException) as exc_info:
+        service.get_container_stats("c123", ram_limit_mb=128.0)
+    assert exc_info.value.status_code == 503
+
+
+def test_docker_stats_stopped_container():
+    service = DockerService()
+    mock_container = MagicMock()
+    mock_container.status = "exited"
+    service.client = MagicMock()
+    service.client.containers.get.return_value = mock_container
+
+    stats = service.get_container_stats("c123", ram_limit_mb=256.0)
+    assert stats["status"] == "stopped"
+    assert stats["cpu_percent"] == 0.0
+    assert stats["memory_usage_mb"] == 0.0
+    assert stats["memory_limit_mb"] == 256.0
+
+
+def test_docker_stats_calculation():
+    service = DockerService()
+    mock_container = MagicMock()
+    mock_container.status = "running"
+    mock_container.stats.return_value = {
+        "cpu_stats": {
+            "cpu_usage": {"total_usage": 200000000, "percpu_usage": [100000000, 100000000]},
+            "system_cpu_usage": 1000000000,
+            "online_cpus": 2
+        },
+        "precpu_stats": {
+            "cpu_usage": {"total_usage": 100000000},
+            "system_cpu_usage": 500000000
+        },
+        "memory_stats": {
+            "usage": 20 * 1024 * 1024,
+            "stats": {"cache": 5 * 1024 * 1024}
+        }
+    }
+    service.client = MagicMock()
+    service.client.containers.get.return_value = mock_container
+
+    stats = service.get_container_stats("c123", ram_limit_mb=128.0)
+    assert stats["status"] == "running"
+    # CPU delta: (100M / 500M) * 2 * 100 = 40.0%
+    assert stats["cpu_percent"] == 40.0
+    # Memory: (20MB - 5MB) = 15.0 MB
+    assert stats["memory_usage_mb"] == 15.0
+    # Percent: 15 / 128 * 100 = 11.72%
+    assert stats["memory_percent"] == 11.72
+
+
+def test_docker_logs_retrieval():
+    service = DockerService()
+    mock_container = MagicMock()
+    mock_container.logs.return_value = b"2026-10-07 line 1\n2026-10-07 line 2\n"
+    service.client = MagicMock()
+    service.client.containers.get.return_value = mock_container
+
+    logs = service.get_container_logs("c123", tail=100)
+    assert len(logs) == 2
+    assert "line 1" in logs[0]
+    assert "line 2" in logs[1]
+
+
+def test_docker_status_not_found():
+    from docker.errors import NotFound
+    service = DockerService()
+    service.client = MagicMock()
+    service.client.containers.get.side_effect = NotFound("Container not found")
+
+    status = service.get_container_status("c_missing")
+    assert status == "not_found"
+
+
+def test_docker_resolve_network_existing():
+    service = DockerService()
+    service.client = MagicMock()
+    mock_net = MagicMock()
+    service.client.networks.get.return_value = mock_net
+
+    net_name = service._resolve_network()
+    assert net_name == "paas_instances_network"
+    service.client.networks.get.assert_called_once_with("paas_instances_network")
+    service.client.networks.create.assert_not_called()
+
+
+def test_docker_resolve_network_auto_create_on_not_found():
+    from docker.errors import NotFound
+    service = DockerService()
+    service.client = MagicMock()
+    service.client.networks.get.side_effect = NotFound("Network paas_instances_network not found")
+    mock_created_net = MagicMock()
+    service.client.networks.create.return_value = mock_created_net
+
+    net_name = service._resolve_network()
+    assert net_name == "paas_instances_network"
+    service.client.networks.get.assert_called_once_with("paas_instances_network")
+    service.client.networks.create.assert_called_once_with(
+        name="paas_instances_network",
+        driver="bridge",
+        labels={
+            "managed_by": "cloudpaas",
+            "purpose": "hosting_instances_isolation"
+        }
+    )
+
+
+def test_docker_resolve_network_create_failure_fallback_none():
+    from docker.errors import NotFound
+    service = DockerService()
+    service.client = MagicMock()
+    service.client.networks.get.side_effect = NotFound("Not found")
+    service.client.networks.create.side_effect = Exception("Docker daemon error")
+
+    net_name = service._resolve_network()
+    assert net_name is None
+
+
+# ==============================================================================
+# Pruebas Unitarias de Seguridad: Anti-Zip Slip en ArtifactService (RNF-05)
+# ==============================================================================
+def test_anti_zip_slip_prevention(tmp_path):
+    from fastapi import UploadFile, HTTPException
+
+    dest_dir = tmp_path / "instancia_segura"
+    dest_dir.mkdir()
+
+    # Crear zip malicioso con escape de directorio
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zf:
+        zf.writestr("../../etc/passwd", "root:x:0:0::/root:/bin/bash")
+    zip_buffer.seek(0)
+
+    upload_file = UploadFile(file=zip_buffer, filename="malicious.zip")
+
+    with pytest.raises(HTTPException) as exc_info:
+        ArtifactService.sanitize_and_extract_zip(upload_file, str(dest_dir))
+    assert exc_info.value.status_code == 400
+    assert "Directory Traversal" in exc_info.value.detail or "zip slip" in exc_info.value.detail.lower()
+
+
+def test_legitimate_zip_extraction(tmp_path):
+    from fastapi import UploadFile
+
+    dest_dir = tmp_path / "instancia_ok"
+    dest_dir.mkdir()
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zf:
+        zf.writestr("index.html", "<h1>CloudPaaS Ok</h1>")
+        zf.writestr("css/style.css", "body { color: black; }")
+    zip_buffer.seek(0)
+
+    upload_file = UploadFile(file=zip_buffer, filename="legit.zip")
+    ArtifactService.sanitize_and_extract_zip(upload_file, str(dest_dir))
+
+    assert (dest_dir / "index.html").exists()
+    assert (dest_dir / "css" / "style.css").exists()
+
+
+# ==============================================================================
+# Pruebas Unitarias de Red y Formato de URL (RF-19)
+# ==============================================================================
+def test_build_public_url_standard():
+    from app.services.instance_service import InstanceService
+    from app.core.config import settings
+
+    with patch.object(settings, "SUBDOMAIN_ENABLED", False):
+        with patch.object(settings, "HOST_PUBLIC_IP", "localhost"):
+            url = InstanceService.build_public_url("Mi App Web", "abc-12345", 30005)
+            assert url == "http://localhost:30005"
+
+
+def test_build_public_url_subdomain_rfc6761():
+    from app.services.instance_service import InstanceService
+    from app.core.config import settings
+
+    with patch.object(settings, "SUBDOMAIN_ENABLED", True):
+        with patch.object(settings, "HOST_PUBLIC_IP", "localhost"):
+            url = InstanceService.build_public_url("Mi Proyecto Increíble!!", "abc-12345", 30005)
+            assert url == "http://mi-proyecto-increble.localhost:30005"
+
+        with patch.object(settings, "HOST_PUBLIC_IP", "192.168.1.100"):
+            url2 = InstanceService.build_public_url("Portfolio", "def-67890", 30010)
+            assert url2 == "http://portfolio.192.168.1.100:30010"
+
+        with patch.object(settings, "HOST_PUBLIC_IP", "localhost"):
+            url3 = InstanceService.build_public_url("!!!", "abcde123-uuid", 30015)
+            assert url3 == "http://app-abcde123.localhost:30015"
+
+

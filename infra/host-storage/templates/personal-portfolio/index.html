@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Rivera | Ingeniero de Software & DevOps</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card: #131b2e;
+      --accent: #38bdf8;
+      --accent-gradient: linear-gradient(135deg, #38bdf8, #818cf8);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #1e293b;
+      --tag-bg: #1e293b;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    header {
+      padding: 4rem 0 2rem;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    .avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #090d16;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.3);
+      flex-shrink: 0;
+    }
+    .title-area h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .title-area p {
+      color: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    .bio {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+    .social-links {
+      display: flex;
+      gap: 1rem;
+    }
+    .social-btn {
+      padding: 0.5rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .social-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+    section {
+      margin: 3.5rem 0;
+    }
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h2::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      margin-left: 1rem;
+    }
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .skill-tag {
+      padding: 0.4rem 0.85rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .skill-tag:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    .project-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      transition: all 0.2s;
+    }
+    .project-card:hover {
+      border-color: #38bdf8;
+      transform: translateY(-3px);
+    }
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+    .project-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .project-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+    .project-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .project-tag {
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+    .timeline {
+      position: relative;
+      border-left: 2px solid var(--border);
+      padding-left: 1.5rem;
+      margin-left: 0.5rem;
+    }
+    .timeline-item {
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: calc(-1.5rem - 6px);
+      top: 0.35rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .timeline-date {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .timeline-role {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    .timeline-company {
+      color: var(--accent);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+    footer {
+      padding: 3rem 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="profile-header">
+        <div class="avatar">AR</div>
+        <div class="title-area">
+          <h1>Alex Rivera</h1>
+          <p>DevOps & Cloud Engineer</p>
+        </div>
+      </div>
+      <p class="bio">
+        Especialista en arquitecturas de nube, orquestación de contenedores Docker/Kubernetes y automatización de despliegues CI/CD. Apasionado por la observabilidad, la resiliencia de sistemas y los estándares de calidad ISO/IEC 25010.
+      </p>
+      <div class="social-links">
+        <a href="https://github.com" target="_blank" rel="noreferrer" class="social-btn">GitHub</a>
+        <a href="https://linkedin.com" target="_blank" rel="noreferrer" class="social-btn">LinkedIn</a>
+        <a href="mailto:alex.rivera@example.com" class="social-btn">Contacto Directo</a>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <h2>Habilidades Técnicas</h2>
+        <div class="skills-grid">
+          <span class="skill-tag">Docker Engine & Compose</span>
+          <span class="skill-tag">Linux / Debian / Alpine</span>
+          <span class="skill-tag">Cgroups v2 & Hardening</span>
+          <span class="skill-tag">Python & FastAPI</span>
+          <span class="skill-tag">Nginx Reverse Proxy</span>
+          <span class="skill-tag">PostgreSQL 16</span>
+          <span class="skill-tag">Bash Scripting</span>
+          <span class="skill-tag">Git / GitHub Actions</span>
+          <span class="skill-tag">Networking & Redes Virtuales</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Proyectos Destacados</h2>
+        <div class="projects-grid">
+          <div class="project-card">
+            <div class="project-header">
+              <div class="project-title">CloudPaaS Hosting Platform</div>
+              <span class="project-tag">Producción</span>
+            </div>
+            <p class="project-desc">
+              Plataforma como Servicio (PaaS) que automatiza el ciclo de vida de servidores Nginx aislados con límites de memoria y CPU, red bridge protegida y panel de control en tiempo real.
+            </p>
+            <div class="project-tags">
+              <span class="project-tag">Python</span>
+              <span class="project-tag">Docker SDK</span>
+              <span class="project-tag">FastAPI</span>
+              <span class="project-tag">Nginx</span>
+            </div>
+          </div>
+
+          <div class="project-card">
+            <div class="project-header">
+              <div class="project-title">Suite de Benchmarking ISO/IEC 25010</div>
+              <span class="project-tag">Open Source</span>
+            </div>
+            <p class="project-desc">
+              Conjunto de scripts automatizados para certificar latencia P95 &lt; 200ms, huella de memoria idle &lt; 10MB y contención estricta Anti-OOM en entornos de contenedores masivos.
+            </p>
+            <div class="project-tags">
+              <span class="project-tag">Bash</span>
+              <span class="project-tag">cgroups</span>
+              <span class="project-tag">Linux Kernel</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Experiencia Laboral</h2>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-date">2024 — Presente</div>
+            <div class="timeline-role">Lead Infrastructure & DevOps Specialist</div>
+            <div class="timeline-company">Cloud Innovations Lab</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+              Diseño de arquitecturas multi-tenant, optimización de imágenes Nginx Alpine non-root y automatización de pipelines de entrega continua.
+            </p>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-date">2022 — 2024</div>
+            <div class="timeline-role">Backend & Systems Developer</div>
+            <div class="timeline-company">TechSolutions Global</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+              Construcción de APIs RESTful de alto rendimiento en FastAPI, integración de bases de datos relacionales y monitoreo con Prometheus.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 Alex Rivera. Desplegado con 1-Clic en la plataforma CloudPaaS.</p>
+    </footer>
+  </div>
+
+</body>
+</html>

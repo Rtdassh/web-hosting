@@ -1,4 +1,5 @@
 import os
+import uuid
 import zipfile
 import shutil
 from pathlib import Path
@@ -9,7 +10,8 @@ class ArtifactService:
     def sanitize_and_extract_zip(upload_file: UploadFile, destination_dir: str) -> None:
         """
         Extrae un paquete .zip aplicando mitigación rigurosa de Zip Slip (RNF-05),
-        límite estricto de 25 MB en subida (RF-13) y validación de existencia de index.html.
+        prohibición estricta de enlaces simbólicos, límite de 25 MB en subida (RF-13)
+        y validación de existencia de index.html.
         """
         MAX_ZIP_SIZE = 25 * 1024 * 1024       # 25 MB comprimido
         MAX_UNCOMPRESSED_SIZE = 100 * 1024 * 1024  # 100 MB descomprimido (Anti-Zip Bomb)
@@ -18,7 +20,7 @@ class ArtifactService:
         dest_path = Path(destination_dir).resolve()
         dest_path.mkdir(parents=True, exist_ok=True)
 
-        temp_zip_path = dest_path / "uploaded_package.zip"
+        temp_zip_path = dest_path / f".upload_{uuid.uuid4().hex}.tmp"
 
         # 1. Guardar temporalmente el archivo subido verificando tamaño en stream
         file_size = 0
@@ -36,7 +38,7 @@ class ArtifactService:
             shutil.rmtree(dest_path, ignore_errors=True)
             raise
 
-        # 2. Validar estructura interna y descomprimir con prevención de Zip Slip
+        # 2. Validar estructura interna y descomprimir con prevención de Zip Slip y Symlinks
         try:
             with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
                 # Mitigación contra Zip Bomb
@@ -48,6 +50,23 @@ class ArtifactService:
                     )
 
                 for member in zip_ref.infolist():
+                    # Mitigación contra Symlink Traversal (RNF-05)
+                    # external_attr almacena los bits de modo Unix en los 16 bits superiores
+                    mode = (member.external_attr >> 16) & 0o170000
+                    if mode == 0o120000:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Los enlaces simbólicos no están permitidos en los paquetes web: {member.filename}"
+                        )
+
+                    # Comprobación sintáctica contra Zip Slip
+                    parts = Path(member.filename).parts
+                    if ".." in parts or member.filename.startswith(("/", "\\")):
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Intento de Directory Traversal detectado (Zip Slip) en: {member.filename}"
+                        )
+
                     target_path = (dest_path / member.filename).resolve()
                     
                     # Comprobación canónica estricta Anti-Zip Slip (RNF-05)

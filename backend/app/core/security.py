@@ -1,24 +1,31 @@
+"""
+Módulo de seguridad: autenticación JWT y dependencias de autorización para FastAPI.
+Las funciones puras de hashing están en app.core.hashing.
+"""
 from datetime import datetime, timedelta, timezone
 from typing import Any, Union
-from jose import jwt
-from passlib.context import CryptContext
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import jwt, JWTError
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
+from app.core.database import get_db
+from app.core.hashing import verify_password, get_password_hash  # noqa: F401 – re-exportado
+from app.models.user import User, UserRole
 
-# Hashing seguro con Bcrypt (RNF-06: factor de coste estándar)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+security_scheme = HTTPBearer(auto_error=True)
 
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
 
 def create_access_token(subject: Union[str, Any], role: str, expires_delta: timedelta = None) -> str:
+    """Crea un token JWT firmado con subject (user id), role y expiración."""
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     to_encode = {
         "sub": str(subject),
         "role": role,
@@ -27,15 +34,6 @@ def create_access_token(subject: Union[str, Any], role: str, expires_delta: time
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-# Autenticación basada en Bearer token para FastAPI y Swagger UI
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from jose import JWTError
-from app.core.database import get_db
-from app.models.user import User, UserRole
-
-security_scheme = HTTPBearer(auto_error=True)
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
@@ -63,6 +61,7 @@ def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario inactivo.")
     return user
+
 
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     """Verifica que el usuario actual tenga rol de Administrador."""

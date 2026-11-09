@@ -10,7 +10,7 @@ import time
 import requests
 from pathlib import Path
 
-BASE_URL = os.environ.get("PAAS_API_URL", "http://100.112.65.75:8000/api/v1")
+BASE_URL = os.environ.get("PAAS_API_URL", "http://localhost:8000/api/v1")
 SAMPLES_DIR = Path(__file__).resolve().parent
 
 def run_tests():

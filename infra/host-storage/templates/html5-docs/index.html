@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentación Técnica | API & Arquitectura</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --sidebar-bg: #1e293b;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --code-bg: #0b1120;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+    aside {
+      width: 280px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .brand {
+      padding: 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent);
+    }
+    .search-box {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .search-box input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+    }
+    .search-box input:focus {
+      border-color: var(--accent);
+    }
+    nav.toc {
+      padding: 1.5rem;
+      flex: 1;
+    }
+    .nav-group {
+      margin-bottom: 1.5rem;
+    }
+    .nav-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .nav-list {
+      list-style: none;
+    }
+    .nav-list a {
+      display: block;
+      padding: 0.35rem 0.5rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      border-radius: 0.25rem;
+      transition: all 0.15s;
+    }
+    .nav-list a:hover, .nav-list a.active {
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+    }
+    main {
+      flex: 1;
+      padding: 3rem 4rem;
+      max-width: 900px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 1.75rem;
+      margin: 2.5rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 1.25rem;
+      margin: 1.5rem 0 0.75rem;
+    }
+    p {
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 1.25rem 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.875rem;
+      color: #38bdf8;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.875em;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.25rem;
+      color: #f1f5f9;
+    }
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: 0.5rem;
+      margin: 1.5rem 0;
+      font-size: 0.925rem;
+    }
+    .alert-info {
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 4px solid var(--accent);
+      color: #e0f2fe;
+    }
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid #f59e0b;
+      color: #fef3c7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    th {
+      background: rgba(255, 255, 255, 0.03);
+      font-weight: 600;
+    }
+    footer {
+      margin-top: 5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    @media (max-width: 850px) {
+      body {
+        flex-direction: column;
+      }
+      aside {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      main {
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <aside>
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      CloudDocs
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Filtrar documentación..." onkeyup="filterDocs()">
+    </div>
+    <nav class="toc">
+      <div class="nav-group">
+        <div class="nav-title">Inicio Rápido</div>
+        <ul class="nav-list">
+          <li><a href="#introduccion" class="active">Introducción</a></li>
+          <li><a href="#arquitectura">Arquitectura General</a></li>
+          <li><a href="#instalacion">Instalación & Despliegue</a></li>
+        </ul>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">Operaciones & Redes</div>
+        <ul class="nav-list">
+          <li><a href="#cgroups">Límites Cgroups v2</a></li>
+          <li><a href="#seguridad">Seguridad Non-Root</a></li>
+          <li><a href="#subdominios">Subdominios Locales</a></li>
+        </ul>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">API Reference</div>
+        <ul class="nav-list">
+          <li><a href="#endpoints">Endpoints REST</a></li>
+          <li><a href="#codigos-error">Códigos de Respuesta</a></li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+
+  <main>
+    <section id="introduccion">
+      <h1>Documentación de Arquitectura de Hosting</h1>
+      <p>
+        Bienvenido a la guía técnica oficial de la plataforma CloudPaaS. Esta documentación detalla los mecanismos de aislamiento, orquestación mediante Docker Engine y confinamiento de recursos para sitios web estáticos.
+      </p>
+
+      <div class="alert alert-info">
+        <strong>Nota de Producción:</strong> Todos los contenedores de inquilinos se ejecutan bajo el principio de menor privilegio, con UID/GID 101:101 y sistema de archivos montado en sólo lectura (<code>:ro</code>).
+      </div>
+    </section>
+
+    <section id="arquitectura">
+      <h2>1. Arquitectura General</h2>
+      <p>
+        La plataforma implementa un desacoplamiento estricto entre el plano de control (FastAPI + PostgreSQL) y el plano de ejecución de inquilinos (Contenedores Nginx Alpine independientes conectados a la red virtual <code>paas_instances_network</code>).
+      </p>
+      <pre><code># Inspeccionar redes activas en el host
+docker network inspect paas_instances_network --format '{{.Name}}: {{.Driver}}'</code></pre>
+    </section>
+
+    <section id="cgroups">
+      <h2>2. Control de Recursos (Cgroups v2)</h2>
+      <p>
+        Para garantizar la calidad ISO/IEC 25010 y prevenir ataques de denegación de servicio por agotamiento de recursos (Anti-OOM), se aplican cuotas por plan:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Límite RAM</th>
+            <th>Cuota CPU</th>
+            <th>Sitios Permitidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Free</strong></td>
+            <td>128 MB</td>
+            <td>0.25 vCPU</td>
+            <td>1 Instancia</td>
+          </tr>
+          <tr>
+            <td><strong>Developer</strong></td>
+            <td>256 MB</td>
+            <td>0.50 vCPU</td>
+            <td>3 Instancias</td>
+          </tr>
+          <tr>
+            <td><strong>Pro</strong></td>
+            <td>512 MB</td>
+            <td>1.00 vCPU</td>
+            <td>10 Instancias</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="seguridad">
+      <h2>3. Directivas de Seguridad del Contenedor</h2>
+      <p>
+        Cada instancia se levanta con las siguientes banderas de seguridad del Docker Engine:
+      </p>
+      <pre><code>--read-only \
+--cap-drop ALL \
+--security-opt no-new-privileges:true \
+--user 101:101 \
+--tmpfs /tmp:rw,noexec,nosuid,size=16m</code></pre>
+
+      <div class="alert alert-warning">
+        <strong>Protección de Escritura:</strong> Cualquier intento de escritura sobre <code>/usr/share/nginx/html</code> arrojará el error <code>Read-only file system</code> a nivel de kernel de Linux.
+      </div>
+    </section>
+
+    <section id="subdominios">
+      <h2>4. Soporte para Subdominios Locales Simulados</h2>
+      <p>
+        El servidor soporta peticiones HTTP mediante el comodín <code>*.localhost:PUERTO</code> (RFC 6761), resolviendo de forma nativa hacia la dirección IP de loopback <code>127.0.0.1</code> sin requerir modificaciones en <code>/etc/hosts</code>.
+      </p>
+    </section>
+
+    <footer>
+      <span>Última actualización: Hito 100% (Noviembre 2026)</span>
+      <span>CloudPaaS Infrastructure Docs</span>
+    </footer>
+  </main>
+
+  <script>
+    function filterDocs() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const links = document.querySelectorAll('.nav-list a');
+      links.forEach(a => {
+        const text = a.textContent.toLowerCase();
+        a.style.display = text.includes(q) ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

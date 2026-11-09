@@ -3,6 +3,7 @@ import enum
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.core.model_types import UTCDateTime
 
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
@@ -15,10 +16,11 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.CLIENT, nullable=False)
+    role = Column(Enum(UserRole, native_enum=False, length=50, create_constraint=False,
+                       validate_strings=True), default=UserRole.CLIENT, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(UTCDateTime(), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relaciones
     instances = relationship("Instance", back_populates="owner", cascade="all, delete-orphan")

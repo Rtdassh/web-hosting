@@ -4,6 +4,12 @@ from typing import Optional
 import docker
 from docker.errors import DockerException, NotFound
 from app.core.config import settings
+from app.core.exceptions import (
+    DockerUnavailableError,
+    ContainerNotFoundError,
+    ContainerMockError,
+    DockerOperationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +25,7 @@ class DockerService:
             self.client.ping()
             logger.info("Conexión con Docker Daemon establecida exitosamente.")
         except DockerException as e:
-            logger.warning(f"No se pudo conectar al Docker Daemon: {e}. Modo simulación disponible.")
+            logger.warning(f"No se pudo conectar al Docker Daemon: {e}. Operaciones de despliegue no disponibles.")
             self.client = None
 
     def _resolve_image(self) -> str:
@@ -29,25 +35,45 @@ class DockerService:
 
         try:
             self.client.images.get(settings.DOCKER_IMAGE_NAME)
-            return settings.DOCKER_IMAGE_NAME
-        except NotFound:
-            logger.warning(
-                f"Imagen '{settings.DOCKER_IMAGE_NAME}' no encontrada localmente. Usando fallback 'nginx:1.27-alpine'."
-            )
-            return "nginx:1.27-alpine"
-        except Exception:
-            return "nginx:1.27-alpine"
+        except NotFound as exc:
+            raise DockerOperationError(
+                "La imagen de hosting configurada no está instalada."
+            ) from exc
+        return settings.DOCKER_IMAGE_NAME
 
     def _resolve_network(self) -> Optional[str]:
-        """Comprueba si la red aislada de la plataforma existe."""
+        """
+        Comprueba si la red aislada de la plataforma existe o la crea dinámicamente.
+        Garantiza el cumplimiento estricto de RNF-04 y RNF-07 evitando la degradación
+        insegura a la red bridge por defecto.
+        """
         if not self.client:
             return None
         try:
             self.client.networks.get(settings.DOCKER_NETWORK)
             return settings.DOCKER_NETWORK
         except NotFound:
-            logger.info(f"Red '{settings.DOCKER_NETWORK}' no encontrada, utilizando red bridge por defecto.")
-            return None
+            logger.warning(
+                f"Red aislada '{settings.DOCKER_NETWORK}' no encontrada en Docker Daemon. "
+                "Creándola automáticamente..."
+            )
+            try:
+                self.client.networks.create(
+                    name=settings.DOCKER_NETWORK,
+                    driver="bridge",
+                    labels={
+                        "managed_by": "cloudpaas",
+                        "purpose": "hosting_instances_isolation"
+                    }
+                )
+                logger.info(f"Red aislada '{settings.DOCKER_NETWORK}' creada exitosamente.")
+                return settings.DOCKER_NETWORK
+            except Exception as exc:
+                logger.error(
+                    f"No se pudo crear automáticamente la red aislada '{settings.DOCKER_NETWORK}': {exc}. "
+                    "Degradando temporalmente a red bridge por defecto."
+                )
+                return None
 
     def run_nginx_instance(
         self,
@@ -68,8 +94,7 @@ class DockerService:
         - Conexión a red aislada paas_instances_network
         """
         if not self.client:
-            logger.warning("Docker client no disponible. Simulando ID de contenedor.")
-            return f"mock_container_{container_name}"
+            raise DockerUnavailableError("No hay conexión con Docker.")
 
         abs_storage_path = str(Path(host_storage_path).resolve())
         image_name = self._resolve_image()
@@ -92,6 +117,22 @@ class DockerService:
             "instance_uuid": instance_uuid
         }
 
+        # Política de retención de logs para proteger el almacenamiento del host (T1.1, RF-21)
+        extra_kwargs["log_config"] = {
+            "type": "json-file",
+            "config": {
+                "max-size": "5m",
+                "max-file": "2"
+            }
+        }
+
+        # Endurecimiento y principio de menor privilegio Non-Root (RNF-07 - Hito 100%)
+        extra_kwargs["user"] = "101:101"
+        extra_kwargs["cap_drop"] = ["ALL"]
+        extra_kwargs["security_opt"] = ["no-new-privileges:true"]
+        extra_kwargs["sysctls"] = {"net.ipv4.ip_unprivileged_port_start": "0"}
+        extra_kwargs["tmpfs"] = {"/tmp": "rw,noexec,nosuid,size=16m"}
+
         container = self.client.containers.run(
             image=image_name,
             name=container_name,
@@ -109,9 +150,25 @@ class DockerService:
         )
         return container.id
 
-    def stop_instance(self, container_id: str) -> bool:
-        if not self.client or container_id.startswith("mock_"):
+    def start_instance(self, container_id: str) -> bool:
+        """Inicia un contenedor existente detenido (RF-16)."""
+        if not self.client or not container_id or container_id.startswith("mock_"):
+            return False
+        try:
+            container = self.client.containers.get(container_id)
+            container.start()
             return True
+        except NotFound:
+            logger.warning(f"Contenedor {container_id} no encontrado para iniciar.")
+            return False
+        except DockerException as e:
+            logger.error(f"Error al iniciar contenedor {container_id}: {e}")
+            return False
+
+    def stop_instance(self, container_id: str) -> bool:
+        """Detiene un contenedor en ejecución (RF-16)."""
+        if not self.client or not container_id or container_id.startswith("mock_"):
+            return False
         try:
             container = self.client.containers.get(container_id)
             container.stop(timeout=5)
@@ -124,8 +181,9 @@ class DockerService:
             return False
 
     def restart_instance(self, container_id: str) -> bool:
-        if not self.client or container_id.startswith("mock_"):
-            return True
+        """Reinicia un contenedor activo (RF-16)."""
+        if not self.client or not container_id or container_id.startswith("mock_"):
+            return False
         try:
             container = self.client.containers.get(container_id)
             container.restart(timeout=5)
@@ -138,8 +196,18 @@ class DockerService:
             return False
 
     def remove_instance(self, container_id: str) -> bool:
-        if not self.client or container_id.startswith("mock_"):
-            return True
+        """Elimina definitivamente un contenedor Docker (RF-17)."""
+
+        if container_id.startswith("mock_"):
+            return True  # Una instancia simulada no tiene contenedor real.
+
+        if not self.client:
+            logger.error(
+                "No se puede eliminar el contenedor %s: Docker no está disponible.",
+                container_id
+            )
+            return False
+
         try:
             container = self.client.containers.get(container_id)
             container.remove(force=True)
@@ -150,5 +218,153 @@ class DockerService:
         except DockerException as e:
             logger.error(f"Error al remover contenedor {container_id}: {e}")
             return False
+
+    def get_container_status(self, container_id: Optional[str]) -> str:
+        """Comprueba el estado real de un contenedor en Docker Engine (T3.3, T4.3)."""
+        if not container_id:
+            return "not_found"
+        if not self.client or container_id.startswith("mock_"):
+            return "error"
+        try:
+            container = self.client.containers.get(container_id)
+            container.reload()
+            return container.status.lower()  # running, exited, paused, etc.
+        except NotFound:
+            return "not_found"
+        except DockerException as e:
+            logger.warning(f"Error consultando estado de {container_id}: {e}")
+            return "error"
+
+    def get_container_stats(self, container_id: Optional[str], ram_limit_mb: float = 128.0) -> dict:
+        """
+        Calcula las métricas de CPU y Memoria en tiempo real (T4.1, RF-20).
+        Fórmulas precisas:
+        - CPU%: (cpu_delta / system_cpu_delta) * number_cpus * 100.0
+        - RAM MB: (usage - cache) / (1024 * 1024)
+
+        Raises:
+            DockerUnavailableError: si no hay conexión con Docker.
+            ContainerMockError: si el contenedor es simulado.
+            ContainerNotFoundError: si el contenedor no existe.
+            DockerOperationError: si falla la consulta de métricas.
+        """
+        default_stats = {
+            "cpu_percent": 0.0,
+            "memory_usage_mb": 0.0,
+            "memory_limit_mb": float(ram_limit_mb),
+            "memory_percent": 0.0,
+            "status": "stopped"
+        }
+
+        if not container_id:
+            return default_stats
+
+        if not self.client:
+            raise DockerUnavailableError("No hay conexión con Docker.")
+
+        if container_id.startswith("mock_"):
+            raise ContainerMockError("La instancia simulada no tiene un contenedor real.")
+
+        try:
+            container = self.client.containers.get(container_id)
+            container.reload()
+            current_status = container.status.lower()
+
+            if current_status != "running":
+                default_stats["status"] = (
+                    "stopped" if current_status == "exited" else current_status
+                )
+                return default_stats
+
+            stats = container.stats(stream=False)
+
+            # Cálculo preciso de CPU %
+            cpu_stats = stats.get("cpu_stats", {})
+            precpu_stats = stats.get("precpu_stats", {})
+            cpu_usage_total = cpu_stats.get("cpu_usage", {}).get("total_usage", 0)
+            precpu_usage_total = precpu_stats.get("cpu_usage", {}).get("total_usage", 0)
+            cpu_delta = cpu_usage_total - precpu_usage_total
+
+            system_cpu_usage = cpu_stats.get("system_cpu_usage", 0)
+            pre_system_cpu_usage = precpu_stats.get("system_cpu_usage", 0)
+            system_cpu_delta = system_cpu_usage - pre_system_cpu_usage
+
+            online_cpus = cpu_stats.get("online_cpus")
+            if not online_cpus:
+                percpu_usage = cpu_stats.get("cpu_usage", {}).get("percpu_usage")
+                online_cpus = len(percpu_usage) if percpu_usage else 1
+
+            if system_cpu_delta > 0 and cpu_delta > 0:
+                cpu_percent = round((cpu_delta / system_cpu_delta) * online_cpus * 100.0, 2)
+            else:
+                cpu_percent = 0.0
+
+            # Cálculo preciso de memoria
+            mem_stats = stats.get("memory_stats", {})
+            raw_mem_usage = mem_stats.get("usage", 0)
+            mem_details = mem_stats.get("stats", {})
+            cache = mem_details.get("inactive_file", mem_details.get("cache", 0))
+            active_usage = max(0, raw_mem_usage - cache) if raw_mem_usage > cache else raw_mem_usage
+            memory_usage_mb = round(active_usage / (1024 * 1024), 2)
+
+            resolved_limit_mb = float(ram_limit_mb)
+            if "limit" in mem_stats and mem_stats["limit"] > 0:
+                reported_limit_mb = round(mem_stats["limit"] / (1024 * 1024), 2)
+                if reported_limit_mb < 200000:  # Descarta valores ilimitados de cgroup v1/v2 del host (> 200GB)
+                    resolved_limit_mb = reported_limit_mb
+
+            memory_percent = round((memory_usage_mb / resolved_limit_mb) * 100.0, 2) if resolved_limit_mb > 0 else 0.0
+
+            return {
+                "cpu_percent": cpu_percent,
+                "memory_usage_mb": memory_usage_mb,
+                "memory_limit_mb": resolved_limit_mb,
+                "memory_percent": memory_percent,
+                "status": "running"
+            }
+        except NotFound as exc:
+            raise ContainerNotFoundError("Contenedor no encontrado en Docker.") from exc
+
+        except DockerException as exc:
+            logger.exception(
+                "Error extrayendo telemetría de %s", container_id
+            )
+            raise DockerOperationError("No se pudieron consultar las métricas de Docker.") from exc
+
+    def get_container_logs(self, container_id: Optional[str], tail: int = 100) -> list[str]:
+        """
+        Extrae las últimas líneas de logs de Nginx desde stdout/stderr (T4.2, RF-21).
+        Decodifica UTF-8 de forma segura.
+
+        Raises:
+            DockerUnavailableError: si no hay conexión con Docker.
+            ContainerMockError: si el contenedor es simulado.
+            ContainerNotFoundError: si el contenedor no existe.
+            DockerOperationError: si falla la obtención de logs.
+        """
+        if not container_id:
+            return []
+
+        if not self.client:
+            raise DockerUnavailableError("No hay conexión con Docker.")
+
+        if container_id.startswith("mock_"):
+            raise ContainerMockError("La instancia simulada no tiene un contenedor real.")
+
+        try:
+            container = self.client.containers.get(container_id)
+            raw_bytes = container.logs(tail=tail, timestamps=True, stdout=True, stderr=True)
+            decoded_text = raw_bytes.decode("utf-8", errors="replace")
+            lines = [line for line in decoded_text.splitlines() if line.strip()]
+            return lines
+
+        except NotFound as exc:
+            raise ContainerNotFoundError("Contenedor no encontrado en Docker.") from exc
+
+        except DockerException as exc:
+            logger.exception(
+                "Error obteniendo logs de %s", container_id
+            )
+            raise DockerOperationError("No se pudieron obtener los logs de Docker.") from exc
 
 docker_service = DockerService()

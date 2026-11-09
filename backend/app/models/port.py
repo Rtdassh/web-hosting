@@ -7,4 +7,4 @@ class PortAllocation(Base):
 
     port_number = Column(Integer, primary_key=True, index=True)
     is_allocated = Column(Boolean, default=False, nullable=False)
-    instance_id = Column(Integer, ForeignKey("instances.id"), nullable=True)
+    instance_id = Column(Integer, ForeignKey("instances.id", ondelete="SET NULL"), nullable=True)
