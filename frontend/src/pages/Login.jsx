@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import codropIsotipo from '../assets/codrop-isotipo.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
+import { toast } from '../components/ui/Toast';
 
 export default function Login({
   onHome,
@@ -56,6 +57,7 @@ export default function Login({
     setEmail('dev@cloudpaas.local');
     setPassword('admin123');
     setError('');
+    toast.info('Credenciales de prueba dev@cloudpaas.local autocompletadas.');
   };
 
   return (
@@ -280,7 +282,7 @@ export default function Login({
 
                 {/* Error */}
                 {error && (
-                  <div className="mt-6 flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 text-red-600 rounded-[9px] text-sm">
+                  <div className="mt-6 flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 text-red-600 rounded-[9px] text-sm fade-slide-down">
 
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
 

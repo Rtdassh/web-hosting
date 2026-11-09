@@ -21,6 +21,8 @@ import {
 
 import { adminService } from '../services/api';
 import ServerMascot from '../components/mascot/ServerMascot';
+import { toast } from '../components/ui/Toast';
+import { SkeletonTableRow } from '../components/ui/Skeleton';
 
 export default function AdminDashboardPage({ onBack }) {
   const [dashboardData, setDashboardData] = useState(null);
@@ -49,7 +51,7 @@ export default function AdminDashboardPage({ onBack }) {
     return 'No fue posible cargar la consola administrativa. Verifica que la API de administración esté disponible y que la sesión tenga rol admin.';
   };
 
-  const fetchData = async () => {
+  const fetchData = async (showSuccessToast = false) => {
     setLoading(true);
     setError(null);
 
@@ -63,6 +65,9 @@ export default function AdminDashboardPage({ onBack }) {
       setInstances(
         Array.isArray(instancesResponse) ? instancesResponse : []
       );
+      if (showSuccessToast) {
+        toast.success('Consola administrativa actualizada.');
+      }
     } catch (requestError) {
       console.error(
         'Error cargando datos de administración:',
@@ -71,7 +76,11 @@ export default function AdminDashboardPage({ onBack }) {
 
       setDashboardData(null);
       setInstances([]);
-      setError(extractErrorMessage(requestError));
+      const msg = extractErrorMessage(requestError);
+      setError(msg);
+      if (showSuccessToast) {
+        toast.error(`Error al actualizar: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -151,15 +160,17 @@ export default function AdminDashboardPage({ onBack }) {
         actionReason
       );
 
-      setNotification(
-        `${actionType === 'force_destroy' ? 'Eliminación' : 'Detención'} forzosa ejecutada sobre ${selectedInstanceForAction.name}.`
-      );
+      const successMsg = `${actionType === 'force_destroy' ? 'Eliminación' : 'Detención'} forzosa ejecutada sobre ${selectedInstanceForAction.name}.`;
+      setNotification(successMsg);
+      toast.success(successMsg);
 
       setSelectedInstanceForAction(null);
       await fetchData();
     } catch (requestError) {
       setNotification(null);
-      setError(extractErrorMessage(requestError));
+      const msg = extractErrorMessage(requestError);
+      setError(msg);
+      toast.error(`Error en acción forzosa: ${msg}`);
     } finally {
       setActionLoading(false);
     }
@@ -171,7 +182,7 @@ export default function AdminDashboardPage({ onBack }) {
 
     setActionReason(
       type === 'force_destroy'
-        ? 'Eliminación administrativa de instancia por incumplimiento o anomalía'
+        ? 'Eliminación administrativa de proyecto por incumplimiento o anomalía'
         : 'Detención administrativa preventiva por uso anómalo de recursos'
     );
   };
@@ -216,7 +227,7 @@ export default function AdminDashboardPage({ onBack }) {
 
             <button
               type="button"
-              onClick={fetchData}
+              onClick={() => fetchData(true)}
               disabled={loading}
               title="Actualizar consola"
               className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce7e2] bg-white text-[#1C7F62] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:bg-[#f8fbf9] disabled:opacity-50"
@@ -244,7 +255,7 @@ export default function AdminDashboardPage({ onBack }) {
             </h1>
 
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[#64748B]">
-              Supervisa usuarios, facturación simulada, contenedores y
+              Supervisa usuarios, facturación, infraestructura y
               recursos del host desde una única consola administrativa.
             </p>
           </div>
@@ -315,7 +326,7 @@ export default function AdminDashboardPage({ onBack }) {
 
               <KpiCard
                 icon={DollarSign}
-                label="Ingresos simulados"
+                label="Ingresos acumulados (MRR)"
                 value={`$${Number(
                   summary.total_revenue_simulated || 0
                 ).toFixed(2)}`}
@@ -325,10 +336,9 @@ export default function AdminDashboardPage({ onBack }) {
 
               <KpiCard
                 icon={Server}
-                label="Contenedores"
-                value={`${summary.active_instances ?? 0} / ${
-                  summary.total_instances ?? 0
-                }`}
+                label="Sitios activos"
+                value={`${summary.active_instances ?? 0} / ${summary.total_instances ?? 0
+                  }`}
                 caption="activos / totales"
               />
 
@@ -348,12 +358,12 @@ export default function AdminDashboardPage({ onBack }) {
                 )}
                 caption={
                   host.memory_used_mb !== undefined &&
-                  host.memory_total_mb !== undefined
+                    host.memory_total_mb !== undefined
                     ? `${(
-                        Number(host.memory_used_mb) / 1024
-                      ).toFixed(1)} / ${(
-                        Number(host.memory_total_mb) / 1024
-                      ).toFixed(1)} GB`
+                      Number(host.memory_used_mb) / 1024
+                    ).toFixed(1)} / ${(
+                      Number(host.memory_total_mb) / 1024
+                    ).toFixed(1)} GB`
                     : 'uso global'
                 }
               />
@@ -368,7 +378,7 @@ export default function AdminDashboardPage({ onBack }) {
                   </p>
 
                   <h2 className="mt-1 text-lg font-black text-[#172838]">
-                    Instancias de la plataforma
+                    Proyectos en la plataforma
                   </h2>
 
                   <p className="mt-1 text-xs font-medium text-[#64748B]">
@@ -377,7 +387,7 @@ export default function AdminDashboardPage({ onBack }) {
                 </div>
 
                 <span className="rounded-full bg-[#f3f6f4] px-3 py-1.5 text-[10px] font-black text-[#64748B]">
-                  {instances.length} instancias
+                  {instances.length} proyectos
                 </span>
               </div>
 
@@ -386,7 +396,7 @@ export default function AdminDashboardPage({ onBack }) {
                   <Server className="mx-auto h-6 w-6 text-[#94A3B8]" />
 
                   <p className="mt-3 text-sm font-black text-[#172838]">
-                    No hay instancias registradas
+                    No hay proyectos registrados
                   </p>
                 </div>
               ) : (
@@ -394,7 +404,7 @@ export default function AdminDashboardPage({ onBack }) {
                   <table className="w-full min-w-[1180px] border-collapse text-left">
                     <thead>
                       <tr className="border-b border-[#e9efec] bg-[#f8fbf9] text-[10px] font-black uppercase tracking-[0.13em] text-[#94A3B8]">
-                        <th className="px-5 py-4">Instancia</th>
+                        <th className="px-5 py-4">Proyecto</th>
                         <th className="px-5 py-4">Propietario</th>
                         <th className="px-5 py-4">Plan</th>
                         <th className="px-5 py-4">Puerto</th>
@@ -455,7 +465,7 @@ export default function AdminDashboardPage({ onBack }) {
                           <td className="px-5 py-4 text-xs font-black text-[#334e5e]">
                             {formatMetric(
                               instance.cpu_usage_percent ??
-                                instance.cpu_percent,
+                              instance.cpu_percent,
                               '%'
                             )}
                           </td>
@@ -463,29 +473,27 @@ export default function AdminDashboardPage({ onBack }) {
                           <td className="px-5 py-4 text-xs font-black text-[#334e5e]">
                             {instance.memory_usage_mb !== undefined
                               ? `${Number(
-                                  instance.memory_usage_mb
-                                ).toFixed(1)} MB`
+                                instance.memory_usage_mb
+                              ).toFixed(1)} MB`
                               : instance.ram_usage_mb !== undefined
-                              ? `${Number(
+                                ? `${Number(
                                   instance.ram_usage_mb
                                 ).toFixed(1)} MB`
-                              : '—'}
+                                : '—'}
                           </td>
 
                           <td className="px-5 py-4">
                             <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
-                                instance.status === 'running'
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${instance.status === 'running'
                                   ? 'border border-[#b9ddcd] bg-[#edf9f3] text-[#176c53]'
                                   : 'border border-[#e2e8e5] bg-[#f3f6f4] text-[#64748B]'
-                              }`}
+                                }`}
                             >
                               <span
-                                className={`h-1.5 w-1.5 rounded-full ${
-                                  instance.status === 'running'
+                                className={`h-1.5 w-1.5 rounded-full ${instance.status === 'running'
                                     ? 'bg-[#28B586]'
                                     : 'bg-[#94A3B8]'
-                                }`}
+                                  }`}
                               />
 
                               {instance.status || 'unknown'}
@@ -643,7 +651,7 @@ export default function AdminDashboardPage({ onBack }) {
 
               <div className="p-6">
                 <p className="text-sm leading-6 text-[#64748B]">
-                  Vas a intervenir la instancia{' '}
+                  Vas a intervenir el proyecto{' '}
                   <strong className="text-[#172838]">
                     {selectedInstanceForAction.name}
                   </strong>{' '}
@@ -657,7 +665,7 @@ export default function AdminDashboardPage({ onBack }) {
                 {actionType === 'force_destroy' && (
                   <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-bold leading-5 text-red-700">
                     La eliminación forzosa es destructiva y puede liberar
-                    definitivamente los recursos asociados a esta instancia.
+                    definitivamente los recursos asociados a este proyecto.
                   </div>
                 )}
 
@@ -694,11 +702,10 @@ export default function AdminDashboardPage({ onBack }) {
                     disabled={
                       actionLoading || !actionReason.trim()
                     }
-                    className={`inline-flex min-w-[175px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white transition duration-150 btn-tactile cursor-pointer disabled:opacity-50 ${
-                      actionType === 'force_destroy'
+                    className={`inline-flex min-w-[175px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white transition duration-150 btn-tactile cursor-pointer disabled:opacity-50 ${actionType === 'force_destroy'
                         ? 'bg-red-600 hover:bg-red-700'
                         : 'bg-amber-500 hover:bg-amber-600'
-                    }`}
+                      }`}
                   >
                     {actionLoading ? (
                       <>
@@ -748,9 +755,8 @@ function KpiCard({
         </div>
 
         <div
-          className={`mt-4 text-2xl font-black tracking-[-0.03em] ${
-            accent ? 'text-[#28B586]' : 'text-[#172838]'
-          }`}
+          className={`mt-4 text-2xl font-black tracking-[-0.03em] ${accent ? 'text-[#28B586]' : 'text-[#172838]'
+            }`}
         >
           {value}
         </div>

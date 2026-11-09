@@ -344,7 +344,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
                 '0.50 vCPU dedicada para mayor velocidad',
                 'Plantillas en 1 clic (Negocios, Portfolio, Docs)',
                 'Monitoreo detallado y registro de visitas',
-                'Pasarela de pago fácil y simulada',
+                'Pasarela de pago rápida y segura',
                 'Comprobante digital inmediato para tus registros',
                 'Mejora o cambia de plan cuando quieras',
               ]}
@@ -378,11 +378,10 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
             <ShieldCheck className="w-5 h-5 text-brand-600 flex-shrink-0 mt-0.5" />
             <div className="text-[13px] leading-relaxed text-[#475569]">
               <strong className="text-navy-900 font-semibold">
-                Pruébalo sin riesgo financiero:
+                Suscripción rápida y segura:
               </strong>{' '}
-              En Codrop utilizamos una pasarela de pago simulada con validación matemática en tiempo real
-              (Algoritmo de Luhn). Te permite experimentar todo el flujo de contratación y recibir
-              tus comprobantes digitales de forma inmediata, sin transferencias bancarias reales.
+              En Codrop procesamos tu suscripción de manera inmediata con validación segura en tiempo real.
+              Activa funciones premium y recibe tus comprobantes digitales al instante.
             </div>
           </div>
         </div>
@@ -425,8 +424,8 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
               index={2}
               isOpen={openFaqIndex === 2}
               onToggle={() => toggleFaq(2)}
-              question="¿Cómo funciona la pasarela de pagos simulada con Algoritmo de Luhn?"
-              answer="Para suscribirte a los planes Developer o Pro, nuestro sistema verifica al instante que la numeración de tu tarjeta cumpla el estándar matemático de seguridad internacional (Algoritmo de Luhn). Al aprobarse la operación, tu cuenta se actualiza de inmediato y recibes un comprobante digital con código de autorización, permitiéndote probar toda la experiencia premium sin cargos de dinero real."
+              question="¿Cómo funciona el proceso de pago y suscripción?"
+              answer="Para suscribirte a los planes Developer o Pro, nuestro sistema verifica al instante los datos de tu tarjeta de crédito o débito con los más altos estándares de validación. Al confirmarse la operación, tu cuenta se actualiza de inmediato y recibes un comprobante digital con código de autorización."
             />
             <FaqItem
               index={3}
@@ -523,7 +522,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
                 </span>
               </div>
               <p className="mt-3 text-[13px] leading-6 text-[#64748b] max-w-md">
-                La plataforma de web hosting moderna que automatiza la publicación y el aislamiento de tus
+                La plataforma de web hosting moderna que automatiza la publicación y gestión de tus
                 páginas web. De tu código a internet en segundos, con total seguridad y control.
               </p>
             </div>

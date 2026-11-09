@@ -14,6 +14,8 @@ import {
 
 import { billingService } from '../services/api';
 import ReceiptModal from '../components/billing/ReceiptModal';
+import { toast } from '../components/ui/Toast';
+import { SkeletonTableRow } from '../components/ui/Skeleton';
 
 export default function BillingHistoryPage({ onBack, onGoToPricing }) {
   const [invoices, setInvoices] = useState([]);
@@ -31,17 +33,24 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
     return 'No pudimos cargar tu historial de facturación. Verifica que el servicio de facturación esté disponible.';
   };
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (showSuccessToast = false) => {
     setLoading(true);
     setError(null);
 
     try {
       const data = await billingService.getInvoices();
       setInvoices(Array.isArray(data) ? data : []);
+      if (showSuccessToast) {
+        toast.success('Historial de facturación actualizado.');
+      }
     } catch (requestError) {
       console.error('Error al cargar facturas:', requestError);
       setInvoices([]);
-      setError(extractErrorMessage(requestError));
+      const msg = extractErrorMessage(requestError);
+      setError(msg);
+      if (showSuccessToast) {
+        toast.error(`Error al actualizar: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -165,7 +174,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
 
           <button
             type="button"
-            onClick={fetchInvoices}
+            onClick={() => fetchInvoices(true)}
             disabled={loading}
             title="Actualizar historial"
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce7e2] bg-white text-[#1C7F62] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:bg-[#f8fbf9] disabled:cursor-not-allowed disabled:opacity-50"
@@ -178,20 +187,8 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
 
         {/* Main card */}
         <div className="overflow-hidden rounded-[24px] border border-[#dce7e2] bg-white shadow-[0_16px_45px_rgba(23,40,56,0.055)]">
-          {loading ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center px-6 text-center">
-              <RefreshCw className="h-6 w-6 animate-spin text-[#28B586]" />
-
-              <p className="mt-4 text-sm font-black text-[#172838]">
-                Consultando tus comprobantes
-              </p>
-
-              <p className="mt-1 text-xs font-medium text-[#94A3B8]">
-                Sincronizando el historial de facturación...
-              </p>
-            </div>
-          ) : error ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center px-6 text-center">
+          {error ? (
+            <div className="flex min-h-[320px] flex-col items-center justify-center px-6 text-center fade-slide-down">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
                 <AlertCircle className="h-6 w-6" />
               </div>
@@ -206,15 +203,15 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
 
               <button
                 type="button"
-                onClick={fetchInvoices}
+                onClick={() => fetchInvoices(true)}
                 className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#172838] px-4 py-2.5 text-xs font-black text-white transition duration-150 btn-tactile cursor-pointer hover:bg-[#1F3141]"
               >
                 <RefreshCw className="h-4 w-4" />
                 Intentar nuevamente
               </button>
             </div>
-          ) : invoices.length === 0 ? (
-            <div className="flex min-h-[340px] flex-col items-center justify-center px-6 text-center">
+          ) : !loading && invoices.length === 0 ? (
+            <div className="flex min-h-[340px] flex-col items-center justify-center px-6 text-center scale-pop-in">
               <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-[#dce7e2] bg-[#f8fbf9] text-[#1C7F62]">
                 <FileText className="h-7 w-7" />
 
@@ -260,73 +257,81 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
                 </thead>
 
                 <tbody className="divide-y divide-[#edf1ef]">
-                  {invoices.map((invoice) => (
-                    <tr
-                      key={invoice.id || invoice.invoice_number}
-                      className="transition hover:bg-[#f9fcfa]"
-                    >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF7F1] text-[#1C7F62]">
-                            <ReceiptText className="h-4 w-4" />
+                  {loading ? (
+                    <>
+                      <SkeletonTableRow columns={8} />
+                      <SkeletonTableRow columns={8} />
+                      <SkeletonTableRow columns={8} />
+                    </>
+                  ) : (
+                    invoices.map((invoice) => (
+                      <tr
+                        key={invoice.id || invoice.invoice_number}
+                        className="transition hover:bg-[#f9fcfa]"
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF7F1] text-[#1C7F62]">
+                              <ReceiptText className="h-4 w-4" />
+                            </span>
+
+                            <span className="font-mono text-xs font-black text-[#1C7F62]">
+                              {invoice.invoice_number ||
+                                `INV-2026-${invoice.id}`}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4 text-xs font-black text-[#172838]">
+                          {invoice.plan_name || '—'}
+                        </td>
+
+                        <td className="px-5 py-4 text-xs font-black text-[#172838]">
+                          ${Number(invoice.amount || 0).toFixed(2)}
+                          <span className="ml-1 text-[9px] font-bold text-[#94A3B8]">
+                            USD
                           </span>
+                        </td>
 
-                          <span className="font-mono text-xs font-black text-[#1C7F62]">
-                            {invoice.invoice_number ||
-                              `INV-2026-${invoice.id}`}
+                        <td className="px-5 py-4 font-mono text-[11px] font-bold text-[#64748B]">
+                          {invoice.auth_code || '—'}
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#475569]">
+                            <CreditCard className="h-3.5 w-3.5 text-[#28B586]" />
+
+                            {invoice.card_brand || 'Tarjeta'} ••••{' '}
+                            {invoice.card_last_four || '—'}
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4 text-xs font-semibold text-[#64748B]">
+                          {formatDate(
+                            invoice.created_at || invoice.timestamp
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b9ddcd] bg-[#edf9f3] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#176c53]">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Aprobada
                           </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="px-5 py-4 text-xs font-black text-[#172838]">
-                        {invoice.plan_name || '—'}
-                      </td>
-
-                      <td className="px-5 py-4 text-xs font-black text-[#172838]">
-                        ${Number(invoice.amount || 0).toFixed(2)}
-                        <span className="ml-1 text-[9px] font-bold text-[#94A3B8]">
-                          USD
-                        </span>
-                      </td>
-
-                      <td className="px-5 py-4 font-mono text-[11px] font-bold text-[#64748B]">
-                        {invoice.auth_code || '—'}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#475569]">
-                          <CreditCard className="h-3.5 w-3.5 text-[#28B586]" />
-
-                          {invoice.card_brand || 'Tarjeta'} ••••{' '}
-                          {invoice.card_last_four || '—'}
-                        </div>
-                      </td>
-
-                      <td className="px-5 py-4 text-xs font-semibold text-[#64748B]">
-                        {formatDate(
-                          invoice.created_at || invoice.timestamp
-                        )}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b9ddcd] bg-[#edf9f3] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#176c53]">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Aprobada
-                        </span>
-                      </td>
-
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedInvoice(invoice)}
-                          className="inline-flex items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-3.5 py-2 text-[11px] font-black text-[#334e5e] transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:bg-[#f8fbf9] hover:text-[#1C7F62]"
-                        >
-                          <FileText className="h-3.5 w-3.5" />
-                          Ver recibo
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="px-5 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedInvoice(invoice)}
+                            className="inline-flex items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-3.5 py-2 text-[11px] font-black text-[#334e5e] transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:bg-[#f8fbf9] hover:text-[#1C7F62]"
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            Ver recibo
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

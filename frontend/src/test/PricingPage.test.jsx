@@ -107,7 +107,7 @@ describe('PricingPage UI Component (RF-07, RF-08, RF-11 Gestión de Suscripcione
     fireEvent.click(upgradeBtn);
 
     // Modal de checkout debe abrirse
-    expect(screen.getByText('Pago simulado seguro')).toBeInTheDocument();
+    expect(screen.getByText('Pago seguro')).toBeInTheDocument();
   });
 
   it('debe solicitar confirmación antes de solicitar un downgrade a plan gratuito', async () => {
@@ -156,7 +156,7 @@ describe('Catalog and renewal regressions', () => {
     billingService.getPlans.mockResolvedValue([plan]);
     renderPage({ name: 'Pro', is_current: false });
     fireEvent.click(await screen.findByRole('button', { name: 'Renovar plan' }));
-    expect(screen.getByText('Pago simulado seguro')).toBeInTheDocument();
+    expect(screen.getByText('Pago seguro')).toBeInTheDocument();
   });
   it('shows failure without a purchasable invented catalog', async () => {
     billingService.getPlans.mockRejectedValue(new Error('synthetic unavailable'));

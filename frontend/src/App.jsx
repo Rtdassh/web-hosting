@@ -16,6 +16,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './components/ui/Toast';
 
 
 function AuthenticatedApp({ onLogout }) {
@@ -32,14 +33,14 @@ function AuthenticatedApp({ onLogout }) {
     <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-brand-500 selection:text-white">
       <Navbar onLogout={onLogout} />
 
-      {/* Sub-navbar de Navegación por Módulos (Hitos 80% y 100%) */}
+      {/* Sub-navbar de Navegación por Módulos */}
       <div className="bg-white border-b border-[#e2e8f0] px-6 lg:px-12 py-2 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-1 sm:space-x-4">
           <button
             onClick={() => setCurrentView('dashboard')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'dashboard'
-                ? 'bg-brand-50 text-brand-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              ? 'bg-brand-50 text-brand-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
           >
             <Globe className="w-3.5 h-3.5" />
@@ -48,8 +49,8 @@ function AuthenticatedApp({ onLogout }) {
           <button
             onClick={() => setCurrentView('pricing')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'pricing'
-                ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -58,8 +59,8 @@ function AuthenticatedApp({ onLogout }) {
           <button
             onClick={() => setCurrentView('billing')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'billing'
-                ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -69,8 +70,8 @@ function AuthenticatedApp({ onLogout }) {
             <button
               onClick={() => setCurrentView('admin')}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${currentView === 'admin'
-                  ? 'bg-amber-50 text-amber-700 shadow-sm'
-                  : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50/50'
+                ? 'bg-amber-50 text-amber-700 shadow-sm'
+                : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50/50'
                 }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -84,33 +85,35 @@ function AuthenticatedApp({ onLogout }) {
       </div>
 
       <div className="flex-1">
-        {currentView === 'dashboard' && (
-          <DashboardPage
-            onDeployClick={() => setIsDeployOpen(true)}
-            refreshKey={refreshKey}
-          />
-        )}
+        <div key={currentView} className="view-enter">
+          {currentView === 'dashboard' && (
+            <DashboardPage
+              onDeployClick={() => setIsDeployOpen(true)}
+              refreshKey={refreshKey}
+            />
+          )}
 
-        {currentView === 'pricing' && (
-          <PricingPage
-            currentPlan={user?.plan?.name || 'Free'}
-            onBack={() => setCurrentView('dashboard')}
-            onGoToBilling={() => setCurrentView('billing')}
-          />
-        )}
+          {currentView === 'pricing' && (
+            <PricingPage
+              currentPlan={user?.plan?.name || 'Free'}
+              onBack={() => setCurrentView('dashboard')}
+              onGoToBilling={() => setCurrentView('billing')}
+            />
+          )}
 
-        {currentView === 'billing' && (
-          <BillingHistoryPage
-            onBack={() => setCurrentView('dashboard')}
-            onGoToPricing={() => setCurrentView('pricing')}
-          />
-        )}
+          {currentView === 'billing' && (
+            <BillingHistoryPage
+              onBack={() => setCurrentView('dashboard')}
+              onGoToPricing={() => setCurrentView('pricing')}
+            />
+          )}
 
-        {currentView === 'admin' && (
-          <AdminDashboardPage
-            onBack={() => setCurrentView('dashboard')}
-          />
-        )}
+          {currentView === 'admin' && (
+            <AdminDashboardPage
+              onBack={() => setCurrentView('dashboard')}
+            />
+          )}
+        </div>
       </div>
 
       <DeployModal
@@ -253,7 +256,9 @@ export function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AuthProvider>
   );
 }

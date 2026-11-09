@@ -57,7 +57,7 @@ describe('Landing Page UI Component', () => {
   it('debe permitir expandir y colapsar preguntas frecuentes (FAQ)', () => {
     render(<Landing onLogin={vi.fn()} onRegister={vi.fn()} />);
 
-    const faqButton = screen.getByText(/¿Cómo funciona la pasarela de pagos simulada con Algoritmo de Luhn\?/i);
+    const faqButton = screen.getByText(/¿Cómo funciona el proceso de pago y suscripción\?/i);
     expect(faqButton).toBeInTheDocument();
 
     // Al hacer click, debe mostrar la respuesta

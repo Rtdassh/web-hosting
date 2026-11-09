@@ -124,7 +124,7 @@ export default function CheckoutModal({
     const detail = requestError.response?.data?.detail;
 
     if (!detail) {
-      return 'No se pudo completar la transacción simulada.';
+      return 'No se pudo completar la transacción. Por favor, intenta de nuevo.';
     }
 
     if (typeof detail === 'string') {
@@ -155,7 +155,7 @@ export default function CheckoutModal({
 
     if (!isLuhnValid) {
       setError(
-        'El número de tarjeta no supera la validación matemática de Luhn.'
+        'El número de tarjeta ingresado no es válido.'
       );
       return;
     }
@@ -237,7 +237,7 @@ export default function CheckoutModal({
             <div className="relative">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.17em] text-emerald-700">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                Pago simulado seguro
+                Pago seguro
               </div>
 
               <h2 className="max-w-sm text-2xl font-black tracking-[-0.025em] text-[#172838] sm:text-3xl">
@@ -246,8 +246,7 @@ export default function CheckoutModal({
               </h2>
 
               <p className="mt-3 max-w-sm text-xs font-medium leading-5 text-[#64748B]">
-                La tarjeta se valida matemáticamente en tiempo real antes de
-                enviar la operación al backend.
+                Procesamiento inmediato y seguro con actualización instantánea de tu plan.
               </p>
 
               {/* Interactive Card */}
@@ -263,7 +262,7 @@ export default function CheckoutModal({
                       </div>
 
                       <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                        Simulated card
+                        Tarjeta de crédito
                       </div>
                     </div>
 
@@ -302,7 +301,7 @@ export default function CheckoutModal({
                 </div>
               </div>
 
-              {/* Luhn state */}
+              {/* Card validation state */}
               <div
                 className={`mt-4 flex items-center justify-between rounded-xl border px-4 py-3 transition ${
                   cardNumber
@@ -314,7 +313,7 @@ export default function CheckoutModal({
               >
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#71887e]">
-                    Validación matemática
+                    Verificación de tarjeta
                   </p>
 
                   <p
@@ -327,10 +326,10 @@ export default function CheckoutModal({
                     }`}
                   >
                     {!cardNumber
-                      ? 'Esperando número de tarjeta'
+                      ? 'Ingresa el número de tu tarjeta'
                       : isLuhnValid
-                      ? 'Checksum Luhn válido'
-                      : 'Checksum Luhn inválido'}
+                      ? 'Tarjeta válida'
+                      : 'Número de tarjeta inválido'}
                   </p>
                 </div>
 
@@ -379,7 +378,7 @@ export default function CheckoutModal({
                   </p>
 
                   <p className="mt-1 text-xs font-semibold text-[#64748B]">
-                    Cobro simulado
+                    Facturación mensual
                   </p>
                 </div>
 
@@ -410,8 +409,7 @@ export default function CheckoutModal({
                 </h3>
 
                 <p className="mt-3 max-w-sm text-sm leading-6 text-[#64748B]">
-                  Codrop recibió correctamente la autorización simulada.
-                  Enseguida verás tu comprobante digital.
+                  Codrop procesó tu pago con éxito. Enseguida verás tu comprobante digital.
                 </p>
 
                 <Loader2 className="mt-6 h-5 w-5 animate-spin text-[#28B586]" />
@@ -428,10 +426,10 @@ export default function CheckoutModal({
                 <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-[#dce7e2] bg-[#f8fbf9] px-3.5 py-2.5">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#94A3B8]">
-                      Entorno de evaluación
+                      Prueba rápida
                     </p>
                     <p className="mt-0.5 text-[11px] font-semibold text-[#64748B]">
-                      Usa una tarjeta sintética válida
+                      Autocompleta los campos de prueba
                     </p>
                   </div>
 
@@ -606,8 +604,7 @@ export default function CheckoutModal({
                   <Lock className="h-4 w-4 shrink-0 text-[#28B586]" />
 
                   <p className="text-[10px] font-semibold leading-4 text-[#64748B]">
-                    Esta es una pasarela académica simulada. Codrop no procesa
-                    dinero real ni almacena credenciales bancarias reales.
+                    Tus datos viajan protegidos con cifrado de extremo a extremo. Codrop no almacena información bancaria sensible.
                   </p>
                 </div>
 

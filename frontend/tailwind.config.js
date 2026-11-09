@@ -25,6 +25,7 @@ export default {
         'emil-out': 'cubic-bezier(0.23, 1, 0.32, 1)',
         'emil-in-out': 'cubic-bezier(0.77, 0, 0.175, 1)',
         'emil-spring': 'cubic-bezier(0.175, 0.885, 0.32, 1.1)',
+        'emil-decel': 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
       keyframes: {
         'modal-enter': {

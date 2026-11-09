@@ -56,7 +56,7 @@ export default function InstanceLogsModal({
 
       setError(
         err.response?.data?.detail ||
-        'No se pudieron recuperar los registros del contenedor.'
+        'No se pudieron recuperar los registros de actividad.'
       );
     } finally {
       setLoading(false);
@@ -169,7 +169,7 @@ export default function InstanceLogsModal({
               <div className="flex items-center gap-2 flex-wrap">
 
                 <h3 className="text-[13px] sm:text-[14px] font-semibold text-white truncate">
-                  Logs · {instance?.name}
+                  Registros de actividad · {instance?.name}
                 </h3>
 
 
@@ -186,8 +186,8 @@ export default function InstanceLogsModal({
 
                 <p className="text-[10px] font-mono text-[#78909c] truncate">
                   {instance?.container_id
-                    ? `Container ${instance.container_id.slice(0, 12)}`
-                    : 'Container ID no disponible'}
+                    ? `Instancia ${instance.container_id.slice(0, 12)}`
+                    : 'Identificador no disponible'}
                 </p>
 
               </div>
@@ -209,10 +209,9 @@ export default function InstanceLogsModal({
                 py-1
                 rounded-full
                 border
-                ${
-                  instance?.status === 'running'
-                    ? 'bg-brand-500/10 border-brand-500/20 text-brand-500'
-                    : 'bg-white/5 border-white/10 text-slate-400'
+                ${instance?.status === 'running'
+                  ? 'bg-brand-500/10 border-brand-500/20 text-brand-500'
+                  : 'bg-white/5 border-white/10 text-slate-400'
                 }
               `}
             >
@@ -279,10 +278,9 @@ export default function InstanceLogsModal({
                 transition duration-150
                 btn-tactile
                 cursor-pointer
-                ${
-                  filterStream === 'error'
-                    ? 'bg-rose-500 text-white'
-                    : 'text-[#78909c] hover:text-white hover:bg-white/5'
+                ${filterStream === 'error'
+                  ? 'bg-rose-500 text-white'
+                  : 'text-[#78909c] hover:text-white hover:bg-white/5'
                 }
               `}
             >
@@ -311,10 +309,9 @@ export default function InstanceLogsModal({
                 transition duration-150
                 btn-tactile
                 cursor-pointer
-                ${
-                  autoScroll
-                    ? 'bg-brand-500/10 border-brand-500/25 text-brand-500'
-                    : 'bg-white/5 border-white/10 text-[#78909c] hover:text-white'
+                ${autoScroll
+                  ? 'bg-brand-500/10 border-brand-500/25 text-brand-500'
+                  : 'bg-white/5 border-white/10 text-[#78909c] hover:text-white'
                 }
               `}
             >
@@ -336,13 +333,13 @@ export default function InstanceLogsModal({
             >
 
               {copied ? (
-                <Check className="w-3 h-3 text-brand-500" />
+                <Check className="w-3 h-3 text-brand-500 scale-pop-in" />
               ) : (
                 <Copy className="w-3 h-3" />
               )}
 
               <span className="hidden sm:inline">
-                {copied ? 'Copiado' : 'Copiar'}
+                {copied ? <span className="scale-pop-in text-brand-400">Copiado</span> : 'Copiar'}
               </span>
 
             </button>
@@ -389,7 +386,7 @@ export default function InstanceLogsModal({
               <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
 
               <p>
-                Conectando con el contenedor...
+                Cargando registros...
               </p>
 
             </TerminalState>
@@ -453,10 +450,9 @@ export default function InstanceLogsModal({
                     <span
                       className={`
                         break-all
-                        ${
-                          isError
-                            ? 'text-rose-300'
-                            : 'text-[#83dcb8]'
+                        ${isError
+                          ? 'text-rose-300'
+                          : 'text-[#83dcb8]'
                         }
                       `}
                     >
@@ -519,10 +515,9 @@ function FilterButton({
         transition duration-150
         btn-tactile
         cursor-pointer
-        ${
-          active
-            ? 'bg-brand-500 text-white'
-            : 'text-[#78909c] hover:text-white hover:bg-white/5'
+        ${active
+          ? 'bg-brand-500 text-white'
+          : 'text-[#78909c] hover:text-white hover:bg-white/5'
         }
       `}
     >

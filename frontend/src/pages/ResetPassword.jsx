@@ -194,14 +194,14 @@ export default function ResetPassword({
               </div>
 
               {error && (
-                <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold leading-5 text-red-700">
+                <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold leading-5 text-red-700 fade-slide-down">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {success ? (
-                <div>
+                <div className="scale-pop-in">
                   <div className="rounded-[22px] border border-[#b9ddcd] bg-[#edf9f3] p-6 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#1C7F62] shadow-sm">
                       <CheckCircle2 className="h-6 w-6" />
@@ -380,8 +380,8 @@ function PasswordCheck({ valid, label }) {
     >
       <span
         className={`flex h-4 w-4 items-center justify-center rounded-full ${valid
-            ? 'bg-[#CFE4D6] text-[#1C7F62]'
-            : 'bg-[#e8eeeb] text-[#94A3B8]'
+          ? 'bg-[#CFE4D6] text-[#1C7F62]'
+          : 'bg-[#e8eeeb] text-[#94A3B8]'
           }`}
       >
         <Check className="h-2.5 w-2.5" />

@@ -77,9 +77,9 @@ export const formatCardNumber = (value) => {
  * @property {number} id - Identificador único del plan
  * @property {string} name - Nombre del plan (Free, Developer, Pro)
  * @property {string} description - Descripción comercial
- * @property {number} price - Costo mensual simulado en USD
+ * @property {number} price - Costo mensual en USD
  * @property {number} max_instances - Límite de sitios activos permitidos
- * @property {number} max_ram_mb - Límite estricto de memoria RAM por contenedor
+ * @property {number} max_ram_mb - Límite de memoria RAM por sitio
  * @property {number} cpu_quota - Porcentaje asignado de CPU (ej. 0.25, 0.50, 1.0)
  * @property {boolean} is_active - Disponibilidad en catálogo
  */

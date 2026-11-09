@@ -46,7 +46,7 @@ describe('CheckoutModal UI Component (RF-09 Luhn Checkout)', () => {
 
     expect(screen.getByText('Plan Developer')).toBeInTheDocument();
     expect(screen.getByText('$9.99')).toBeInTheDocument();
-    expect(screen.getByText('Pago simulado seguro')).toBeInTheDocument();
+    expect(screen.getByText('Pago seguro')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('4532 0151 1283 0366')).toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe('CheckoutModal UI Component (RF-09 Luhn Checkout)', () => {
 
     const cardInput = screen.getByPlaceholderText('4532 0151 1283 0366');
     expect(cardInput.value).toBe('4532 0151 1283 0366');
-    expect(screen.getByText('Checksum Luhn válido')).toBeInTheDocument();
+    expect(screen.getByText('Tarjeta válida')).toBeInTheDocument();
     expect(screen.getByText('Visa · válida')).toBeInTheDocument();
   });
 
@@ -81,7 +81,7 @@ describe('CheckoutModal UI Component (RF-09 Luhn Checkout)', () => {
     // Tarjeta con checksum adulterado
     fireEvent.change(cardInput, { target: { value: '4532015112830367' } });
 
-    expect(screen.getByText('Checksum Luhn inválido')).toBeInTheDocument();
+    expect(screen.getByText('Número de tarjeta inválido')).toBeInTheDocument();
     expect(screen.getByText('Número inválido')).toBeInTheDocument();
   });
 

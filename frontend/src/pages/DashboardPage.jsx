@@ -27,13 +27,20 @@ import {
   Zap,
   Search,
   Check,
+  X,
+  ChevronRight,
 } from 'lucide-react';
 
 import { instanceService } from '../services/api';
 
 import InstanceLogsModal from '../components/instances/InstanceLogsModal';
 import InstanceMetricsCard from '../components/instances/InstanceMetricsCard';
+import InstanceDetailView from '../components/instances/InstanceDetailView';
 import SystemStatusModal from '../components/system/SystemStatusModal';
+import { toast } from '../components/ui/Toast';
+import CopyButton from '../components/ui/CopyButton';
+import Skeleton, { SkeletonInstanceCard } from '../components/ui/Skeleton';
+import StatusBadge from '../components/ui/StatusBadge';
 
 import codropIsotipo from '../assets/codrop-isotipo.png';
 import ServerMascot, { mascotDestroying } from '../components/mascot/ServerMascot';
@@ -53,6 +60,16 @@ export default function DashboardPage({
   const [isSystemModalOpen, setIsSystemModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedInstanceId, setSelectedInstanceId] = useState(null);
+
+  const selectedInstance =
+    instances.find((inst) => inst.id === selectedInstanceId) || null;
+
+  useEffect(() => {
+    if (selectedInstanceId && !loading && !selectedInstance) {
+      setSelectedInstanceId(null);
+    }
+  }, [instances, selectedInstanceId, loading, selectedInstance]);
 
 
   /* =========================================================
@@ -97,11 +114,15 @@ export default function DashboardPage({
     try {
       await instanceService.triggerAction(id, action);
       await fetchInstances();
+      const labels = {
+        start: 'iniciado',
+        stop: 'detenido',
+        restart: 'reiniciado',
+      };
+      toast.success(`Proyecto ${labels[action] || 'actualizado'} correctamente.`);
     } catch (err) {
-      alert(
-        'Error al ejecutar acción: ' +
-        (err.response?.data?.detail || err.message)
-      );
+      const msg = err.response?.data?.detail || err.message || 'Error al ejecutar acción';
+      toast.error(`Error al ejecutar acción: ${msg}`);
     } finally {
       setActionLoading((prev) => ({
         ...prev,
@@ -120,11 +141,10 @@ export default function DashboardPage({
     try {
       await instanceService.syncStatus(id);
       await fetchInstances();
+      toast.success('Estado del proyecto actualizado.');
     } catch (err) {
-      alert(
-        'Error al sincronizar estado: ' +
-        (err.response?.data?.detail || err.message)
-      );
+      const msg = err.response?.data?.detail || err.message || 'Error al sincronizar';
+      toast.error(`Error al sincronizar estado: ${msg}`);
     } finally {
       setActionLoading((prev) => ({
         ...prev,
@@ -135,6 +155,7 @@ export default function DashboardPage({
 
 
   const handleDestroy = async (id) => {
+    const targetName = destroyConfirmInstance?.name;
     setActionLoading((prev) => ({
       ...prev,
       [id]: 'destroy',
@@ -144,13 +165,15 @@ export default function DashboardPage({
       await instanceService.destroyInstance(id);
 
       setDestroyConfirmInstance(null);
+      if (selectedInstanceId === id) {
+        setSelectedInstanceId(null);
+      }
 
       await fetchInstances();
+      toast.success(`Proyecto ${targetName ? `"${targetName}"` : ''} eliminado definitivamente.`);
     } catch (err) {
-      alert(
-        'Error al eliminar instancia: ' +
-        (err.response?.data?.detail || err.message)
-      );
+      const msg = err.response?.data?.detail || err.message || 'Error al eliminar';
+      toast.error(`No se pudo eliminar el proyecto: ${msg}`);
     } finally {
       setActionLoading((prev) => ({
         ...prev,
@@ -188,8 +211,8 @@ export default function DashboardPage({
       statusFilter === 'all'
         ? true
         : statusFilter === 'running'
-        ? inst.status === 'running'
-        : inst.status !== 'running';
+          ? inst.status === 'running'
+          : inst.status !== 'running';
     const query = searchQuery.trim().toLowerCase();
     const matchesSearch =
       !query ||
@@ -236,16 +259,16 @@ export default function DashboardPage({
               <button
                 type="button"
                 onClick={() => {
+                  setSelectedInstanceId(null);
                   setActiveNav('dashboard');
                   setStatusFilter('all');
                   setSearchQuery('');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${
-                  activeNav === 'dashboard'
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${activeNav === 'dashboard'
                     ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
                     : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
-                }`}
+                  }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
                 Dashboard
@@ -258,11 +281,10 @@ export default function DashboardPage({
                   setActiveNav('deployments');
                   onDeployClick();
                 }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${
-                  activeNav === 'deployments'
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${activeNav === 'deployments'
                     ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
                     : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
-                }`}
+                  }`}
               >
                 <Rocket className="w-4 h-4" />
                 Despliegues
@@ -275,17 +297,17 @@ export default function DashboardPage({
               <button
                 type="button"
                 onClick={() => {
+                  setSelectedInstanceId(null);
                   setActiveNav('instances');
                   document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${
-                  activeNav === 'instances'
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${activeNav === 'instances'
                     ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
                     : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
-                }`}
+                  }`}
               >
                 <Server className="w-4 h-4" />
-                Instancias
+                Proyectos
                 {instances.length > 0 && (
                   <span className="ml-auto text-[10px] text-slate-600 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
                     {instances.length}
@@ -409,11 +431,27 @@ export default function DashboardPage({
         ====================================================== */}
         <div className="flex-1 min-w-0 px-5 sm:px-6 lg:px-8 xl:px-10 py-8">
 
+          {selectedInstance ? (
+            <InstanceDetailView
+              instance={selectedInstance}
+              actionLoading={actionLoading[selectedInstance.id]}
+              onBack={() => {
+                setSelectedInstanceId(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onAction={handleAction}
+              onSync={handleSync}
+              onOpenLogs={(inst) => setSelectedLogInstance(inst)}
+              onDestroy={(inst) => setDestroyConfirmInstance(inst)}
+              formatDate={formatDate}
+            />
+          ) : (
+            <div className="master-view-enter space-y-5">
 
-          {/* =================================================
-              HERO
-          ================================================== */}
-          <section className="relative overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-white to-brand-50 px-6 sm:px-8 py-7 shadow-[0_12px_40px_rgba(23,40,56,0.04)]">
+              {/* =================================================
+                  HERO
+              ================================================== */}
+              <section className="relative overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-white to-brand-50 px-6 sm:px-8 py-7 shadow-[0_12px_40px_rgba(23,40,56,0.04)]">
 
             {/* Grid */}
             <div
@@ -534,522 +572,320 @@ export default function DashboardPage({
 
 
           {/* =================================================
-              LOADING
+              STATS
           ================================================== */}
-          {loading ? (
+          <section className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
 
-            <div className="flex flex-col items-center justify-center py-24">
-
-              <div className="w-9 h-9 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-
-              <p className="mt-4 text-[12px] text-[#64748b]">
-                Cargando tu workspace...
-              </p>
-
-            </div>
-
-          ) : (
-
-            <>
-
-              {/* =================================================
-                  STATS
-              ================================================== */}
-              <section className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-
-                <EnhancedStatCard
-                  label="Sitios desplegados"
-                  value={instances.length}
-                  description="Proyectos registrados"
-                  icon={Globe}
-                />
+            <EnhancedStatCard
+              label="Sitios desplegados"
+              value={instances.length}
+              description="Proyectos registrados"
+              icon={Globe}
+            />
 
 
-                <EnhancedStatCard
-                  label="Sitios activos"
-                  value={runningInstances}
-                  description="Ejecutándose ahora"
-                  icon={Activity}
-                  active
-                />
+            <EnhancedStatCard
+              label="Sitios activos"
+              value={runningInstances}
+              description="Ejecutándose ahora"
+              icon={Activity}
+              active
+            />
 
 
-                <EnhancedStatCard
-                  label="Contenedores"
-                  value={instances.length}
-                  description="Instancias Docker"
-                  icon={Box}
-                  className="sm:col-span-2 xl:col-span-1"
-                />
+            <EnhancedStatCard
+              label="Total proyectos"
+              value={instances.length}
+              description="Sitios en tu cuenta"
+              icon={Box}
+              className="sm:col-span-2 xl:col-span-1"
+            />
 
-              </section>
+          </section>
 
 
-              {/* =================================================
+          {/* =================================================
                   PROJECTS
               ================================================== */}
-              <section id="projects-section" className="mt-5 bg-white border border-[#dfe7e4] rounded-[20px] shadow-[0_12px_38px_rgba(23,40,56,0.04)] overflow-hidden">
+          <section id="projects-section" className="mt-5 bg-white border border-[#dfe7e4] rounded-[20px] shadow-[0_12px_38px_rgba(23,40,56,0.04)] overflow-hidden">
 
 
-                {/* Header */}
-                <div className="relative px-6 py-5 border-b border-[#e8eeeb] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Header */}
+            <div className="relative px-6 py-5 border-b border-[#e8eeeb] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-                  <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-500" />
-
-
-                  <div>
-
-                    <div className="flex items-center gap-2">
-
-                      <h2 className="text-[18px] font-bold tracking-[-0.02em] text-navy-900">
-                        Mis proyectos
-                      </h2>
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-500" />
 
 
-                      {instances.length > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 text-[10px] font-semibold">
-                          {instances.length}
-                        </span>
-                      )}
+              <div>
 
-                    </div>
+                <div className="flex items-center gap-2">
 
-
-                    <p className="mt-1 text-[11px] text-[#64748b]">
-                      Sitios publicados y administrados desde Codrop.
-                    </p>
-
-                  </div>
+                  <h2 className="text-[18px] font-bold tracking-[-0.02em] text-navy-900">
+                    Mis proyectos
+                  </h2>
 
 
                   {instances.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={onDeployClick}
-                      className="h-9 px-4 rounded-[9px] bg-brand-50 hover:bg-brand-100 border border-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Nuevo proyecto
-                    </button>
+                    <span className="px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 text-[10px] font-semibold">
+                      {instances.length}
+                    </span>
                   )}
 
                 </div>
 
-                {/* Filters & Search Toolbar */}
-                {instances.length > 0 && (
-                  <div className="px-6 py-3 bg-[#fbfdfc] border-b border-[#e8eeeb] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                      <button
-                        type="button"
-                        onClick={() => setStatusFilter('all')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${
-                          statusFilter === 'all'
-                            ? 'bg-navy-900 text-white shadow-sm'
-                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        Todos ({instances.length})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setStatusFilter('running')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${
-                          statusFilter === 'running'
-                            ? 'bg-brand-500 text-white shadow-sm'
-                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        En ejecución ({runningInstances})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setStatusFilter('stopped')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${
-                          statusFilter === 'stopped'
-                            ? 'bg-slate-700 text-white shadow-sm'
-                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        Detenidos ({stoppedInstances})
-                      </button>
-                    </div>
 
-                    <div className="relative min-w-[210px]">
-                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-                      <input
-                        type="text"
-                        placeholder="Buscar por nombre o puerto..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-8 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 font-medium transition duration-150"
-                      />
-                    </div>
-                  </div>
-                )}
+                <p className="mt-1 text-[11px] text-[#64748b]">
+                  Sitios publicados y administrados desde Codrop.
+                </p>
+
+              </div>
 
 
-                {/* EMPTY */}
-                {instances.length === 0 ? (
+              {instances.length > 0 && (
+                <button
+                  type="button"
+                  onClick={onDeployClick}
+                  className="h-9 px-4 rounded-[9px] bg-brand-50 hover:bg-brand-100 border border-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Nuevo proyecto
+                </button>
+              )}
 
-                  <div className="px-6 py-14 text-center">
+            </div>
 
-                    <div className="w-16 h-16 mx-auto rounded-[18px] bg-brand-50 border border-brand-100 flex items-center justify-center shadow-sm">
-                      <PackageOpen className="w-7 h-7 text-brand-600" />
-                    </div>
+            {/* Filters & Search Toolbar */}
+            {instances.length > 0 && (
+              <div className="px-6 py-3 bg-[#fbfdfc] border-b border-[#e8eeeb] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${statusFilter === 'all'
+                        ? 'bg-navy-900 text-white shadow-sm'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                  >
+                    Todos ({instances.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('running')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${statusFilter === 'running'
+                        ? 'bg-brand-500 text-white shadow-sm'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                  >
+                    En ejecución ({runningInstances})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('stopped')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-150 btn-tactile whitespace-nowrap cursor-pointer ${statusFilter === 'stopped'
+                        ? 'bg-slate-700 text-white shadow-sm'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                  >
+                    Detenidos ({stoppedInstances})
+                  </button>
+                </div>
 
-
-                    <h3 className="mt-5 text-[20px] font-bold tracking-[-0.02em] text-navy-900">
-                      Tu primer proyecto empieza aquí
-                    </h3>
-
-
-                    <p className="mt-2 max-w-[470px] mx-auto text-[12px] leading-6 text-[#64748b]">
-                      Empaqueta tu sitio en un archivo{' '}
-                      <code className="font-semibold text-navy-900">
-                        .zip
-                      </code>{' '}
-                      con un{' '}
-                      <code className="font-semibold text-navy-900">
-                        index.html
-                      </code>{' '}
-                      y Codrop lo convertirá en una URL pública.
-                    </p>
-
-
+                <div className="relative min-w-[210px]">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o puerto..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-8 pl-8 pr-7 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 font-medium transition duration-150"
+                  />
+                  {searchQuery && (
                     <button
                       type="button"
-                      onClick={onDeployClick}
-                      className="mt-6 h-10 px-5 rounded-[9px] bg-brand-500 hover:bg-brand-600 text-white text-[12px] font-semibold inline-flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(40,181,134,0.18)] transition-colors"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Limpiar búsqueda"
+                      className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer transition-colors"
                     >
-                      <Rocket className="w-4 h-4" />
-                      Desplegar mi primer sitio
+                      <X className="w-3 h-3" />
                     </button>
+                  )}
+                </div>
+              </div>
+            )}
 
-                  </div>
 
-                ) : filteredInstances.length === 0 ? (
+            {/* CONTENT STATES */}
+            {loading ? (
+              <div className="divide-y divide-[#edf1ef]">
+                <SkeletonInstanceCard />
+                <SkeletonInstanceCard />
+              </div>
+            ) : instances.length === 0 ? (
 
-                  <div className="py-12 px-6 text-center">
-                    <p className="text-xs font-semibold text-slate-700">
-                      No hay proyectos que coincidan con los filtros aplicados.
-                    </p>
-                    <button
-                      type="button"
+              <div className="px-6 py-14 text-center scale-pop-in">
+
+                <div className="w-16 h-16 mx-auto rounded-[18px] bg-brand-50 border border-brand-100 flex items-center justify-center shadow-sm">
+                  <PackageOpen className="w-7 h-7 text-brand-600" />
+                </div>
+
+
+                <h3 className="mt-5 text-[20px] font-bold tracking-[-0.02em] text-navy-900">
+                  Tu primer proyecto empieza aquí
+                </h3>
+
+
+                <p className="mt-2 max-w-[470px] mx-auto text-[12px] leading-6 text-[#64748b]">
+                  Empaqueta tu sitio en un archivo{' '}
+                  <code className="font-semibold text-navy-900">
+                    .zip
+                  </code>{' '}
+                  con un{' '}
+                  <code className="font-semibold text-navy-900">
+                    index.html
+                  </code>{' '}
+                  y Codrop lo convertirá en una URL pública.
+                </p>
+
+
+                <button
+                  type="button"
+                  onClick={onDeployClick}
+                  className="mt-6 h-10 px-5 rounded-[9px] bg-brand-500 hover:bg-brand-600 text-white text-[12px] font-semibold inline-flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(40,181,134,0.18)] transition-colors btn-tactile cursor-pointer"
+                >
+                  <Rocket className="w-4 h-4" />
+                  Desplegar mi primer sitio
+                </button>
+
+              </div>
+
+            ) : filteredInstances.length === 0 ? (
+
+              <div className="py-12 px-6 text-center scale-pop-in">
+                <p className="text-xs font-semibold text-slate-700">
+                  No hay proyectos que coincidan con los filtros aplicados.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setSearchQuery('');
+                  }}
+                  className="mt-3 text-xs font-bold text-brand-600 hover:underline cursor-pointer btn-tactile"
+                >
+                  Restablecer filtros
+                </button>
+              </div>
+
+            ) : (
+
+              <div className="divide-y divide-[#edf1ef]">
+
+                {filteredInstances.map((inst) => {
+
+                  return (
+                    <article
+                      key={inst.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => {
-                        setStatusFilter('all');
-                        setSearchQuery('');
+                        setSelectedInstanceId(inst.id);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="mt-3 text-xs font-bold text-brand-600 hover:underline cursor-pointer"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedInstanceId(inst.id);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      }}
+                      className="group px-5 sm:px-6 py-4 hover:bg-[#fbfdfc] transition-colors duration-150 relative cursor-pointer btn-tactile focus:outline-none focus:bg-brand-50/20 select-none"
                     >
-                      Restablecer filtros
-                    </button>
-                  </div>
 
-                ) : (
+                      <div className="absolute inset-y-3 left-0 w-[2.5px] rounded-r-full bg-transparent group-hover:bg-brand-500 transition-colors duration-150" />
 
-                  <div className="divide-y divide-[#edf1ef]">
+                      {/* Main row */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
-                    {filteredInstances.map((inst) => {
-
-                      const isRunning = inst.status === 'running';
-
-                      return (
-                        <article
-                          key={inst.id}
-                          className="group px-5 sm:px-6 py-5 hover:bg-[#fbfdfc] transition-colors relative"
-                        >
-
-                          <div className="absolute inset-y-4 left-0 w-[2px] rounded-r-full bg-transparent group-hover:bg-brand-500 transition-colors" />
-
-
-                          {/* Main row */}
-                          <div className="flex flex-col xl:flex-row xl:items-center gap-5">
-
-
-                            {/* Proyecto */}
-                            <div className="flex items-center gap-3.5 xl:w-[23%] min-w-0">
-
-                              {/* Mascota según ciclo de vida del servidor */}
-                              <ServerMascot
-                                status={inst.status}
-                                action={actionLoading[inst.id]}
-                                size="md"
-                              />
-
-
-                              <div className="min-w-0">
-
-                                <div className="flex items-center gap-2">
-
-                                  <h3 className="text-[13px] font-semibold text-navy-900 truncate">
-                                    {inst.name}
-                                  </h3>
-
-                                  {isRunning && (
-                                    <span className="hidden 2xl:inline-flex items-center gap-1 text-[9px] text-brand-700 font-medium">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-                                      live
-                                    </span>
-                                  )}
-
-                                </div>
-
-
-                                <p className="mt-1 text-[10px] text-[#94a3b8]">
-                                  Creado {formatDate(inst.created_at)}
-                                </p>
-
-                              </div>
-
-                            </div>
-
-
-                            {/* Estado */}
-                            <div className="xl:w-[13%]">
-
-                              <span
-                                className={`
-                                  inline-flex
-                                  items-center
-                                  gap-2
-                                  px-2.5
-                                  py-1
-                                  rounded-full
-                                  text-[10px]
-                                  font-semibold
-                                  border
-                                  ${
-                                    isRunning
-                                      ? 'bg-brand-50 text-brand-700 border-brand-100'
-                                      : 'bg-slate-100 text-slate-600 border-slate-200'
-                                  }
-                                `}
-                              >
-
-                                <span
-                                  className={`
-                                    w-1.5
-                                    h-1.5
-                                    rounded-full
-                                    ${
-                                      isRunning
-                                        ? 'bg-brand-500'
-                                        : 'bg-slate-400'
-                                    }
-                                  `}
-                                />
-
-                                {isRunning ? 'Running' : 'Stopped'}
-
-                              </span>
-
-                            </div>
-
-
-                            {/* Puerto */}
-                            <div className="xl:w-[9%]">
-
-                              <p className="text-[9px] uppercase tracking-[0.12em] font-semibold text-[#94a3b8]">
-                                Puerto
-                              </p>
-
-                              <p className="mt-1 text-[12px] font-mono font-semibold text-navy-900">
-                                {inst.assigned_port || '—'}
-                              </p>
-
-                            </div>
-
-
-                            {/* URL */}
-                            <div className="flex-1 min-w-0">
-
-                              <p className="text-[9px] uppercase tracking-[0.12em] font-semibold text-[#94a3b8]">
-                                URL pública
-                              </p>
-
-
-                              {inst.public_url ? (
-
-                                <a
-                                  href={inst.public_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="mt-1 inline-flex max-w-full items-center gap-1.5 text-[12px] font-medium text-brand-700 hover:text-brand-600"
-                                >
-
-                                  <span className="truncate">
-                                    {inst.public_url}
-                                  </span>
-
-                                  <ArrowUpRight className="w-3.5 h-3.5 flex-shrink-0" />
-
-                                </a>
-
-                              ) : (
-
-                                <p className="mt-1 text-[12px] text-[#64748b]">
-                                  No disponible
-                                </p>
-
-                              )}
-
-                            </div>
-
-
-                            {/* Acciones */}
-                            <div className="flex items-center xl:justify-end gap-1.5 flex-wrap">
-
-                              {isRunning ? (
-
-                                <button
-                                  type="button"
-                                  title="Detener servidor"
-                                  disabled={Boolean(actionLoading[inst.id])}
-                                  onClick={() => handleAction(inst.id, 'stop')}
-                                  className="h-8 px-2.5 rounded-[8px] bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
-                                >
-                                  {actionLoading[inst.id] === 'stop' ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <Square className="w-3.5 h-3.5" />
-                                  )}
-
-                                  <span className="hidden sm:inline">
-                                    Detener
-                                  </span>
-                                </button>
-
-                              ) : (
-
-                                <button
-                                  type="button"
-                                  title="Iniciar servidor"
-                                  disabled={Boolean(actionLoading[inst.id])}
-                                  onClick={() => handleAction(inst.id, 'start')}
-                                  className="h-8 px-2.5 rounded-[8px] bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-100 text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
-                                >
-
-                                  {actionLoading[inst.id] === 'start' ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <Play className="w-3.5 h-3.5" />
-                                  )}
-
-                                  <span className="hidden sm:inline">
-                                    Iniciar
-                                  </span>
-
-                                </button>
-
-                              )}
-
-
-                              <button
-                                type="button"
-                                title="Reiniciar servidor"
-                                disabled={Boolean(actionLoading[inst.id])}
-                                onClick={() => handleAction(inst.id, 'restart')}
-                                className="h-8 px-2.5 rounded-[8px] bg-[#f5f8f7] hover:bg-[#edf3f0] text-[#47675b] border border-[#dce7e2] text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
-                              >
-
-                                <RotateCcw
-                                  className={`
-                                    w-3.5 h-3.5
-                                    ${
-                                      actionLoading[inst.id] === 'restart'
-                                        ? 'animate-spin'
-                                        : ''
-                                    }
-                                  `}
-                                />
-
-                                <span className="hidden sm:inline">
-                                  Reiniciar
-                                </span>
-
-                              </button>
-
-
-                              <button
-                                type="button"
-                                title="Sincronizar estado con Docker Engine"
-                                disabled={Boolean(actionLoading[inst.id])}
-                                onClick={() => handleSync(inst.id)}
-                                className="h-8 px-2.5 rounded-[8px] bg-white hover:bg-[#f8faf9] text-[#64748b] border border-[#dfe7e4] text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
-                              >
-
-                                <RefreshCw
-                                  className={`
-                                    w-3.5 h-3.5
-                                    ${
-                                      actionLoading[inst.id] === 'sync'
-                                        ? 'animate-spin'
-                                        : ''
-                                    }
-                                  `}
-                                />
-
-                                <span className="hidden sm:inline">
-                                  Sync
-                                </span>
-
-                              </button>
-
-
-                              <button
-                                type="button"
-                                title="Ver registros"
-                                onClick={() => setSelectedLogInstance(inst)}
-                                className="h-8 px-2.5 rounded-[8px] bg-navy-900 hover:bg-navy-800 text-white text-[11px] font-medium flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer shadow-[0_5px_14px_rgba(23,40,56,0.15)]"
-                              >
-
-                                <Terminal className="w-3.5 h-3.5 text-brand-500" />
-
-                                <span className="hidden sm:inline">
-                                  Logs
-                                </span>
-
-                              </button>
-
-
-                              <button
-                                type="button"
-                                title="Eliminar proyecto"
-                                disabled={Boolean(actionLoading[inst.id])}
-                                onClick={() => setDestroyConfirmInstance(inst)}
-                                className="h-8 w-8 rounded-[8px] bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 flex items-center justify-center transition duration-150 btn-tactile cursor-pointer disabled:opacity-50"
-                              >
-
-                                {actionLoading[inst.id] === 'destroy' ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                )}
-
-                              </button>
-
-                            </div>
-
-                          </div>
-
-
-                          {/* Métricas */}
-                          <InstanceMetricsCard
-                            instanceId={inst.id}
-                            isRunning={isRunning}
+                        {/* 1. Nombre del proyecto (jerarquía primaria) */}
+                        <div className="flex items-center gap-3.5 sm:w-[30%] min-w-0">
+                          <ServerMascot
+                            status={inst.status}
+                            action={actionLoading[inst.id]}
+                            size="md"
                           />
 
-                        </article>
-                      );
-                    })}
+                          <div className="min-w-0">
+                            <h3 className="text-[13px] sm:text-sm font-bold text-navy-900 group-hover:text-brand-700 transition-colors duration-150 truncate">
+                              {inst.name}
+                            </h3>
+                          </div>
+                        </div>
 
-                  </div>
+                        {/* 2. Indicador visual de estado discreto */}
+                        <div className="sm:w-[15%] shrink-0">
+                          <StatusBadge status={inst.status} size="sm" />
+                        </div>
 
-                )}
+                        {/* 3. Puerto asignado (formato monoespaciado) */}
+                        <div className="sm:w-[14%] shrink-0">
+                          <span className="text-[11px] font-mono font-bold text-navy-900 bg-slate-100/90 px-2.5 py-1 rounded-md border border-slate-200/80 inline-block">
+                            {inst.assigned_port || '—'}
+                          </span>
+                        </div>
 
-              </section>
+                        {/* 4. URL pública (con acción rápida de copiar o abrir en pestaña sin disparar detalle) */}
+                        <div className="flex-1 min-w-0">
+                          {inst.public_url ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <a
+                                href={inst.public_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-600 transition-colors truncate group/link"
+                                title="Abrir sitio web en nueva pestaña"
+                              >
+                                <span className="truncate">
+                                  {inst.public_url}
+                                </span>
+                                <ArrowUpRight className="w-3.5 h-3.5 flex-shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                              </a>
 
-            </>
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <CopyButton
+                                  textToCopy={inst.public_url}
+                                  iconOnly
+                                  title="Copiar URL pública"
+                                  className="!py-0.5 !px-1.5 text-[10px]"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-[#94a3b8]">
+                              No disponible
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Indicador de divulgación interactiva hacia detalle */}
+                        <div className="flex items-center gap-1.5 text-[#94a3b8] group-hover:text-brand-600 transition-colors duration-150 shrink-0 self-end sm:self-center">
+                          <span className="text-[11px] font-semibold hidden xl:inline">Ver detalle</span>
+                          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
+                        </div>
+
+                      </div>
+
+                    </article>
+                  );
+                })}
+
+              </div>
+
+            )}
+
+          </section>
+
+          </div>
           )}
 
         </div>
@@ -1101,7 +937,7 @@ export default function DashboardPage({
                 </h3>
 
                 <p className="mt-0.5 text-[10px] text-red-500 font-semibold uppercase tracking-[0.08em]">
-                  Acción irreversible • Fin de ciclo de vida
+                  Acción irreversible • Esta operación no se puede deshacer
                 </p>
 
               </div>
@@ -1117,13 +953,7 @@ export default function DashboardPage({
                 {destroyConfirmInstance.name}
               </strong>.
 
-              {' '}Codrop detendrá y eliminará el contenedor, liberará el puerto{' '}
-
-              <code className="bg-[#f1f5f4] px-1.5 py-0.5 rounded text-navy-900 font-mono font-bold">
-                {destroyConfirmInstance.assigned_port}
-              </code>
-
-              {' '}y eliminará sus archivos asociados.
+              {' '}Esta acción detendrá el sitio web y eliminará de forma permanente todos sus archivos y configuraciones asociadas.
 
             </p>
 
@@ -1242,10 +1072,9 @@ function EnhancedStatCard({
               flex
               items-center
               justify-center
-              ${
-                active
-                  ? 'bg-brand-500 text-white shadow-[0_10px_20px_rgba(40,181,134,0.2)]'
-                  : 'bg-brand-50 border border-brand-100 text-brand-600'
+              ${active
+                ? 'bg-brand-500 text-white shadow-[0_10px_20px_rgba(40,181,134,0.2)]'
+                : 'bg-brand-50 border border-brand-100 text-brand-600'
               }
             `}
           >
@@ -1266,10 +1095,9 @@ function EnhancedStatCard({
             <p
               className={`
                 text-[10px]
-                ${
-                  active
-                    ? 'text-brand-700 font-medium'
-                    : 'text-[#94a3b8]'
+                ${active
+                  ? 'text-brand-700 font-medium'
+                  : 'text-[#94a3b8]'
                 }
               `}
             >

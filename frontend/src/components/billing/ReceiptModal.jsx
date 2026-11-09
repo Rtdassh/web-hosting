@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
+import CopyButton from '../ui/CopyButton';
 
 export default function ReceiptModal({ isOpen, onClose, invoice }) {
   if (!isOpen || !invoice) return null;
@@ -36,13 +37,13 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
 
   const formattedDate = dateValue
     ? new Date(dateValue).toLocaleString('es-GT', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      })
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })
     : new Date().toLocaleString('es-GT', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      });
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
 
   const handlePrint = () => {
     window.print();
@@ -116,7 +117,19 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
           <div className="space-y-4">
             <ReceiptRow
               label="Código de autorización"
-              value={invoice.auth_code || '—'}
+              value={
+                <span className="inline-flex items-center gap-2">
+                  <span>{invoice.auth_code || '—'}</span>
+                  {invoice.auth_code && (
+                    <CopyButton
+                      textToCopy={invoice.auth_code}
+                      iconOnly
+                      title="Copiar código de autorización"
+                      className="!py-0.5 !px-1.5 text-[9px]"
+                    />
+                  )}
+                </span>
+              }
               mono
               accent
             />
@@ -169,7 +182,7 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
                 </p>
 
                 <p className="mt-1 text-[11px] font-semibold text-[#64748B]">
-                  Operación simulada
+                  Pago confirmado
                 </p>
               </div>
 
@@ -183,16 +196,6 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
                 </span>
               </div>
             </div>
-          </div>
-
-          {/* Academic notice */}
-          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[#e5ece8] bg-white p-3.5">
-            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#28B586]" />
-
-            <p className="text-[10px] font-semibold leading-4 text-[#64748B]">
-              Este comprobante corresponde a una transacción simulada dentro
-              del entorno académico de Codrop.
-            </p>
           </div>
 
           {/* Actions */}
@@ -238,13 +241,11 @@ function ReceiptRow({
       </span>
 
       <span
-        className={`text-right text-xs font-black ${
-          mono ? 'font-mono' : ''
-        } ${
-          accent
+        className={`text-right text-xs font-black ${mono ? 'font-mono' : ''
+          } ${accent
             ? 'rounded-lg border border-[#CFE4D6] bg-[#EAF7F1] px-2 py-1 text-[#1C7F62]'
             : 'text-[#172838]'
-        }`}
+          }`}
       >
         {value}
       </span>

@@ -12,12 +12,14 @@ import {
   Server,
   Sparkles,
   Zap,
+  Loader2,
 } from 'lucide-react';
 
 import { billingService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CheckoutModal from '../components/billing/CheckoutModal';
 import ReceiptModal from '../components/billing/ReceiptModal';
+import { toast } from '../components/ui/Toast';
 
 const PLAN_ORDER = {
   free: 0,
@@ -37,7 +39,7 @@ const DEFAULT_PLANS = [
     cpu_quota: 0.25,
     features: [
       '1 sitio activo',
-      '128 MB RAM por contenedor',
+      '128 MB RAM por sitio',
       '0.25 vCPU dedicada',
       'Despliegue mediante .zip',
       'Telemetría básica',
@@ -55,7 +57,7 @@ const DEFAULT_PLANS = [
     popular: true,
     features: [
       'Hasta 3 sitios simultáneos',
-      '256 MB RAM por contenedor',
+      '256 MB RAM por sitio',
       '0.50 vCPU dedicada',
       'Plantillas en 1 clic',
       'Telemetría y logs',
@@ -73,7 +75,7 @@ const DEFAULT_PLANS = [
     cpu_quota: 1,
     features: [
       'Hasta 10 sitios simultáneos',
-      '512 MB RAM por contenedor',
+      '512 MB RAM por sitio',
       '1.00 vCPU dedicada',
       'Plantillas en 1 clic',
       'Telemetría completa',
@@ -101,6 +103,7 @@ export default function PricingPage({
   const [actionMessage, setActionMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [changingPlanId, setChangingPlanId] = useState(null);
 
   useEffect(() => {
     if (user?.plan?.name) {
@@ -159,12 +162,13 @@ export default function PricingPage({
   const changePlanWithoutCheckout = async (plan) => {
     const confirmed = window.confirm(
       `¿Deseas cambiar tu suscripción de ${activePlanName} a ${plan.name}?\n\n` +
-        'Si tu cuenta supera las cuotas del nuevo plan, Codrop bloqueará el cambio hasta que reduzcas tus sitios activos.'
+      'Si tu cuenta supera las cuotas del nuevo plan, Codrop bloqueará el cambio hasta que reduzcas tus sitios activos.'
     );
 
     if (!confirmed) return;
 
     setIsChangingPlan(true);
+    setChangingPlanId(plan.id);
     setActionMessage(null);
     setErrorMessage(null);
 
@@ -172,18 +176,20 @@ export default function PricingPage({
       const response = await billingService.changePlan(plan.id);
 
       setActivePlanName(plan.name);
-      setActionMessage(
-        response?.message ||
-          `Tu suscripción ahora utiliza el plan ${plan.name}.`
-      );
+      const msg = response?.message || `Tu suscripción ahora utiliza el plan ${plan.name}.`;
+      setActionMessage(msg);
+      toast.success(msg);
 
       if (refreshUser) {
         await refreshUser();
       }
     } catch (error) {
-      setErrorMessage(safeExtractError(error));
+      const err = safeExtractError(error);
+      setErrorMessage(err);
+      toast.error(err);
     } finally {
       setIsChangingPlan(false);
+      setChangingPlanId(null);
     }
   };
 
@@ -215,9 +221,9 @@ export default function PricingPage({
     setLatestInvoice(receiptData);
     setIsReceiptOpen(true);
 
-    setActionMessage(
-      `Tu suscripción fue actualizada correctamente al plan ${receiptData.plan_name}.`
-    );
+    const msg = `Tu suscripción fue actualizada correctamente al plan ${receiptData.plan_name}.`;
+    setActionMessage(msg);
+    toast.success(msg);
 
     if (refreshUser) {
       await refreshUser();
@@ -298,7 +304,7 @@ export default function PricingPage({
               <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[#64748B]">
                 Empieza gratis y escala cuando tu proyecto lo necesite.
                 Cada plan define cuántos sitios puedes publicar y los recursos
-                disponibles para cada contenedor.
+                disponibles para cada proyecto.
               </p>
             </div>
 
@@ -328,14 +334,14 @@ export default function PricingPage({
 
         {/* Feedback */}
         {actionMessage && (
-          <div className="mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-[#b9ddcd] bg-[#edf9f3] p-4 text-sm font-semibold text-[#176c53]">
+          <div className="mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-[#b9ddcd] bg-[#edf9f3] p-4 text-sm font-semibold text-[#176c53] fade-slide-down">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
             <span>{actionMessage}</span>
           </div>
         )}
 
         {errorMessage && (
-          <div className="mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+          <div className="mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 fade-slide-down">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
             <span>{errorMessage}</span>
           </div>
@@ -354,13 +360,12 @@ export default function PricingPage({
             return (
               <article
                 key={plan.id}
-                className={`relative flex min-h-[590px] flex-col overflow-hidden rounded-[26px] border bg-white p-6 transition duration-300 ${
-                  plan.popular
+                className={`relative flex min-h-[590px] flex-col overflow-hidden rounded-[26px] border bg-white p-6 transition duration-300 ${plan.popular
                     ? 'border-[#28B586] shadow-[0_22px_55px_rgba(40,181,134,0.13)] lg:-translate-y-2'
                     : isCurrent
-                    ? 'border-[#9ed5bf] shadow-[0_18px_45px_rgba(23,40,56,0.08)]'
-                    : 'border-[#dce7e2] shadow-[0_12px_35px_rgba(23,40,56,0.045)] hover:-translate-y-1 hover:border-[#b9d8ca]'
-                }`}
+                      ? 'border-[#9ed5bf] shadow-[0_18px_45px_rgba(23,40,56,0.08)]'
+                      : 'border-[#dce7e2] shadow-[0_12px_35px_rgba(23,40,56,0.045)] hover:-translate-y-1 hover:border-[#b9d8ca]'
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute right-5 top-5 rounded-full bg-[#172838] px-3 py-1 text-[10px] font-black uppercase tracking-[0.13em] text-white">
@@ -407,7 +412,7 @@ export default function PricingPage({
                     </div>
 
                     <p className="mt-2 text-[11px] font-medium text-[#94A3B8]">
-                      Facturación simulada para el entorno Codrop
+                      Facturación mensual sin plazos forzosos
                     </p>
                   </div>
                 </div>
@@ -484,20 +489,27 @@ export default function PricingPage({
                     type="button"
                     onClick={() => handlePlanAction(plan)}
                     disabled={(isCurrent && !(needsRenewal && Number(plan.price) > 0)) || isChangingPlan}
-                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-xs font-black transition duration-150 ${
-                      isCurrent
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-xs font-black transition duration-150 ${isCurrent
                         ? needsRenewal && Number(plan.price) > 0
                           ? 'bg-[#172838] text-white hover:bg-[#1F3141] btn-tactile cursor-pointer'
                           : 'cursor-default border border-[#e2e8e5] bg-[#f3f6f4] text-[#94A3B8]'
                         : plan.popular
-                        ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76] btn-tactile cursor-pointer'
-                        : 'bg-[#172838] text-white shadow-[0_10px_25px_rgba(23,40,56,0.12)] hover:bg-[#1F3141] btn-tactile cursor-pointer'
-                    }`}
+                          ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76] btn-tactile cursor-pointer'
+                          : 'bg-[#172838] text-white shadow-[0_10px_25px_rgba(23,40,56,0.12)] hover:bg-[#1F3141] btn-tactile cursor-pointer'
+                      }`}
                   >
-                    {getPlanActionLabel(plan)}
-
-                    {!isCurrent && (
-                      <ArrowRight className="h-4 w-4" />
+                    {changingPlanId === plan.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Procesando cambio...
+                      </>
+                    ) : (
+                      <>
+                        {getPlanActionLabel(plan)}
+                        {!isCurrent && (
+                          <ArrowRight className="h-4 w-4" />
+                        )}
+                      </>
                     )}
                   </button>
                 </div>
