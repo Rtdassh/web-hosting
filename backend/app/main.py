@@ -1,4 +1,6 @@
 import logging
+import asyncio
+from app.services.sync_worker import SyncWorker
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -15,9 +17,20 @@ logger = logging.getLogger("paas-core")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Schema and seed are explicit deployment steps; API startup never writes them.
+    # El esquema y las semillas se gestionan fuera del arranque.
     logger.info("Esquema gestionado con Alembic; semillas mediante app.seed.")
-    yield
+
+    worker = SyncWorker(interval_seconds=30)
+    app.state.sync_worker = worker
+    task = asyncio.create_task(worker.start_periodic_sync())
+    await asyncio.sleep(0)
+
+    try:
+        yield
+    finally:
+        worker.stop()
+        await task
+        logger.info("SyncWorker detenido correctamente.")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

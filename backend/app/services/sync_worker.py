@@ -4,6 +4,8 @@ Mantiene la consistencia del sistema ante fallas externas o detenciones manuales
 """
 import asyncio
 import logging
+from sqlalchemy import text
+
 from typing import Dict, Any
 from sqlalchemy.orm import Session
 
@@ -20,6 +22,7 @@ class SyncWorker:
     def __init__(self, interval_seconds: int = 30):
         self.interval_seconds = interval_seconds
         self.is_running = False
+        self._stop_event = None
 
     def reconcile_states(self, db: Session) -> Dict[str, Any]:
         """
@@ -33,13 +36,18 @@ class SyncWorker:
             return {"status": "skipped", "reason": "docker_unavailable"}
 
         try:
-            # Consultar instancias que la base de datos cree que están corriendo
+            # Revisar instancias activas y detenidas.
             running_instances = db.query(Instance).filter(
-                Instance.status == InstanceStatus.RUNNING
+                Instance.status.in_([
+                    InstanceStatus.RUNNING,
+                    InstanceStatus.STOPPED
+                ])
             ).all()
 
             for inst in running_instances:
+                previous_status = inst.status
                 docker_status = docker_service.get_container_status(inst.container_id)
+
 
                 # Si el contenedor ya no existe en Docker
                 if docker_status == "not_found":
@@ -51,7 +59,7 @@ class SyncWorker:
                     port_service.release_port(db, inst.assigned_port, commit=False)
                     db.add(InstanceStatusHistory(
                         instance_id=inst.id,
-                        previous_status=InstanceStatus.RUNNING.value,
+                        previous_status=previous_status.value,
                         new_status=InstanceStatus.FAILED.value,
                         reason="Contenedor no encontrado en Docker durante reconciliación periódica (SyncWorker)"
                     ))
@@ -59,7 +67,10 @@ class SyncWorker:
                     reconciled_instances.append(inst.id)
 
                 # Si el contenedor está detenido en Docker pero corriendo en BD
-                elif docker_status in ["exited", "stopped", "dead"]:
+                elif (
+                    docker_status in ["exited", "stopped", "dead"]
+                    and previous_status != InstanceStatus.STOPPED
+                ):
                     logger.warning(
                         f"[RECONCILIATION] Contenedor '{inst.container_id}' (instancia {inst.id}) "
                         f"detenido en Docker ({docker_status}). Marcando como STOPPED."
@@ -67,7 +78,7 @@ class SyncWorker:
                     inst.status = InstanceStatus.STOPPED
                     db.add(InstanceStatusHistory(
                         instance_id=inst.id,
-                        previous_status=InstanceStatus.RUNNING.value,
+                        previous_status=previous_status.value,
                         new_status=InstanceStatus.STOPPED.value,
                         reason=f"Contenedor detenido externamente en Docker [{docker_status}] (SyncWorker)"
                     ))
@@ -78,31 +89,68 @@ class SyncWorker:
                 db.commit()
                 logger.info(f"[RECONCILIATION] Se reconciliaron {discrepancies_found} instancias.")
 
-        except Exception as e:
-            logger.error(f"[RECONCILIATION] Error durante el ciclo de sincronización: {e}")
-            if db:
-                db.rollback()
+        except Exception:
+            logger.exception(
+                "[RECONCILIATION] No se pudo completar el ciclo."
+            )
+            db.rollback()
+            raise
 
         return {
             "discrepancies_found": discrepancies_found,
             "reconciled_instances": reconciled_instances
         }
 
+    def _run_sync_cycle(self):
+        """Ejecuta un ciclo exclusivo y cierra siempre la sesión."""
+        db = SessionLocal()
+        try:
+            acquired = db.execute(
+                text("SELECT pg_try_advisory_xact_lock(:lock_id)"),
+                {"lock_id": 7304100}
+            ).scalar()
+
+            if acquired is not True:
+                return {
+                    "status": "skipped",
+                    "reason": "another_worker_running"
+                }
+
+            return self.reconcile_states(db)
+        finally:
+            db.close()
+
     async def start_periodic_sync(self):
-        """Loop asíncrono para ejecutar la reconciliación periódica en background."""
+        """Ejecuta la reconciliación sin bloquear el bucle de la API."""
+        self._stop_event = asyncio.Event()
         self.is_running = True
-        logger.info(f"SyncWorker iniciado con intervalo de {self.interval_seconds}s.")
-        while self.is_running:
-            try:
-                db = SessionLocal()
-                self.reconcile_states(db)
-                db.close()
-            except Exception as e:
-                logger.error(f"Error en loop de SyncWorker: {e}")
-            await asyncio.sleep(self.interval_seconds)
+        logger.info(
+            "SyncWorker iniciado con intervalo de %ss.",
+            self.interval_seconds
+        )
+
+        try:
+            while self.is_running:
+                try:
+                    await asyncio.to_thread(self._run_sync_cycle)
+                except Exception:
+                    logger.exception("Error en el ciclo de SyncWorker.")
+
+                if self.is_running:
+                    try:
+                        await asyncio.wait_for(
+                            self._stop_event.wait(),
+                            timeout=self.interval_seconds
+                        )
+                    except asyncio.TimeoutError:
+                        pass  # Timeout esperado, continuar con el siguiente ciclo
+        finally:
+            self.is_running = False
 
     def stop(self):
         self.is_running = False
+        if self._stop_event is not None:
+            self._stop_event.set()
 
 
 sync_worker = SyncWorker()
