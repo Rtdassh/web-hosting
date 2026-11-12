@@ -12,46 +12,80 @@ const apiClient = axios.create({
 
 // Interceptor para inyectar token JWT automáticamente si existe sesión
 apiClient.interceptors.request.use((config) => {
-  if (!config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
+  if (
+    !config.url.includes('/auth/login') &&
+    !config.url.includes('/auth/register')
+  ) {
     const token = localStorage.getItem('paas_token');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+
   return config;
 });
 
 export const authService = {
   login: async (email, password) => {
-    const res = await apiClient.post('/auth/login', { email, password });
+    const res = await apiClient.post('/auth/login', {
+      email,
+      password,
+    });
+
     if (res.data.access_token) {
       localStorage.setItem('paas_token', res.data.access_token);
     }
+
     return res.data;
   },
+
   register: async (userData) => {
     const res = await apiClient.post('/auth/register', userData);
     return res.data;
   },
+
   logout: () => {
     localStorage.removeItem('paas_token');
   },
+
   getMe: async () => {
     const res = await apiClient.get('/auth/me');
     return res.data;
   },
+
   forgotPassword: async (email) => {
-    const res = await apiClient.post('/auth/forgot-password', { email });
+    const res = await apiClient.post('/auth/forgot-password', {
+      email,
+    });
+
     return res.data;
   },
+
   resetPassword: async (token, newPassword) => {
-    const res = await apiClient.post('/auth/reset-password', { token, new_password: newPassword });
+    const res = await apiClient.post('/auth/reset-password', {
+      token,
+      new_password: newPassword,
+    });
+
     return res.data;
   },
+
   verifyEmail: async (token) => {
-    const res = await apiClient.get('/auth/verify-email', { params: { token } });
+    const res = await apiClient.get('/auth/verify-email', {
+      params: { token },
+    });
+
     return res.data;
-  }
+  },
+
+  resendVerification: async (email) => {
+    const res = await apiClient.post('/auth/resend-verification', {
+      email,
+    });
+
+    return res.data;
+  },
 };
 
 export const billingService = {
@@ -59,18 +93,24 @@ export const billingService = {
     const res = await apiClient.get('/plans');
     return res.data;
   },
+
   checkout: async (checkoutData) => {
     const res = await apiClient.post('/billing/checkout', checkoutData);
     return res.data;
   },
+
   getInvoices: async () => {
     const res = await apiClient.get('/billing/invoices');
     return res.data;
   },
+
   changePlan: async (targetPlanId) => {
-    const res = await apiClient.post('/subscriptions/change-plan', { target_plan_id: targetPlanId });
+    const res = await apiClient.post('/subscriptions/change-plan', {
+      target_plan_id: targetPlanId,
+    });
+
     return res.data;
-  }
+  },
 };
 
 export const templateService = {
@@ -78,13 +118,15 @@ export const templateService = {
     const res = await apiClient.get('/templates');
     return res.data;
   },
+
   deployTemplate: async (name, templateId) => {
     const res = await apiClient.post('/instances/deploy-template', {
       name,
-      template_id: templateId
+      template_id: templateId,
     });
+
     return res.data;
-  }
+  },
 };
 
 export const adminService = {
@@ -92,17 +134,23 @@ export const adminService = {
     const res = await apiClient.get('/admin/dashboard');
     return res.data;
   },
+
   getInstances: async () => {
     const res = await apiClient.get('/admin/instances');
     return res.data;
   },
+
   forceAction: async (instanceId, action, reason) => {
-    const res = await apiClient.post(`/admin/instances/${instanceId}/force-action`, {
-      action,
-      reason
-    });
+    const res = await apiClient.post(
+      `/admin/instances/${instanceId}/force-action`,
+      {
+        action,
+        reason,
+      }
+    );
+
     return res.data;
-  }
+  },
 };
 
 export const instanceService = {
@@ -110,8 +158,10 @@ export const instanceService = {
     const res = await apiClient.get('/instances');
     return res.data;
   },
+
   deployInstance: async (name, zipFile) => {
     const formData = new FormData();
+
     formData.append('name', name);
     formData.append('file', zipFile);
 
@@ -120,31 +170,41 @@ export const instanceService = {
         'Content-Type': 'multipart/form-data',
       },
     });
+
     return res.data;
   },
+
   triggerAction: async (instanceId, action) => {
-    const res = await apiClient.post(`/instances/${instanceId}/action`, { action });
+    const res = await apiClient.post(
+      `/instances/${instanceId}/action`,
+      { action }
+    );
+
     return res.data;
   },
+
   destroyInstance: async (instanceId) => {
     const res = await apiClient.delete(`/instances/${instanceId}`);
     return res.data;
   },
+
   getMetrics: async (instanceId) => {
     const res = await apiClient.get(`/instances/${instanceId}/metrics`);
     return res.data;
   },
+
   getLogs: async (instanceId, tail = 100) => {
     const res = await apiClient.get(`/instances/${instanceId}/logs`, {
-      params: { tail }
+      params: { tail },
     });
+
     return res.data;
   },
+
   syncStatus: async (instanceId) => {
     const res = await apiClient.post(`/instances/${instanceId}/sync`);
     return res.data;
-  }
+  },
 };
 
 export default apiClient;
-
