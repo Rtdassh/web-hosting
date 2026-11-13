@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import PublicNavbar from '../components/layout/PublicNavbar';
+import AuthBrandAccent from '../components/mascot/AuthBrandAccent';
 import { authService } from '../services/api';
 
 export default function ForgotPassword({
@@ -56,7 +57,7 @@ export default function ForgotPassword({
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f5f9f7] text-[#172838]">
+    <div className="relative min-h-screen overflow-hidden bg-[#f5f9f7] bg-brand-stripes-subtle text-[#172838]">
       <PublicNavbar
         variant="forgot-password"
         onHome={onHome}
@@ -81,9 +82,9 @@ export default function ForgotPassword({
       </div>
 
       <main className="relative mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-7xl items-center px-5 py-10 sm:px-6 lg:px-8">
-        <div className="grid w-full overflow-hidden rounded-[30px] border border-[#dce7e2] bg-white shadow-[0_28px_80px_rgba(23,40,56,0.11)] lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid w-full mt-14 lg:mt-0 rounded-[30px] border border-[#dce7e2] bg-white shadow-[0_28px_80px_rgba(23,40,56,0.11)] lg:grid-cols-[0.9fr_1.1fr]">
           {/* Brand panel */}
-          <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#f4f9f7] via-[#ecf6f1] to-[#e4f2eb] border-r border-[#dce7e2] p-10 text-[#172838] lg:flex lg:flex-col lg:justify-between">
+          <section className="relative hidden overflow-hidden rounded-l-[30px] bg-gradient-to-br from-[#f4f9f7] via-[#ecf6f1] to-[#e4f2eb] border-r border-[#dce7e2] p-10 text-[#172838] lg:flex lg:flex-col lg:justify-between">
             <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#28B586]/15 blur-3xl" />
 
             <div className="relative">
@@ -127,11 +128,12 @@ export default function ForgotPassword({
           </section>
 
           {/* Form panel */}
-          <section className="px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-12">
+          <section className="relative px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-12 rounded-[30px] lg:rounded-l-none">
+            <AuthBrandAccent />
             <button
               type="button"
               onClick={onBack}
-              className="mb-9 inline-flex items-center gap-2 text-xs font-black text-[#64748B] transition duration-150 btn-tactile cursor-pointer hover:text-[#1C7F62]"
+              className="mb-9 inline-flex items-center gap-2 text-xs font-black text-[#64748B] transition duration-150 btn-tactile brand-focus cursor-pointer hover:text-[#1C7F62]"
             >
               <ArrowLeft className="h-4 w-4" />
               Volver a iniciar sesión
@@ -207,7 +209,7 @@ export default function ForgotPassword({
                       <button
                         type="button"
                         onClick={() => onGoToReset && onGoToReset(pastedToken.trim())}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28B586] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(40,181,134,0.24)] transition duration-150 btn-tactile cursor-pointer hover:bg-[#239C76]"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28B586] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(40,181,134,0.24)] transition duration-150 btn-tactile brand-focus cursor-pointer hover:bg-[#239C76]"
                       >
                         Continuar y restablecer contraseña
                         <ArrowRight className="h-4 w-4" />
@@ -254,7 +256,7 @@ export default function ForgotPassword({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28B586] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(40,181,134,0.24)] transition duration-150 btn-tactile cursor-pointer hover:bg-[#239C76] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28B586] px-5 py-3.5 text-xs font-black text-white shadow-[0_12px_28px_rgba(40,181,134,0.24)] transition duration-150 btn-tactile brand-focus cursor-pointer hover:bg-[#239C76] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {loading ? (
                       <>

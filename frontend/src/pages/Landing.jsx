@@ -25,6 +25,8 @@ import {
 
 import codropIsotipo from '../assets/codrop-isotipo.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
+import CrocodileMascot from '../components/mascot/CrocodileMascot';
+import PlanGuide from '../components/marketing/PlanGuide';
 
 export default function Landing({ onLogin, onRegister, onNavigateSection }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
@@ -93,7 +95,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
             {/* Lado Izquierdo */}
             <div className="max-w-[760px]">
               <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-brand-50/90 border border-brand-100 shadow-[0_5px_20px_rgba(40,181,134,0.08)]">
-                <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-brand-500 status-dot-live" />
                 <span className="text-[13px] font-semibold text-brand-700">
                   Tu proyecto entra como .zip y sale como URL pública
                 </span>
@@ -116,7 +118,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
                 <button
                   type="button"
                   onClick={onRegister}
-                  className="h-[52px] px-8 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_12px_28px_rgba(40,181,134,0.28)] flex items-center justify-center gap-3 transition duration-150 btn-tactile cursor-pointer"
+                  className="h-[52px] px-8 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_12px_28px_rgba(40,181,134,0.28)] flex items-center justify-center gap-3 transition duration-150 btn-tactile brand-focus cursor-pointer"
                 >
                   Empezar gratis en 1 minuto
                   <ArrowRight className="w-4 h-4" />
@@ -184,7 +186,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
                   <button
                     type="button"
                     onClick={onRegister}
-                    className="w-full h-[50px] rounded-[10px] bg-brand-50 hover:bg-brand-100 text-brand-700 text-[14px] font-semibold flex items-center justify-center gap-3 transition duration-150 btn-tactile cursor-pointer"
+                    className="w-full h-[50px] rounded-[10px] bg-brand-50 hover:bg-brand-100 text-brand-700 text-[14px] font-semibold flex items-center justify-center gap-3 transition duration-150 btn-tactile brand-focus cursor-pointer"
                   >
                     Crear mi cuenta gratuita
                     <ArrowRight className="w-4 h-4" />
@@ -241,7 +243,9 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
       {/* =====================================================
           SECCIÓN: BENEFICIOS CLAVE (VENTAJAS COMERCIALES)
       ====================================================== */}
-      <section id="caracteristicas" className="py-24 bg-[#f8fbfc] border-t border-[#edf2f0]">
+      <section id="caracteristicas" className="relative py-24 bg-[#f8fbfc] border-t border-[#edf2f0]">
+        <CrocodileMascot variant="walking" position="edge-top" className="!w-28 sm:!w-36 !right-8 lg:!right-16" />
+        <div aria-hidden="true" className="accent-stripes absolute inset-x-0 top-0" />
         <div className="max-w-[1380px] mx-auto px-6 lg:px-12">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
@@ -304,6 +308,8 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
               gratis y mejorar tu suscripción en cualquier momento cuando lo necesites.
             </p>
           </div>
+
+          <PlanGuide />
 
           <div className="mt-16 grid lg:grid-cols-3 gap-8 items-stretch">
             {/* PLAN FREE */}
@@ -378,7 +384,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
       {/* =====================================================
           SECCIÓN: PREGUNTAS FRECUENTES (FAQ)
       ====================================================== */}
-      <section id="faq" className="py-24 bg-[#f8fbfc] border-t border-[#edf2f0]">
+      <section id="faq" className="py-24 bg-brand-stripes-subtle bg-[#f8fbfc] border-t border-[#edf2f0]">
         <div className="max-w-[980px] mx-auto px-6 lg:px-12">
           <div className="text-center max-w-2xl mx-auto">
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
@@ -446,7 +452,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
               <button
                 type="button"
                 onClick={onRegister}
-                className="w-full sm:w-auto h-[54px] px-9 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_10px_25px_rgba(40,181,134,0.3)] flex items-center justify-center gap-3 transition duration-150 btn-tactile cursor-pointer"
+                className="w-full sm:w-auto h-[54px] px-9 rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white text-[15px] font-bold shadow-[0_10px_25px_rgba(40,181,134,0.3)] flex items-center justify-center gap-3 transition duration-150 btn-tactile brand-focus cursor-pointer"
               >
                 Crear cuenta gratis
                 <ArrowRight className="w-4 h-4" />
@@ -559,7 +565,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
 
 function StepCard({ number, icon: Icon, title, description }) {
   return (
-    <div className="rounded-[22px] border border-[#dfe7e4] bg-[#fbfdfc] p-8 shadow-[0_10px_30px_rgba(23,40,56,0.03)] hover:shadow-md transition-shadow">
+    <div className="card-tactile rounded-[22px] p-8">
       <div className="flex items-center justify-between">
         <div className="w-12 h-12 rounded-[14px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
           <Icon className="w-6 h-6" />
@@ -578,7 +584,7 @@ function StepCard({ number, icon: Icon, title, description }) {
 
 function ArchitectureCard({ icon: Icon, title, subtitle, text }) {
   return (
-    <div className="rounded-[20px] border border-[#dfe7e4] bg-white p-7 shadow-[0_8px_24px_rgba(23,40,56,0.03)] hover:shadow-md transition-shadow">
+    <div className="card-tactile rounded-[20px] p-7">
       <div className="w-11 h-11 rounded-[12px] bg-brand-50 flex items-center justify-center text-brand-600">
         <Icon className="w-5 h-5" />
       </div>
@@ -609,11 +615,15 @@ function PricingCard({
 }) {
   return (
     <div
-      className={`relative rounded-[24px] p-8 flex flex-col justify-between transition-all duration-300 ${popular
-        ? 'bg-white border-2 border-brand-500 shadow-[0_20px_50px_rgba(40,181,134,0.14)] lg:-translate-y-2'
+      id={`landing-plan-${name.toLowerCase()}`}
+      tabIndex={-1}
+      data-interactive="true"
+      className={`card-tactile brand-focus scroll-mt-28 relative rounded-[24px] p-8 flex flex-col justify-between ${popular
+        ? 'bg-white border-2 border-brand-500 shadow-[0_20px_50px_rgba(40,181,134,0.14)]'
         : 'bg-[#fbfdfc] border border-[#dfe7e4] shadow-[0_10px_30px_rgba(23,40,56,0.04)] hover:shadow-md'
         }`}
     >
+      {popular && <div aria-hidden="true" className="accent-stripes absolute inset-x-0 top-0 rounded-t-[22px]" />}
       {popular && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-brand-500 text-white text-[10px] font-black uppercase tracking-[0.16em] shadow-sm">
           {badge}
@@ -668,7 +678,7 @@ function PricingCard({
         <button
           type="button"
           onClick={onAction}
-          className={`w-full h-[48px] rounded-[10px] text-[14px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile cursor-pointer ${popular
+          className={`w-full h-[48px] rounded-[10px] text-[14px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile brand-focus cursor-pointer ${popular
             ? 'bg-brand-500 hover:bg-brand-600 text-white shadow-[0_8px_20px_rgba(40,181,134,0.25)]'
             : 'bg-navy-900 hover:bg-navy-800 text-white'
             }`}
@@ -687,6 +697,7 @@ function FaqItem({ question, answer, isOpen, onToggle }) {
       <button
         type="button"
         onClick={onToggle}
+        aria-expanded={isOpen}
         className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 hover:bg-[#fafcfb] transition-colors cursor-pointer"
       >
         <span className="text-[15px] sm:text-[16px] font-bold text-navy-900">

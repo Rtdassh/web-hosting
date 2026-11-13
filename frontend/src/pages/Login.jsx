@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import codropIsotipo from '../assets/codrop-isotipo.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
+import AuthBrandAccent from '../components/mascot/AuthBrandAccent';
 import { toast } from '../components/ui/Toast';
 
 export default function Login({
@@ -61,7 +62,7 @@ export default function Login({
   };
 
   return (
-    <main className="min-h-screen bg-[#f6faf8] text-navy-900 relative overflow-hidden">
+    <main className="min-h-screen bg-[#f6faf8] bg-brand-stripes-subtle text-navy-900 relative overflow-hidden">
 
       {/* =====================================================
           FONDO
@@ -242,7 +243,8 @@ export default function Login({
               <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-brand-100/60 blur-2xl pointer-events-none" />
 
 
-              <div className="relative bg-white border border-[#dfe7e4] rounded-[22px] p-8 shadow-[0_22px_60px_rgba(23,40,56,0.08)]">
+              <div className="card-tactile relative mt-14 rounded-[22px] p-8">
+                <AuthBrandAccent />
 
 
                 {/* Acceso seguro */}
@@ -363,7 +365,7 @@ export default function Login({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.20)] transition duration-150 btn-tactile cursor-pointer"
+                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.20)] transition duration-150 btn-tactile brand-focus cursor-pointer"
                   >
 
                     {loading ? (
@@ -387,7 +389,7 @@ export default function Login({
                   <button
                     type="button"
                     onClick={handleTestAccount}
-                    className="w-full h-[40px] rounded-[9px] border border-brand-100 bg-brand-50/80 hover:bg-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile cursor-pointer"
+                    className="w-full h-[40px] rounded-[9px] border border-brand-100 bg-brand-50/80 hover:bg-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile brand-focus cursor-pointer"
                   >
                     <Zap className="w-3.5 h-3.5" />
 
@@ -407,7 +409,7 @@ export default function Login({
                     <button
                       type="button"
                       onClick={onRegister}
-                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile cursor-pointer"
+                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile brand-focus cursor-pointer"
                     >
                       Crear cuenta
                     </button>

@@ -13,6 +13,7 @@ import {
 import { authService } from '../services/api';
 import codropIsotipo from '../assets/codrop-isotipo.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
+import AuthBrandAccent from '../components/mascot/AuthBrandAccent';
 import { toast } from '../components/ui/Toast';
 
 export default function Register({
@@ -79,7 +80,7 @@ export default function Register({
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f8f6] text-navy-900">
+    <main className="min-h-screen bg-[#f4f8f6] bg-brand-stripes-subtle text-navy-900">
 
       <PublicNavbar
         variant="register"
@@ -97,7 +98,7 @@ export default function Register({
           {/* =================================================
               ONBOARDING
           ================================================== */}
-          <div className="relative overflow-hidden rounded-[24px] bg-brand-50 border border-brand-100 p-8 lg:p-9">
+          <div className="relative hidden lg:block overflow-hidden rounded-[24px] bg-brand-50 border border-brand-100 p-8 lg:p-9">
 
             <div className="absolute -top-20 -left-20 w-[220px] h-[220px] rounded-full bg-brand-100/70 blur-3xl" />
 
@@ -192,7 +193,8 @@ export default function Register({
           {/* =================================================
               FORMULARIO
           ================================================== */}
-          <div className="bg-white border border-[#dfe7e4] rounded-[24px] p-8 sm:p-[44px] shadow-[0_20px_60px_rgba(23,40,56,0.07)]">
+          <div className="card-tactile relative mt-14 rounded-[24px] p-8 sm:p-[44px]">
+            <AuthBrandAccent />
 
             <div className="max-w-[570px] mx-auto">
 
@@ -315,7 +317,7 @@ export default function Register({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.18)] transition duration-150 btn-tactile cursor-pointer"
+                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.18)] transition duration-150 btn-tactile brand-focus cursor-pointer"
                   >
 
                     {loading ? (
@@ -340,7 +342,7 @@ export default function Register({
                     <button
                       type="button"
                       onClick={onLogin}
-                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile cursor-pointer"
+                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile brand-focus cursor-pointer"
                     >
                       Iniciar sesión
                     </button>

@@ -1,9 +1,28 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import Landing from '../pages/Landing';
 
 describe('Landing Page UI Component', () => {
+  it('recomienda un plan por cantidad de sitios y enlaza a su detalle sin iniciar el registro', () => {
+    const onRegister = vi.fn();
+    render(<Landing onRegister={onRegister} />);
+
+    const recommendation = screen.getByRole('status');
+    expect(within(recommendation).getByText('Free')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Hasta 3 proyectos' }));
+    expect(within(recommendation).getByText('Developer')).toBeInTheDocument();
+    expect(within(recommendation).getByText(/3 sitios · 256 MB/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver este plan' })).toHaveAttribute('href', '#landing-plan-developer');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Hasta 10 proyectos' }));
+    expect(within(recommendation).getByText('Pro')).toBeInTheDocument();
+    expect(within(recommendation).getByText(/10 sitios · 512 MB/)).toBeInTheDocument();
+    const target = screen.getByRole('link', { name: 'Ver este plan' }).getAttribute('href').slice(1);
+    expect(document.getElementById(target)).toHaveTextContent('Plan Pro');
+    expect(onRegister).not.toHaveBeenCalled();
+  });
+
   it('debe renderizar el encabezado principal y propuesta de valor', () => {
     render(<Landing onLogin={vi.fn()} onRegister={vi.fn()} />);
 
