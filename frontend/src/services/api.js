@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from '../components/ui/Toast';
 
 export const getApiBaseUrl = () => {
   return import.meta.env.VITE_API_URL?.trim() || '/api/v1';
@@ -26,6 +27,30 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// User initiated operations only: background polling stays silent.
+const notifications = {
+  '/auth/login': ['Sesión iniciada', 'Bienvenido a Codrop.'],
+  '/auth/forgot-password': ['Solicitud recibida', 'Si el correo está registrado, recibirás instrucciones para recuperar tu cuenta.'],
+  '/auth/reset-password': ['Contraseña actualizada', 'Ya puedes iniciar sesión con tu nueva contraseña.'],
+  '/auth/verify-email': ['Correo verificado', 'Tu cuenta está lista para iniciar sesión.'],
+  '/auth/resend-verification': ['Solicitud recibida', 'Revisa tu correo para continuar con la verificación.'],
+};
+apiClient.interceptors.response.use((response) => {
+  const notice = notifications[response.config.url];
+  if (notice) toast.success(notice[1], { title: notice[0] });
+  return response;
+}, (error) => {
+  const url = error.config?.url || '';
+  if (notifications[url] || ['/auth/register', '/instances/deploy', '/instances/deploy-template'].includes(url)) {
+    const detail = error.response?.data?.detail;
+    const message = typeof detail === 'string' ? detail : error.response
+      ? 'Revisa los datos e inténtalo nuevamente.'
+      : 'No pudimos confirmar la operación. Comprueba tu conexión y revisa el resultado antes de repetirla.';
+    toast.error(message, { title: 'No se pudo completar la solicitud', duration: 7000 });
+  }
+  return Promise.reject(error);
+});
+
 export const authService = {
   login: async (email, password) => {
     const res = await apiClient.post('/auth/login', {
@@ -47,6 +72,7 @@ export const authService = {
 
   logout: () => {
     localStorage.removeItem('paas_token');
+    toast.info('Has cerrado tu sesión correctamente.');
   },
 
   getMe: async () => {
@@ -154,6 +180,15 @@ export const adminService = {
 };
 
 export const instanceService = {
+  getHealth: async () => (await apiClient.get('/instances/health')).data,
+  getVersions: async (id) => (await apiClient.get(`/instances/${id}/versions`)).data,
+  getInsights: async (id) => (await apiClient.get(`/instances/${id}/insights`)).data,
+  publishVersion: async (id, file) => {
+    const data = new FormData();
+    data.append('file', file);
+    return (await apiClient.post(`/instances/${id}/versions`, data)).data;
+  },
+  restoreVersion: async (id, version) => (await apiClient.post(`/instances/${id}/versions/${version}/restore`)).data,
   getInstances: async () => {
     const res = await apiClient.get('/instances');
     return res.data;

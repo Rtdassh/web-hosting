@@ -34,7 +34,7 @@ describe('Landing Page UI Component', () => {
 
     expect(screen.getByText('$0')).toBeInTheDocument();
     expect(screen.getByText('$9.99')).toBeInTheDocument();
-    expect(screen.getByText('$24.99')).toBeInTheDocument();
+    expect(screen.getByText('$4.99')).toBeInTheDocument();
 
     expect(screen.getByText(/128 MB de memoria rápida exclusiva/i)).toBeInTheDocument();
     expect(screen.getByText(/256 MB RAM por sitio/i)).toBeInTheDocument();

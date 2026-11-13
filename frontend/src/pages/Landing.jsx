@@ -319,7 +319,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
               features={[
                 '1 página web activa en línea',
                 '128 MB de memoria rápida exclusiva',
-                '0.25 vCPU dedicada para tu sitio',
+                '0.25 vCPU de límite para tu sitio',
                 'Publicación fácil con archivo .zip',
                 'Enlace público propio y directo',
                 'Gráficos simples de actividad y consumo',
@@ -332,7 +332,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
               popular
               name="Developer"
               icon={Zap}
-              price="9.99"
+              price="4.99"
               period="/ mes"
               badge="El Más Elegido"
               description="El favorito de freelancers y profesionales que gestionan varios proyectos con mayor velocidad."
@@ -341,7 +341,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
               features={[
                 'Hasta 3 sitios web simultáneos',
                 '256 MB RAM por sitio (Doble de potencia)',
-                '0.50 vCPU dedicada para mayor velocidad',
+                '0.50 vCPU de límite para mayor velocidad',
                 'Plantillas en 1 clic (Negocios, Portfolio, Docs)',
                 'Monitoreo detallado y registro de visitas',
                 'Pasarela de pago rápida y segura',
@@ -354,7 +354,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
             <PricingCard
               name="Pro"
               icon={Layers3}
-              price="24.99"
+              price="9.99"
               period="/ mes"
               badge="Máximo Rendimiento"
               description="Para negocios y agencias que necesitan alta capacidad, más sitios y soporte prioritario."

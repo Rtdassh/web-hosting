@@ -16,6 +16,7 @@ _PRUNE_EVERY = 128
 _requests_since_prune = 0
 
 _RATE_LIMITS = (
+    ("POST", re.compile(r"/instances/\d+/versions(?:/[a-f0-9]+/restore)?$"), "instance-publish", 10, 60),
     ("POST", re.compile(r"/auth/login$"), "login", 5, 60),
     ("POST", re.compile(r"/auth/register$"), "register", 5, 60),
     ("POST", re.compile(r"/auth/forgot-password$"), "forgot-password", 5, 60),

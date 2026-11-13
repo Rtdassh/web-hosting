@@ -25,6 +25,7 @@ from app.schemas.instance_schema import (
     InstanceSyncResponse,
     InstanceDestroyResponse
 )
+from app.schemas.site_schema import SiteVersionResponse, SiteInsightsResponse, SiteHealthResponse
 from app.services.action_audit_service import audit_action
 from app.services.artifact_service import artifact_service
 from app.services.docker_service import docker_service
@@ -159,3 +160,42 @@ def sync_instance_status(
         audit_fn=audit_action,
         history_model=InstanceStatusHistory
     )
+
+
+@router.get("/{instance_id}/versions", response_model=list[SiteVersionResponse])
+def list_site_versions(instance_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.services.site_release_service import site_release_service
+    instance = site_release_service.owned(instance_id, current_user, db)
+    return site_release_service.versions(instance)
+
+
+@router.post("/{instance_id}/versions", response_model=list[SiteVersionResponse])
+def publish_site_version(instance_id: int, file: UploadFile = File(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.services.site_release_service import site_release_service
+    return site_release_service.publish(instance_id, current_user, db, file=file)
+
+
+@router.post("/{instance_id}/versions/{version_id}/restore", response_model=list[SiteVersionResponse])
+def restore_site_version(instance_id: int, version_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.services.site_release_service import site_release_service
+    return site_release_service.publish(instance_id, current_user, db, version_id=version_id)
+
+
+@router.get("/{instance_id}/insights", response_model=SiteInsightsResponse)
+def site_insights(instance_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.services.site_release_service import site_release_service
+    from app.services.site_monitor_service import site_monitor_service, summarize_access_logs
+    instance = site_release_service.owned(instance_id, current_user, db)
+    try:
+        traffic = summarize_access_logs(docker_service.get_container_logs(instance.container_id, tail=1000))
+        traffic['available'] = True
+    except Exception:
+        traffic = {"available": False, "scope": "No se pudieron leer los logs del contenedor."}
+    return {"monitor": site_monitor_service.report(instance), "traffic": traffic}
+
+
+@router.get("/health", response_model=list[SiteHealthResponse])
+def list_site_health(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.services.site_monitor_service import site_monitor_service
+    return [{"id": instance.id, "name": instance.name, "monitor": site_monitor_service.report(instance)}
+            for instance in instance_service.list_instances(current_user, db)]

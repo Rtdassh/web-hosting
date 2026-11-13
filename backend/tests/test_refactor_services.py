@@ -64,6 +64,7 @@ def test_domain_exceptions_hierarchy_and_status_codes():
 # ==============================================================================
 def test_auth_service_register_success():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     # No existing user
     db.query.return_value.filter.return_value.first.side_effect = [
         None,  # User check
@@ -94,6 +95,7 @@ def test_auth_service_register_success():
 
 def test_auth_service_register_duplicate_email_raises_400():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = SimpleNamespace(id=1)
 
     user_in = UserCreate(
@@ -110,6 +112,7 @@ def test_auth_service_register_duplicate_email_raises_400():
 
 def test_auth_service_authenticate_user_success():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     hashed = get_password_hash("mysecretpass")
     mock_user = SimpleNamespace(
         id=42,
@@ -131,6 +134,7 @@ def test_auth_service_authenticate_user_success():
 
 def test_auth_service_authenticate_user_invalid_password_raises_401():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     hashed = get_password_hash("correctpass")
     mock_user = SimpleNamespace(
         id=42,
@@ -150,6 +154,7 @@ def test_auth_service_authenticate_user_invalid_password_raises_401():
 
 def test_auth_service_authenticate_inactive_user_raises_401():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     hashed = get_password_hash("correctpass")
     mock_user = SimpleNamespace(
         id=42,
@@ -169,6 +174,7 @@ def test_auth_service_authenticate_inactive_user_raises_401():
 
 def test_auth_service_get_user_profile():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     user = SimpleNamespace(
         id=10,
         email="profile@test.com",
@@ -200,6 +206,7 @@ def test_auth_service_get_user_profile():
 # ==============================================================================
 def test_instance_service_get_or_404():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = None
 
     with pytest.raises(HTTPException) as exc_info:
@@ -227,6 +234,7 @@ def test_instance_service_enforce_ownership():
 
 def test_instance_service_execute_action_unsupported():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     instance = SimpleNamespace(id=1, user_id=5, container_id="c1", status=InstanceStatus.RUNNING)
     db.query.return_value.filter.return_value.first.return_value = instance
 
@@ -243,6 +251,7 @@ def test_instance_service_execute_action_unsupported():
 
 def test_instance_service_execute_action_success_with_injected_docker():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     instance = SimpleNamespace(id=1, user_id=5, container_id="c1", status=InstanceStatus.STOPPED)
     subscription = SimpleNamespace(status="active", plan=SimpleNamespace(name="Free", max_instances=1))
     db.query.return_value.filter.return_value.first.side_effect = [instance, subscription]

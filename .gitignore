@@ -62,3 +62,6 @@ Thumbs.db
 codrop-debian-*.json
 codrop-docker-*.json
 *.dump
+/infra/Caddyfile
+/infra/domains.json
+/codrop-local-root.crt

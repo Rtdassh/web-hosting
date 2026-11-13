@@ -59,9 +59,10 @@ class InstanceService:
         )
 
     @staticmethod
-    def _get_instance_or_404(instance_id: int, db: Session) -> Instance:
+    def _get_instance_or_404(instance_id: int, db: Session, lock: bool = False) -> Instance:
         """Obtiene una instancia o lanza 404."""
-        instance = db.query(Instance).filter(Instance.id == instance_id).first()
+        query = db.query(Instance).filter(Instance.id == instance_id)
+        instance = (query.with_for_update() if lock else query).first()
         if not instance:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -181,7 +182,7 @@ class InstanceService:
         docker_svc = docker_svc if docker_svc is not None else docker_service
         audit_fn = audit_fn if audit_fn is not None else audit_action
 
-        instance = InstanceService._get_instance_or_404(instance_id, db)
+        instance = InstanceService._get_instance_or_404(instance_id, db, lock=True)
         InstanceService._enforce_ownership(instance, current_user)
 
         operations = {
@@ -301,7 +302,7 @@ class InstanceService:
         path_cls = path_cls if path_cls is not None else Path
         shutil_mod = shutil_mod if shutil_mod is not None else shutil
 
-        instance = InstanceService._get_instance_or_404(instance_id, db)
+        instance = InstanceService._get_instance_or_404(instance_id, db, lock=True)
         InstanceService._enforce_ownership(instance, current_user)
 
         # 1. Detener y remover contenedor Docker
@@ -347,6 +348,9 @@ class InstanceService:
                     shutil_mod.rmtree(target_dir, ignore_errors=True)
                 else:
                     logger.warning(f"Intento de eliminar ruta fuera de almacenamiento permitido o inexistente: {target_dir}")
+
+            from app.services.site_release_service import site_release_service
+            site_release_service.cleanup(instance)
 
             # 4. Eliminar registro en BD
             db.delete(instance)
@@ -477,7 +481,7 @@ class InstanceService:
         audit_fn = audit_fn if audit_fn is not None else audit_action
         history_model = history_model if history_model is not None else InstanceStatusHistory
 
-        instance = InstanceService._get_instance_or_404(instance_id, db)
+        instance = InstanceService._get_instance_or_404(instance_id, db, lock=True)
         InstanceService._enforce_ownership(instance, current_user)
 
         previous_status = instance.status

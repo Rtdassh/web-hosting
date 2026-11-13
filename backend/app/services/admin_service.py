@@ -106,7 +106,7 @@ class AdminService:
                 detail="Debes indicar el motivo de la acción administrativa."
             )
 
-        instance = db.query(Instance).filter(Instance.id == instance_id).first()
+        instance = db.query(Instance).filter(Instance.id == instance_id).with_for_update().first()
         if not instance:
             raise HTTPException(status_code=404, detail="La instancia no existe.")
 
@@ -180,6 +180,9 @@ class AdminService:
                     status_code=500,
                     detail="No se pudo limpiar el almacenamiento. Reintentá la eliminación."
                 ) from exc
+
+            from app.services.site_release_service import site_release_service
+            site_release_service.cleanup(instance)
 
             port_service.release_port(
                 db, instance.assigned_port, commit=False

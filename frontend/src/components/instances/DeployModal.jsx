@@ -215,6 +215,7 @@ export default function DeployModal({
     submitting.current = true;
     setLoading(true);
     onDeploymentStarted?.(name.trim());
+    toast.info(`Estamos preparando el sitio "${name.trim()}".`, { title: 'Creación iniciada' });
 
     try {
       let newInstance;

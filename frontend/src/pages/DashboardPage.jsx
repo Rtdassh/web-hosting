@@ -445,6 +445,7 @@ export default function DashboardPage({
           {selectedInstance ? (
             <InstanceDetailView
               instance={selectedInstance}
+              onChanged={fetchInstances}
               actionLoading={actionLoading[selectedInstance.id]}
               onBack={() => {
                 setSelectedInstanceId(null);

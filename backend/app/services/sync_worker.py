@@ -40,12 +40,22 @@ class SyncWorker:
             running_instances = db.query(Instance).filter(
                 Instance.status.in_([
                     InstanceStatus.RUNNING,
-                    InstanceStatus.STOPPED
+                    InstanceStatus.STOPPED,
+                    InstanceStatus.FAILED,
                 ])
-            ).all()
+            ).with_for_update(skip_locked=True).all()
 
             for inst in running_instances:
+                from app.services.site_release_service import site_release_service
+                try:
+                    site_release_service.recover(inst)
+                except Exception:
+                    logger.exception("Pending handover recovery for instance %s", inst.id)
+                    continue
                 previous_status = inst.status
+                if previous_status == InstanceStatus.FAILED:
+                    # Keep reporting failed sites without touching their released port.
+                    continue
                 docker_status = docker_service.get_container_status(inst.container_id)
 
 
@@ -85,6 +95,12 @@ class SyncWorker:
                     discrepancies_found += 1
                     reconciled_instances.append(inst.id)
 
+            from app.services.site_monitor_service import site_monitor_service
+            for inst in running_instances:
+                try:
+                    site_monitor_service.capture(inst)
+                except Exception:
+                    logger.exception("HTTP monitor failed for instance %s", inst.id)
             if discrepancies_found > 0:
                 db.commit()
                 logger.info(f"[RECONCILIATION] Se reconciliaron {discrepancies_found} instancias.")

@@ -634,3 +634,8 @@ Este proyecto es desarrollado con fines académicos y de investigación en ingen
 <div align="center">
   <sub>Construido con altos estándares de ingeniería y calidad ISO/IEC 25010 • Codrop Team 2026</sub>
 </div>
+
+
+### Actualizaciones, rollback y monitoreo
+
+El detalle de cada sitio incluye publicación de versiones, restauración, disponibilidad HTTP y estadísticas de logs recientes. Consulta [la guía sin costo](docs/MEJORAS_SIN_COSTO.md) para límites, operación, HTTPS local y demostraciones gratuitas.

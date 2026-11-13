@@ -125,6 +125,7 @@ def test_worker_reconciles_container_states(
         status=InstanceStatus.RUNNING
     )
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.all.return_value = [instance]
 
     with patch.object(module, "docker_service") as docker_mock, \
@@ -166,6 +167,7 @@ def test_worker_rolls_back_when_commit_fails():
         status=InstanceStatus.RUNNING
     )
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.all.return_value = [instance]
     db.commit.side_effect = RuntimeError("Fallo de commit simulado")
 
@@ -196,6 +198,7 @@ def test_worker_checks_stopped_instances(docker_status, changed):
         status=InstanceStatus.STOPPED
     )
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.all.return_value = [instance]
 
     with patch.object(module, "docker_service") as docker_mock, \
@@ -246,3 +249,10 @@ def test_sync_cycle_skips_when_another_worker_holds_lock():
     statement, parameters = db.execute.call_args.args
     assert "pg_try_advisory_xact_lock" in str(statement)
     assert parameters == {"lock_id": 7304100}
+
+@pytest.fixture(autouse=True)
+def isolate_operational_storage(monkeypatch):
+    from app.services.site_monitor_service import site_monitor_service
+    from app.services.site_release_service import site_release_service
+    monkeypatch.setattr(site_monitor_service, 'capture', lambda instance: None)
+    monkeypatch.setattr(site_release_service, 'recover', lambda instance: None)

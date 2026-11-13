@@ -3,6 +3,7 @@ import { Globe, Sparkles, FileText, ShieldCheck } from 'lucide-react';
 
 import Navbar from './components/layout/Navbar';
 import DashboardPage from './pages/DashboardPage';
+import SiteHealthNotifications from './components/instances/SiteHealthNotifications';
 import DeployModal from './components/instances/DeployModal';
 import PricingPage from './pages/PricingPage';
 import BillingHistoryPage from './pages/BillingHistoryPage';
@@ -33,6 +34,7 @@ function AuthenticatedApp({ onLogout }) {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-brand-500 selection:text-white">
+      <SiteHealthNotifications />
       <Navbar onLogout={onLogout} />
 
       {/* Sub-navbar de Navegación por Módulos */}

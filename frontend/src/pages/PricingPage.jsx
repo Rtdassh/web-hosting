@@ -40,7 +40,7 @@ const DEFAULT_PLANS = [
     features: [
       '1 sitio activo',
       '128 MB RAM por sitio',
-      '0.25 vCPU dedicada',
+      '0.25 vCPU de límite',
       'Despliegue mediante .zip',
       'Telemetría básica',
     ],
@@ -50,7 +50,7 @@ const DEFAULT_PLANS = [
     name: 'Developer',
     description:
       'El equilibrio ideal para desarrollar, probar y mantener varios proyectos en línea.',
-    price: 9.99,
+    price: 4.99,
     max_instances: 3,
     max_ram_mb: 256,
     cpu_quota: 0.5,
@@ -58,7 +58,7 @@ const DEFAULT_PLANS = [
     features: [
       'Hasta 3 sitios simultáneos',
       '256 MB RAM por sitio',
-      '0.50 vCPU dedicada',
+      '0.50 vCPU de límite',
       'Plantillas en 1 clic',
       'Telemetría y logs',
       'Mayor capacidad de despliegue',
@@ -69,14 +69,14 @@ const DEFAULT_PLANS = [
     name: 'Pro',
     description:
       'Más capacidad para equipos, portafolios grandes y proyectos con mayores exigencias.',
-    price: 24.99,
+    price: 9.99,
     max_instances: 10,
     max_ram_mb: 512,
     cpu_quota: 1,
     features: [
       'Hasta 10 sitios simultáneos',
       '512 MB RAM por sitio',
-      '1.00 vCPU dedicada',
+      '1.00 vCPU de límite',
       'Plantillas en 1 clic',
       'Telemetría completa',
       'Máxima capacidad Codrop',

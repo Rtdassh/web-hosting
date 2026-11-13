@@ -17,6 +17,7 @@ import {
   Layers,
 } from 'lucide-react';
 
+import SiteToolsPanel from './SiteToolsPanel';
 import StatusBadge from '../ui/StatusBadge';
 import CopyButton from '../ui/CopyButton';
 import LoadingButton from '../ui/LoadingButton';
@@ -43,6 +44,7 @@ export default function InstanceDetailView({
   onOpenLogs,
   onDestroy,
   formatDate,
+  onChanged,
 }) {
   if (!instance) return null;
 
@@ -340,6 +342,8 @@ export default function InstanceDetailView({
           />
         </div>
       </section>
+
+      <SiteToolsPanel key={instance.id} instance={instance} onChanged={onChanged} />
 
       {/* =====================================================
           5. ZONA DE PELIGRO / ACCIÓN DESTRUCTIVA
