@@ -88,6 +88,13 @@ def get_current_user(
     return user
 
 
+def get_current_client(current_user: User = Depends(get_current_user)) -> User:
+    """Reserva las operaciones de clientes al rol cliente."""
+    if current_user.role != UserRole.CLIENT:
+        raise HTTPException(status_code=403, detail="El administrador solo puede acceder a la consola administrativa.")
+    return current_user
+
+
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     """Verifica que el usuario actual tenga rol de Administrador."""
     if current_user.role != UserRole.ADMIN:

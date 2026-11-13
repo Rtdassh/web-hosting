@@ -50,7 +50,7 @@ class InstanceService:
     def list_instances(current_user: User, db: Session) -> list[Instance]:
         """Lista las instancias del usuario autenticado (o todas si es Administrador)."""
         if current_user.role == UserRole.ADMIN:
-            return db.query(Instance).order_by(Instance.created_at.desc()).all()
+            raise HTTPException(status_code=403, detail="Usa la consola administrativa.")
         return (
             db.query(Instance)
             .filter(Instance.user_id == current_user.id)
@@ -72,8 +72,8 @@ class InstanceService:
 
     @staticmethod
     def _enforce_ownership(instance: Instance, current_user: User) -> None:
-        """Verifica que el usuario sea dueño de la instancia o Administrador."""
-        if instance.user_id != current_user.id and current_user.role != UserRole.ADMIN:
+        """Verifica rol cliente y propiedad sin excepciones administrativas."""
+        if current_user.role != UserRole.CLIENT or instance.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para operar sobre esta instancia."

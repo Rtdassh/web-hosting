@@ -56,31 +56,14 @@ class AdminService:
         }
 
     def list_all_instances(self, db: Session) -> List[Dict[str, Any]]:
-        """Lista todas las instancias del sistema con datos de su propietario."""
+        """Metadatos operativos sin datos personales ni rutas de acceso."""
         instances = db.query(Instance).order_by(Instance.created_at.desc()).all()
-        results = []
-        for inst in instances:
-            owner = inst.owner
-            plan_name = "Free"
-            if owner:
-                active_sub = next((s for s in owner.subscriptions if s.status == "active"), None)
-                if active_sub and active_sub.plan:
-                    plan_name = active_sub.plan.name
-
-            results.append({
-                "id": inst.id,
-                "uuid": inst.uuid,
-                "name": inst.name,
-                "owner_email": owner.email if owner else "N/A",
-                "owner_name": owner.full_name if owner else "Desconocido",
-                "plan_name": plan_name,
-                "assigned_port": inst.assigned_port,
-                "status": inst.status.value if hasattr(inst.status, "value") else str(inst.status),
-                "public_url": inst.public_url,
-                "container_id": inst.container_id,
-                "created_at": inst.created_at
-            })
-        return results
+        return [{
+            "id": inst.id,
+            "name": inst.name,
+            "owner_id": inst.user_id,
+            "status": inst.status.value if hasattr(inst.status, "value") else str(inst.status),
+        } for inst in instances]
 
     def execute_force_action(
         self,

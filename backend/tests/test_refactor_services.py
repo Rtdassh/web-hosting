@@ -223,8 +223,10 @@ def test_instance_service_enforce_ownership():
     # El dueño no debe lanzar excepción
     InstanceService._enforce_ownership(instance, owner)
 
-    # El admin no debe lanzar excepción aunque no sea el dueño
-    InstanceService._enforce_ownership(instance, admin)
+    # El administrador solo puede intervenir mediante la consola de gobernanza.
+    with pytest.raises(HTTPException) as admin_error:
+        InstanceService._enforce_ownership(instance, admin)
+    assert admin_error.value.status_code == 403
 
     # Otro usuario debe recibir 403 Forbidden
     with pytest.raises(HTTPException) as exc_info:

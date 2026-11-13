@@ -47,6 +47,7 @@ DASHBOARD_RESPONSE = {
 INSTANCES_RESPONSE = [
     {
         "id": 42,
+        "owner_id": 7,
         "uuid": "synthetic-instance-uuid",
         "name": "Synthetic instance",
         "owner_email": "owner@example.invalid",
@@ -153,6 +154,7 @@ def test_admin_can_access_global_instances_and_response_matches_schema(admin_cli
     payload = response.json()
     assert len(payload) == 1
     assert AdminInstanceResponse.model_validate(payload[0])
+    assert set(payload[0]) == {"id", "name", "owner_id", "status"}
     service.assert_called_once_with(TEST_DB)
 
 

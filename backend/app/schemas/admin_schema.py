@@ -3,8 +3,8 @@ Esquemas Pydantic para el Panel de Gobernanza Administrativa (Hito 80% - Rol 3).
 Contratos para /api/v1/admin/dashboard, /api/v1/admin/instances y acciones forzosas.
 """
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Optional, Literal
+from pydantic import BaseModel, Field, field_validator
 
 
 class HostMetricsResponse(BaseModel):
@@ -35,23 +35,21 @@ class AdminDashboardResponse(BaseModel):
 
 class AdminInstanceResponse(BaseModel):
     id: int
-    uuid: str
     name: str
-    owner_email: str
-    owner_name: str
-    plan_name: str
-    assigned_port: int
+    owner_id: int
     status: str
-    public_url: str
-    container_id: Optional[str] = None
-    created_at: datetime
 
     model_config = {"from_attributes": True}
 
 
 class ForceActionRequest(BaseModel):
-    action: str = Field(..., description="'force_stop' o 'force_destroy'")
-    reason: Optional[str] = Field("Acción administrativa de emergencia", description="Motivo de la acción")
+    action: Literal["force_stop", "force_destroy"]
+    reason: str = Field(..., min_length=3, max_length=500)
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def trim_reason(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
 
 class ForceActionResponse(BaseModel):

@@ -23,17 +23,28 @@ import { ToastProvider } from './components/ui/Toast';
 import ErrorBoundary from './components/system/ErrorBoundary';
 
 function AuthenticatedApp({ onLogout }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [sidebarTarget, setSidebarTarget] = useState(null);
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'pricing' | 'billing' | 'admin'
   const [isDeployOpen, setIsDeployOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deployment, setDeployment] = useState(null);
 
+  useEffect(() => {
+    if (user?.role === 'admin') window.history.replaceState({}, '', '/admin');
+    else if (user && window.location.pathname === '/admin') window.history.replaceState({}, '', '/');
+  }, [user?.role]);
+
   const handleInstanceDeployed = () => {
     setDeployment(null);
     setRefreshKey((prev) => prev + 1);
   };
+
+  if (!user) return <p role="status" className="p-6">Verificando sesión…</p>;
+
+  if (user?.role === 'admin') {
+    return <AdminDashboardPage onLogout={() => { logout(); window.history.replaceState({}, '', '/'); onLogout(); }} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-brand-500 selection:text-white">
@@ -82,7 +93,7 @@ function AuthenticatedApp({ onLogout }) {
             />
           )}
 
-          {currentView === 'admin' && (
+          {currentView === 'admin' && user?.role === 'admin' && (
             <AdminDashboardPage
               onBack={() => setCurrentView('dashboard')}
             />

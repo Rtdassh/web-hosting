@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_client
 from app.models.user import User
 from app.schemas.template_schema import (
     TemplateResponse,
@@ -34,7 +34,7 @@ def get_templates():
 )
 def deploy_template(
     request: DeployTemplateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_client),
     db: Session = Depends(get_db)
 ):
     """
