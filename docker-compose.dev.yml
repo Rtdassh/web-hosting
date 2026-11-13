@@ -21,7 +21,7 @@ services:
     container_name: paas_pgadmin_dev
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@paas.local
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
