@@ -80,8 +80,19 @@ class SpaRoutingService:
         parsed = urllib.parse.urlparse(raw_uri)
         decoded_path = urllib.parse.unquote(parsed.path)
 
-        # Prevenir directory traversal
-        clean_rel_path = decoded_path.lstrip("/\\")
+        # Prevenir directory traversal (tanto en formato POSIX como Windows)
+        normalized_path = decoded_path.replace("\\", "/")
+        path_segments = [seg for seg in normalized_path.split("/") if seg]
+        if ".." in path_segments:
+            return ResolvedRoute(
+                status_code=400,
+                route_type="error",
+                resolved_path=None,
+                content_type="text/plain",
+                detail="Directory Traversal detectado."
+            )
+
+        clean_rel_path = "/".join(path_segments)
         target_path = (doc_root / clean_rel_path).resolve()
 
         if not target_path.is_relative_to(doc_root):
