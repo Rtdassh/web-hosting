@@ -46,7 +46,6 @@ import CopyButton from '../components/ui/CopyButton';
 import Skeleton, { SkeletonInstanceCard } from '../components/ui/Skeleton';
 import StatusBadge from '../components/ui/StatusBadge';
 
-import codropIsotipo from '../assets/codrop-isotipo.png';
 import ServerMascot, { mascotDestroying } from '../components/mascot/ServerMascot';
 
 
@@ -318,12 +317,6 @@ export default function DashboardPage({
 
 
             {/* Mascota */}
-            <img
-              src={codropIsotipo}
-              alt=""
-              aria-hidden="true"
-              className="absolute right-[35px] bottom-[-22px] w-[220px] opacity-[0.11] hidden xl:block"
-            />
 
 
             <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">

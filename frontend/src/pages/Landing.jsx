@@ -1,32 +1,26 @@
 import React, { useState } from 'react';
 import {
-  Upload,
   Container,
   Activity,
-  FileText,
   ArrowRight,
   Check,
   Zap,
   Server,
   ShieldCheck,
   Layers3,
-  Cpu,
   Lock,
-  Sparkles,
   Globe,
-  Terminal,
   ChevronDown,
   Rocket,
-  Clock,
-  ExternalLink,
   Award,
   Users,
 } from 'lucide-react';
 
-import codropIsotipo from '../assets/codrop-isotipo.png';
+import heroArtwork from '../assets/landing/hosting-hero.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import CrocodileMascot from '../components/mascot/CrocodileMascot';
-import PlanGuide from '../components/marketing/PlanGuide';
+import PublicationJourney from '../components/marketing/PublicationJourney';
+import HostingOverview from '../components/marketing/HostingOverview';
 
 export default function Landing({ onLogin, onRegister, onNavigateSection }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
@@ -81,40 +75,33 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
         <DotGrid className="absolute left-[70px] top-[82px]" />
         <DotGrid className="absolute right-[20px] bottom-[105px]" />
 
-        {/* Cocodrilo decorativo */}
-        <img
-          src={codropIsotipo}
-          alt=""
-          aria-hidden="true"
-          className="absolute left-[-38px] bottom-[-24px] w-[520px] max-w-none opacity-[0.09] pointer-events-none select-none"
-        />
 
         {/* Contenido Hero */}
-        <div className="relative z-10 max-w-[1380px] mx-auto px-6 lg:px-12 min-h-[735px] flex items-center">
-          <div className="w-full grid lg:grid-cols-[1fr_520px] gap-16 xl:gap-24 items-center py-16">
+        <div className="relative z-10 max-w-[1380px] mx-auto px-6 lg:px-12 min-h-[660px] flex items-center">
+          <div className="w-full grid lg:grid-cols-[1fr_1fr] gap-0 lg:gap-10 xl:gap-16 items-center py-10 lg:py-16">
             {/* Lado Izquierdo */}
-            <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-brand-50/90 border border-brand-100 shadow-[0_5px_20px_rgba(40,181,134,0.08)]">
+            <div className="contents lg:block max-w-[760px]">
+              <div className="order-0 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-brand-50/90 border border-brand-100 shadow-[0_5px_20px_rgba(40,181,134,0.08)]">
                 <span className="w-2 h-2 rounded-full bg-brand-500 status-dot-live" />
                 <span className="text-[13px] font-semibold text-brand-700">
                   Tu proyecto entra como .zip y sale como URL pública
                 </span>
               </div>
 
-              <h1 className="mt-6 max-w-[760px] text-[46px] sm:text-[54px] lg:text-[58px] leading-[1.03] font-bold tracking-[-0.035em] text-navy-900">
+              <h1 className="order-1 mt-6 max-w-[760px] text-[46px] sm:text-[54px] lg:text-[58px] leading-[1.03] font-bold tracking-[-0.035em] text-navy-900">
                 De tu código a la web, sin{' '}
                 <span className="text-brand-500">
                   complicaciones
                 </span>
               </h1>
 
-              <p className="mt-7 max-w-[670px] text-[18px] sm:text-[19px] leading-[1.55] text-[#64748b]">
+              <p className="order-3 mt-7 max-w-[670px] text-[18px] sm:text-[19px] leading-[1.55] text-[#64748b]">
                 Olvídate de servidores difíciles y configuraciones lentas. Sube tus archivos o
                 elige una plantilla lista para usar: en 5 segundos tu página web estará en línea,
                 rápida y con su propio enlace para compartir con quien quieras.
               </p>
 
-              <div className="mt-9 flex flex-col sm:flex-row gap-4">
+              <div className="order-4 mt-9 flex flex-col sm:flex-row gap-4">
                 <button
                   type="button"
                   onClick={onRegister}
@@ -132,68 +119,22 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
                 </a>
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center gap-6 text-[13px] text-[#64748b]">
+              <div className="order-5 mt-10 flex flex-wrap items-center gap-6 text-[13px] text-[#64748b]">
                 <Benefit>Tu web online al instante</Benefit>
                 <Benefit>Recursos 100% dedicados</Benefit>
                 <Benefit>Comienza gratis sin compromiso</Benefit>
               </div>
             </div>
 
-            {/* Lado Derecho: Tarjeta Preview */}
-            <div className="relative">
-              <div className="relative bg-white/95 backdrop-blur-sm border border-[#dfe7e4] rounded-[22px] p-8 shadow-[0_24px_70px_rgba(23,40,56,0.09)] overflow-hidden">
-                <div className="absolute top-0 right-0 w-[58px] h-[58px] bg-brand-100 rounded-bl-[58px]" />
-
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-14 h-14 rounded-[16px] bg-brand-50 border border-brand-100 flex items-center justify-center shadow-sm">
-                    <img
-                      src={codropIsotipo}
-                      alt="Codrop"
-                      className="w-9 h-9 object-contain"
-                    />
-                  </div>
-
-                  <div>
-                    <p className="text-[12px] tracking-[0.18em] font-bold text-brand-600">
-                      HOSTING MODERNO
-                    </p>
-                    <p className="mt-1 text-[13px] text-[#64748b]">
-                      Sube. Enciende. Comparte.
-                    </p>
-                  </div>
-                </div>
-
-                <h2 className="mt-7 text-[28px] sm:text-[31px] leading-[1.12] font-bold tracking-[-0.03em] text-navy-900">
-                  Tu sitio en internet,
-                  <br />
-                  sin enredos técnicos
-                </h2>
-
-                <p className="mt-4 max-w-[420px] text-[14px] leading-6 text-[#64748b]">
-                  La forma más rápida de tener presencia en la web. Diseñado para que cualquier
-                  persona o negocio publique su proyecto sin depender de expertos en servidores.
-                </p>
-
-                <div className="mt-7 space-y-3">
-                  <FeatureRow icon={Upload} text="Arrastra y suelta tu archivo .ZIP" />
-                  <FeatureRow icon={Rocket} text="Plantillas listas para usar en 1 clic" />
-                  <FeatureRow icon={ShieldCheck} text="Tu web segura y siempre protegida" />
-                  <FeatureRow icon={Activity} text="Monitoreo claro de visitas y consumo" />
-                  <FeatureRow icon={Globe} text="Dirección web lista para compartir" />
-                </div>
-
-                <div className="mt-7 pt-6 border-t border-[#eef2f1]">
-                  <button
-                    type="button"
-                    onClick={onRegister}
-                    className="w-full h-[50px] rounded-[10px] bg-brand-50 hover:bg-brand-100 text-brand-700 text-[14px] font-semibold flex items-center justify-center gap-3 transition duration-150 btn-tactile brand-focus cursor-pointer"
-                  >
-                    Crear mi cuenta gratuita
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* Visual principal: el producto tiene el protagonismo. */}
+            <figure className="order-2 lg:order-none relative min-w-0 m-0 mt-6 lg:mt-0 lg:-mr-6">
+              <div aria-hidden="true" className="absolute left-[12%] right-[8%] top-[15%] bottom-[10%] rounded-full bg-brand-100/35 blur-3xl" />
+              <img src={heroArtwork} alt="Ilustración de una web publicada desde tus archivos, con un portátil y un cursor para compartirla" fetchpriority="high" decoding="async" width="1536" height="1024" className="relative w-full h-auto drop-shadow-[0_20px_20px_rgba(23,40,56,0.04)]" />
+              <figcaption className="relative mx-auto mt-2 flex max-w-sm items-center justify-center gap-3 text-xs text-slate-500">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-100 bg-white text-brand-600"><Globe className="h-4 w-4" /></span>
+                Tu idea merece su propio lugar en internet.
+              </figcaption>
+            </figure>
           </div>
         </div>
       </section>
@@ -201,44 +142,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
       {/* =====================================================
           SECCIÓN: CÓMO FUNCIONA (PASO A PASO FÁCIL)
       ====================================================== */}
-      <section id="como-funciona" className="py-24 bg-white border-t border-[#edf2f0]">
-        <div className="max-w-[1380px] mx-auto px-6 lg:px-12">
-          <div className="max-w-2xl mx-auto text-center">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
-              <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-              Sencillo y Veloz
-            </span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-navy-900">
-              Tres pasos simples para tener tu página web funcionando
-            </h2>
-            <p className="mt-4 text-[16px] leading-relaxed text-[#64748b]">
-              Eliminamos toda la fricción. Solo necesitas tu diseño o elegir una plantilla
-              y nosotros nos ocupamos de todo lo demás.
-            </p>
-          </div>
-
-          <div className="mt-16 grid md:grid-cols-3 gap-8">
-            <StepCard
-              number="01"
-              icon={Upload}
-              title="1. Carga o Elige Plantilla"
-              description="Sube tu página en un archivo comprimido (.zip) o elige una plantilla profesional de nuestro catálogo: landing comercial, portafolio de trabajo o sitio de documentación."
-            />
-            <StepCard
-              number="02"
-              icon={ShieldCheck}
-              title="2. Codrop lo Prepara al Instante"
-              description="Asignamos un espacio exclusivo con su propia memoria y procesador garantizados para tu sitio. Nada de servidores compartidos donde la página de otro ralentice la tuya."
-            />
-            <StepCard
-              number="03"
-              icon={Globe}
-              title="3. Comparte tu Enlace con el Mundo"
-              description="Recibes al instante una dirección web directa para mostrar tu trabajo a clientes, reclutadores y amigos. Enciende, apaga o actualiza tu web con un solo clic."
-            />
-          </div>
-        </div>
-      </section>
+      <PublicationJourney />
 
       {/* =====================================================
           SECCIÓN: BENEFICIOS CLAVE (VENTAJAS COMERCIALES)
@@ -247,6 +151,7 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
         <CrocodileMascot variant="walking" position="edge-top" className="!w-28 sm:!w-36 !right-8 lg:!right-16" />
         <div aria-hidden="true" className="accent-stripes absolute inset-x-0 top-0" />
         <div className="max-w-[1380px] mx-auto px-6 lg:px-12">
+          <div className="grid lg:grid-cols-[1fr_1fr] gap-10 lg:gap-20 items-center">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
               <Award className="w-3.5 h-3.5 text-brand-500" />
@@ -261,7 +166,10 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
             </p>
           </div>
 
-          <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <HostingOverview />
+          </div>
+
+          <div className="mt-12 grid sm:grid-cols-2 gap-x-12 gap-y-3">
             <ArchitectureCard
               icon={Container}
               title="Recursos Exclusivos"
@@ -308,8 +216,6 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
               gratis y mejorar tu suscripción en cualquier momento cuando lo necesites.
             </p>
           </div>
-
-          <PlanGuide />
 
           <div className="mt-16 grid lg:grid-cols-3 gap-8 items-stretch">
             {/* PLAN FREE */}
@@ -432,12 +338,6 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
           SECCIÓN: LLAMADO A LA ACCIÓN FINAL (CTA)
       ====================================================== */}
       <section className="py-20 bg-white border-t border-[#edf2f0] relative overflow-hidden">
-        <img
-          src={codropIsotipo}
-          alt=""
-          aria-hidden="true"
-          className="absolute right-[-60px] top-1/2 -translate-y-1/2 w-[440px] opacity-[0.06] pointer-events-none select-none"
-        />
 
         <div className="max-w-[1380px] mx-auto px-6 lg:px-12 relative z-10 text-center">
           <div className="max-w-3xl mx-auto bg-gradient-to-br from-[#f8fbfc] to-brand-50/40 border border-[#dfe7e4] rounded-[32px] p-10 sm:p-16 shadow-[0_20px_60px_rgba(40,181,134,0.08)]">
@@ -478,11 +378,6 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
             {/* Columna Marca */}
             <div className="col-span-2">
               <div className="flex items-center gap-3">
-                <img
-                  src={codropIsotipo}
-                  alt="Codrop"
-                  className="w-10 h-7 object-contain flex-shrink-0"
-                />
                 <span className="text-xl font-bold tracking-tight">
                   <span className="text-brand-500">Co</span>
                   <span className="text-navy-900">drop</span>
@@ -563,32 +458,13 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
    COMPONENTES AUXILIARES DE SECCIONES (DISEÑO LIMPIO)
 ========================================================= */
 
-function StepCard({ number, icon: Icon, title, description }) {
-  return (
-    <div className="card-tactile rounded-[22px] p-8">
-      <div className="flex items-center justify-between">
-        <div className="w-12 h-12 rounded-[14px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
-          <Icon className="w-6 h-6" />
-        </div>
-        <span className="text-2xl font-black text-brand-200">{number}</span>
-      </div>
-      <h3 className="mt-6 text-xl font-bold tracking-tight text-navy-900">
-        {title}
-      </h3>
-      <p className="mt-3 text-[14px] leading-relaxed text-[#64748b]">
-        {description}
-      </p>
-    </div>
-  );
-}
-
 function ArchitectureCard({ icon: Icon, title, subtitle, text }) {
   return (
-    <div className="card-tactile rounded-[20px] p-7">
-      <div className="w-11 h-11 rounded-[12px] bg-brand-50 flex items-center justify-center text-brand-600">
+    <div className="relative border-b border-brand-100 py-6 pl-16">
+      <div className="absolute left-0 top-6 w-11 h-11 rounded-[12px] bg-white border border-brand-100 flex items-center justify-center text-brand-600">
         <Icon className="w-5 h-5" />
       </div>
-      <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand-600">
         {subtitle}
       </p>
       <h3 className="mt-1 text-lg font-bold tracking-tight text-navy-900">
@@ -714,18 +590,6 @@ function FaqItem({ question, answer, isOpen, onToggle }) {
           {answer}
         </div>
       )}
-    </div>
-  );
-}
-
-function FeatureRow({ icon: Icon, text }) {
-  return (
-    <div className="group h-[48px] px-4 rounded-[10px] bg-brand-50 hover:bg-brand-100 flex items-center transition-colors">
-      <Icon className="w-[18px] h-[18px] text-brand-600 flex-shrink-0" />
-      <span className="ml-3 text-[13px] font-semibold text-brand-700">
-        {text}
-      </span>
-      <ArrowRight className="ml-auto w-3.5 h-3.5 text-brand-600 transition-transform group-hover:translate-x-0.5" />
     </div>
   );
 }

@@ -4,23 +4,26 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import Landing from '../pages/Landing';
 
 describe('Landing Page UI Component', () => {
-  it('recomienda un plan por cantidad de sitios y enlaza a su detalle sin iniciar el registro', () => {
+  it('reserva el protagonismo al producto y limita la mascota a dos apariciones', () => {
+    const { container } = render(<Landing />);
+    expect(container.querySelectorAll('img[src*="codrop-isotipo"], .mascot-brand img')).toHaveLength(2);
+    expect(screen.getByRole('img', { name: /Ilustración de una web publicada/ })).toBeInTheDocument();
+    expect(screen.queryByText('HOSTING MODERNO')).not.toBeInTheDocument();
+  });
+
+  it('explora el proceso de publicación sin crear una cuenta ni publicar datos', () => {
     const onRegister = vi.fn();
     render(<Landing onRegister={onRegister} />);
-
-    const recommendation = screen.getByRole('status');
-    expect(within(recommendation).getByText('Free')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('radio', { name: 'Hasta 3 proyectos' }));
-    expect(within(recommendation).getByText('Developer')).toBeInTheDocument();
-    expect(within(recommendation).getByText(/3 sitios · 256 MB/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ver este plan' })).toHaveAttribute('href', '#landing-plan-developer');
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Hasta 10 proyectos' }));
-    expect(within(recommendation).getByText('Pro')).toBeInTheDocument();
-    expect(within(recommendation).getByText(/10 sitios · 512 MB/)).toBeInTheDocument();
-    const target = screen.getByRole('link', { name: 'Ver este plan' }).getAttribute('href').slice(1);
-    expect(document.getElementById(target)).toHaveTextContent('Plan Pro');
+    const preview = screen.getByRole('status');
+    expect(within(preview).getByText('Todo empieza con tus archivos')).toBeInTheDocument();
+    const prepare = screen.getByRole('button', { name: /2\. Codrop lo Prepara/ });
+    fireEvent.click(prepare);
+    expect(prepare).toHaveAttribute('aria-pressed', 'true');
+    expect(within(preview).getByText('Tu espacio, preparado para ti')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /3\. Comparte tu Enlace/ }));
+    expect(within(preview).getByText('Listo para compartir')).toBeInTheDocument();
     expect(onRegister).not.toHaveBeenCalled();
+    expect(screen.queryByText('Encuentra tu punto de partida')).not.toBeInTheDocument();
   });
 
   it('debe renderizar el encabezado principal y propuesta de valor', () => {

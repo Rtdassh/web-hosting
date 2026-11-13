@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
-import codropIsotipo from '../assets/codrop-isotipo.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import AuthBrandAccent from '../components/mascot/AuthBrandAccent';
 import { toast } from '../components/ui/Toast';
@@ -220,12 +219,6 @@ export default function Login({
                     </div>
 
 
-                    <img
-                      src={codropIsotipo}
-                      alt=""
-                      aria-hidden="true"
-                      className="w-[130px] opacity-[0.2]"
-                    />
 
                   </div>
 

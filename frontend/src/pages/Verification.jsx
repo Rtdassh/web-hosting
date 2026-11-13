@@ -10,7 +10,6 @@ import {
   Loader2,
 } from 'lucide-react';
 
-import codropIsotipo from '../assets/codrop-isotipo.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import { authService } from '../services/api';
 
@@ -338,12 +337,6 @@ export default function Verification({
                     </p>
                   </div>
 
-                  <img
-                    src={codropIsotipo}
-                    alt=""
-                    aria-hidden="true"
-                    className="w-[95px] opacity-[0.16] hidden sm:block select-none pointer-events-none"
-                  />
                 </div>
 
               </div>
