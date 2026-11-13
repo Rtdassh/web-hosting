@@ -92,7 +92,9 @@ export default function PricingPage({
   const { user, refreshUser } = useAuth();
 
   const [plans, setPlans] = useState([]);
-  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState(null);
+  const [selectedPlanForCheckout, setSelectedPlanForCheckout] =
+    useState(null);
+
   const [activePlanName, setActivePlanName] = useState(
     user?.plan?.name || currentPlan || 'Free'
   );
@@ -115,15 +117,28 @@ export default function PricingPage({
     billingService
       .getPlans()
       .then((data) => {
-        if (!Array.isArray(data)) throw new Error('Catálogo inválido');
-        setPlans(data.filter((plan) => plan.is_active !== false).map((plan) => ({
-          ...DEFAULT_PLANS.find((item) => item.name.toLowerCase() === plan.name?.toLowerCase()),
-          ...plan,
-        })));
+        if (!Array.isArray(data)) {
+          throw new Error('Catálogo inválido');
+        }
+
+        setPlans(
+          data
+            .filter((plan) => plan.is_active !== false)
+            .map((plan) => ({
+              ...DEFAULT_PLANS.find(
+                (item) =>
+                  item.name.toLowerCase() ===
+                  plan.name?.toLowerCase()
+              ),
+              ...plan,
+            }))
+        );
       })
       .catch(() => {
         setPlans([]);
-        setErrorMessage('No se pudo cargar el catálogo de planes. Inténtalo de nuevo.');
+        setErrorMessage(
+          'No se pudo cargar el catálogo de planes. Inténtalo de nuevo.'
+        );
       });
   }, []);
 
@@ -147,7 +162,9 @@ export default function PricingPage({
         .map((item) =>
           typeof item === 'string'
             ? item
-            : item.msg || item.detail || JSON.stringify(item)
+            : item.msg ||
+              item.detail ||
+              JSON.stringify(item)
         )
         .join('. ');
     }
@@ -162,7 +179,7 @@ export default function PricingPage({
   const changePlanWithoutCheckout = async (plan) => {
     const confirmed = window.confirm(
       `¿Deseas cambiar tu suscripción de ${activePlanName} a ${plan.name}?\n\n` +
-      'Si tu cuenta supera las cuotas del nuevo plan, Codrop bloqueará el cambio hasta que reduzcas tus sitios activos.'
+        'Si tu cuenta supera las cuotas del nuevo plan, Codrop bloqueará el cambio hasta que reduzcas tus sitios activos.'
     );
 
     if (!confirmed) return;
@@ -173,10 +190,15 @@ export default function PricingPage({
     setErrorMessage(null);
 
     try {
-      const response = await billingService.changePlan(plan.id);
+      const response =
+        await billingService.changePlan(plan.id);
 
       setActivePlanName(plan.name);
-      const msg = response?.message || `Tu suscripción ahora utiliza el plan ${plan.name}.`;
+
+      const msg =
+        response?.message ||
+        `Tu suscripción ahora utiliza el plan ${plan.name}.`;
+
       setActionMessage(msg);
       toast.success(msg);
 
@@ -185,6 +207,7 @@ export default function PricingPage({
       }
     } catch (error) {
       const err = safeExtractError(error);
+
       setErrorMessage(err);
       toast.error(err);
     } finally {
@@ -193,22 +216,34 @@ export default function PricingPage({
     }
   };
 
-  const needsRenewal = user?.plan?.is_current === false;
+  const needsRenewal =
+    user?.plan?.is_current === false;
 
   const handlePlanAction = async (plan) => {
     setActionMessage(null);
     setErrorMessage(null);
 
-    const targetRank = PLAN_ORDER[plan.name?.toLowerCase()] ?? 0;
+    const targetRank =
+      PLAN_ORDER[plan.name?.toLowerCase()] ?? 0;
 
     if (targetRank === activePlanRank) {
-      if (needsRenewal && Number(plan.price) > 0) setSelectedPlanForCheckout(plan);
+      if (
+        needsRenewal &&
+        Number(plan.price) > 0
+      ) {
+        setSelectedPlanForCheckout(plan);
+      }
+
       return;
     }
 
-    const isUpgrade = targetRank > activePlanRank;
+    const isUpgrade =
+      targetRank > activePlanRank;
 
-    if (isUpgrade && Number(plan.price) > 0) {
+    if (
+      isUpgrade &&
+      Number(plan.price) > 0
+    ) {
       setSelectedPlanForCheckout(plan);
       return;
     }
@@ -216,12 +251,19 @@ export default function PricingPage({
     await changePlanWithoutCheckout(plan);
   };
 
-  const handleCheckoutSuccess = async (receiptData) => {
-    setActivePlanName(receiptData.plan_name);
+  const handleCheckoutSuccess = async (
+    receiptData
+  ) => {
+    setActivePlanName(
+      receiptData.plan_name
+    );
+
     setLatestInvoice(receiptData);
     setIsReceiptOpen(true);
 
-    const msg = `Tu suscripción fue actualizada correctamente al plan ${receiptData.plan_name}.`;
+    const msg =
+      `Tu suscripción fue actualizada correctamente al plan ${receiptData.plan_name}.`;
+
     setActionMessage(msg);
     toast.success(msg);
 
@@ -231,10 +273,14 @@ export default function PricingPage({
   };
 
   const getPlanActionLabel = (plan) => {
-    const rank = PLAN_ORDER[plan.name?.toLowerCase()] ?? 0;
+    const rank =
+      PLAN_ORDER[plan.name?.toLowerCase()] ?? 0;
 
     if (rank === activePlanRank) {
-      return needsRenewal && Number(plan.price) > 0 ? 'Renovar plan' : 'Plan actual';
+      return needsRenewal &&
+        Number(plan.price) > 0
+        ? 'Renovar plan'
+        : 'Plan actual';
     }
 
     if (rank > activePlanRank) {
@@ -246,15 +292,20 @@ export default function PricingPage({
 
   return (
     <div className="relative px-5 py-8 text-[#172838] sm:px-6 lg:px-8 xl:px-10">
+
       <div className="relative mx-auto max-w-[1280px]">
-        {/* Top actions */}
+
+        {/* =====================================================
+            TOP ACTIONS
+        ====================================================== */}
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:text-[#1C7F62]"
+            className="btn-tactile inline-flex w-fit cursor-pointer items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-[14px] font-bold text-[#334e5e] shadow-sm transition duration-150 hover:border-[#b9d8ca] hover:text-[#1C7F62]"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5" />
             Volver a mis proyectos
           </button>
 
@@ -262,265 +313,407 @@ export default function PricingPage({
             <button
               type="button"
               onClick={onGoToBilling}
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-xs font-bold text-[#334e5e] shadow-sm transition duration-150 btn-tactile cursor-pointer hover:border-[#b9d8ca] hover:text-[#1C7F62]"
+              className="btn-tactile inline-flex w-fit cursor-pointer items-center gap-2 rounded-xl border border-[#dce7e2] bg-white px-4 py-2.5 text-[14px] font-bold text-[#334e5e] shadow-sm transition duration-150 hover:border-[#b9d8ca] hover:text-[#1C7F62]"
             >
-              <FileText className="h-4 w-4 text-[#28B586]" />
+              <FileText className="h-5 w-5 text-[#28B586]" />
               Ver facturación
             </button>
           )}
+
         </div>
 
-        {/* Hero */}
+        {/* =====================================================
+            HERO
+        ====================================================== */}
         <section className="relative mb-10 overflow-hidden rounded-[28px] border border-[#dce7e2] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(23,40,56,0.06)] md:px-9 md:py-9">
+
           <div className="absolute right-0 top-0 h-48 w-48 rounded-bl-[120px] bg-[#EAF7F1]" />
 
           <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+
             <div className="max-w-3xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#CFE4D6] bg-[#EAF7F1] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.18em] text-[#1C7F62]">
-                <Sparkles className="h-3.5 w-3.5" />
+
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#CFE4D6] bg-[#EAF7F1] px-3.5 py-2 text-[13px] font-black uppercase tracking-[0.15em] text-[#1C7F62]">
+
+                <Sparkles className="h-4 w-4" />
+
                 Planes Codrop
+
               </div>
 
-              <h1 className="max-w-3xl text-3xl font-black tracking-[-0.035em] text-[#172838] sm:text-4xl lg:text-[46px] lg:leading-[1.05]">
+              <h1 className="max-w-3xl text-[34px] font-black tracking-[-0.035em] text-[#172838] sm:text-[40px] lg:text-[46px] lg:leading-[1.05]">
+
                 La capacidad que necesitas,
-                <span className="text-[#28B586]"> sin complicaciones.</span>
+
+                <span className="text-[#28B586]">
+                  {' '}sin complicaciones.
+                </span>
+
               </h1>
 
-              <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[#64748B]">
+              <p className="mt-4 max-w-2xl text-[17px] font-medium leading-7 text-[#64748B]">
                 Empieza gratis y escala cuando tu proyecto lo necesite.
                 Cada plan define cuántos sitios puedes publicar y los recursos
                 disponibles para cada proyecto.
               </p>
+
             </div>
 
+            {/* Current subscription */}
             <div className="relative min-w-[220px] rounded-2xl border border-[#dce7e2] bg-[#f8fbf9] p-5">
-              <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#64748B]">
-                <Zap className="h-4 w-4 text-[#28B586]" />
+
+              <div className="mb-3 flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.14em] text-[#64748B]">
+
+                <Zap className="h-5 w-5 text-[#28B586]" />
+
                 Tu suscripción
+
               </div>
 
               <div className="flex items-end gap-2">
-                <span className="text-2xl font-black text-[#172838]">
+
+                <span className="text-[28px] font-black text-[#172838]">
                   {activePlanName}
                 </span>
-                <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-[#EAF7F1] px-2 py-1 text-[10px] font-black uppercase text-[#1C7F62]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#28B586]" />
+
+                <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[12px] font-black uppercase text-[#1C7F62]">
+
+                  <span className="h-2 w-2 rounded-full bg-[#28B586]" />
+
                   Activo
+
                 </span>
+
               </div>
 
-              <p className="mt-2 text-xs leading-5 text-[#64748B]">
+              <p className="mt-2 text-[14px] leading-6 text-[#64748B]">
                 Los cambios de cuota se aplican a tu cuenta después de aprobar
                 la operación.
               </p>
+
             </div>
+
           </div>
+
         </section>
 
-        {/* Feedback */}
+        {/* =====================================================
+            FEEDBACK
+        ====================================================== */}
         {actionMessage && (
-          <div className="mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-[#b9ddcd] bg-[#edf9f3] p-4 text-sm font-semibold text-[#176c53] fade-slide-down">
+          <div className="fade-slide-down mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-[#b9ddcd] bg-[#edf9f3] p-4 text-[15px] font-semibold leading-6 text-[#176c53]">
+
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-            <span>{actionMessage}</span>
+
+            <span>
+              {actionMessage}
+            </span>
+
           </div>
         )}
 
         {errorMessage && (
-          <div className="mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 fade-slide-down">
+          <div className="fade-slide-down mx-auto mb-7 flex max-w-3xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-[15px] font-semibold leading-6 text-red-700">
+
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-            <span>{errorMessage}</span>
+
+            <span>
+              {errorMessage}
+            </span>
+
           </div>
         )}
 
-        {/* Plans */}
+        {/* =====================================================
+            PLANS
+        ====================================================== */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {plans.map((plan) => {
-            const planRank = PLAN_ORDER[plan.name?.toLowerCase()] ?? 0;
-            const isCurrent = planRank === activePlanRank;
-            const isUpgrade = planRank > activePlanRank;
-            const isDowngrade = planRank < activePlanRank;
 
-            const price = Number(plan.price || 0);
+          {plans.map((plan) => {
+            const planRank =
+              PLAN_ORDER[
+                plan.name?.toLowerCase()
+              ] ?? 0;
+
+            const isCurrent =
+              planRank === activePlanRank;
+
+            const isUpgrade =
+              planRank > activePlanRank;
+
+            const isDowngrade =
+              planRank < activePlanRank;
+
+            const price =
+              Number(plan.price || 0);
 
             return (
               <article
                 key={plan.id}
-                className={`relative flex min-h-[590px] flex-col overflow-hidden rounded-[26px] border bg-white p-6 transition duration-300 ${plan.popular
+                className={`relative flex min-h-[590px] flex-col overflow-hidden rounded-[26px] border bg-white p-6 transition duration-300 ${
+                  plan.popular
                     ? 'border-[#28B586] shadow-[0_22px_55px_rgba(40,181,134,0.13)] lg:-translate-y-2'
                     : isCurrent
                       ? 'border-[#9ed5bf] shadow-[0_18px_45px_rgba(23,40,56,0.08)]'
                       : 'border-[#dce7e2] shadow-[0_12px_35px_rgba(23,40,56,0.045)] hover:-translate-y-1 hover:border-[#b9d8ca]'
-                  }`}
+                }`}
               >
+
                 {plan.popular && (
-                  <div className="absolute right-5 top-5 rounded-full bg-[#172838] px-3 py-1 text-[10px] font-black uppercase tracking-[0.13em] text-white">
+                  <div className="absolute right-5 top-5 rounded-full bg-[#172838] px-3 py-1.5 text-[12px] font-black uppercase tracking-[0.13em] text-white">
                     Recomendado
                   </div>
                 )}
 
                 <div>
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF7F1] text-[#1C7F62]">
-                    {plan.name === 'Free' && <Server className="h-5 w-5" />}
+
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF7F1] text-[#1C7F62]">
+
+                    {plan.name === 'Free' && (
+                      <Server className="h-6 w-6" />
+                    )}
+
                     {plan.name === 'Developer' && (
-                      <Zap className="h-5 w-5" />
+                      <Zap className="h-6 w-6" />
                     )}
+
                     {plan.name === 'Pro' && (
-                      <Layers3 className="h-5 w-5" />
+                      <Layers3 className="h-6 w-6" />
                     )}
+
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-2xl font-black text-[#172838]">
+
+                    <h2 className="text-[26px] font-black text-[#172838]">
                       {plan.name}
                     </h2>
 
                     {isCurrent && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[#b9ddcd] bg-[#edf9f3] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#176c53]">
-                        <Check className="h-3 w-3" />
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[#b9ddcd] bg-[#edf9f3] px-2.5 py-1 text-[12px] font-black uppercase tracking-wide text-[#176c53]">
+
+                        <Check className="h-3.5 w-3.5" />
+
                         Plan actual
+
                       </span>
                     )}
+
                   </div>
 
-                  <p className="mt-3 min-h-[60px] text-sm leading-6 text-[#64748B]">
+                  <p className="mt-3 min-h-[60px] text-[15px] leading-7 text-[#64748B]">
                     {plan.description}
                   </p>
 
                   <div className="mt-5 border-b border-[#edf1ef] pb-5">
+
                     <div className="flex items-end gap-1.5">
+
                       <span className="text-[42px] font-black leading-none tracking-[-0.04em] text-[#172838]">
                         ${price.toFixed(2)}
                       </span>
-                      <span className="mb-1 text-xs font-bold text-[#94A3B8]">
+
+                      <span className="mb-1 text-[13px] font-bold text-[#94A3B8]">
                         USD / mes
                       </span>
+
                     </div>
 
-                    <p className="mt-2 text-[11px] font-medium text-[#94A3B8]">
+                    <p className="mt-2 text-[13px] font-medium text-[#94A3B8]">
                       Facturación mensual sin plazos forzosos
                     </p>
+
                   </div>
+
                 </div>
 
-                {/* Resource cards */}
+                {/* =================================================
+                    RESOURCE CARDS
+                ================================================== */}
                 <div className="mt-5 grid grid-cols-3 gap-2">
+
                   <div className="rounded-xl border border-[#e5ece8] bg-[#f8fbf9] p-3">
-                    <Server className="mb-2 h-4 w-4 text-[#28B586]" />
-                    <div className="text-lg font-black text-[#172838]">
+
+                    <Server className="mb-2 h-5 w-5 text-[#28B586]" />
+
+                    <div className="text-[20px] font-black text-[#172838]">
                       {plan.max_instances}
                     </div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">
+
+                    <div className="text-[12px] font-bold uppercase tracking-wide text-[#94A3B8]">
                       Sitios
                     </div>
+
                   </div>
 
                   <div className="rounded-xl border border-[#e5ece8] bg-[#f8fbf9] p-3">
-                    <MemoryStick className="mb-2 h-4 w-4 text-[#28B586]" />
-                    <div className="text-lg font-black text-[#172838]">
+
+                    <MemoryStick className="mb-2 h-5 w-5 text-[#28B586]" />
+
+                    <div className="text-[20px] font-black text-[#172838]">
                       {plan.max_ram_mb}
                     </div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">
+
+                    <div className="text-[12px] font-bold uppercase tracking-wide text-[#94A3B8]">
                       MB RAM
                     </div>
+
                   </div>
 
                   <div className="rounded-xl border border-[#e5ece8] bg-[#f8fbf9] p-3">
-                    <Cpu className="mb-2 h-4 w-4 text-[#28B586]" />
-                    <div className="text-lg font-black text-[#172838]">
+
+                    <Cpu className="mb-2 h-5 w-5 text-[#28B586]" />
+
+                    <div className="text-[20px] font-black text-[#172838]">
                       {plan.cpu_quota}
                     </div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">
+
+                    <div className="text-[12px] font-bold uppercase tracking-wide text-[#94A3B8]">
                       vCPU
                     </div>
+
                   </div>
+
                 </div>
 
-                {/* Features */}
+                {/* =================================================
+                    FEATURES
+                ================================================== */}
                 <div className="mt-6 flex-1">
-                  <p className="mb-3 text-[10px] font-black uppercase tracking-[0.16em] text-[#94A3B8]">
+
+                  <p className="mb-3 text-[12px] font-black uppercase tracking-[0.14em] text-[#94A3B8]">
                     Incluido en el plan
                   </p>
 
                   <div className="space-y-3">
-                    {(plan.features || []).map((feature) => (
-                      <div
-                        key={feature}
-                        className="flex items-start gap-2.5 text-xs font-semibold leading-5 text-[#475569]"
-                      >
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#EAF7F1]">
-                          <Check className="h-2.5 w-2.5 text-[#1C7F62]" />
-                        </span>
-                        {feature}
-                      </div>
-                    ))}
+
+                    {(plan.features || []).map(
+                      (feature) => (
+                        <div
+                          key={feature}
+                          className="flex items-start gap-2.5 text-[14px] font-semibold leading-6 text-[#475569]"
+                        >
+
+                          <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#EAF7F1]">
+
+                            <Check className="h-3 w-3 text-[#1C7F62]" />
+
+                          </span>
+
+                          {feature}
+
+                        </div>
+                      )
+                    )}
+
                   </div>
+
                 </div>
 
-                {/* Action */}
+                {/* =================================================
+                    ACTION
+                ================================================== */}
                 <div className="mt-7">
+
                   {isDowngrade && (
-                    <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-amber-600">
+                    <p className="mb-2 text-center text-[12px] font-bold uppercase tracking-[0.12em] text-amber-600">
                       Downgrade de suscripción
                     </p>
                   )}
 
                   {isUpgrade && (
-                    <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#1C7F62]">
+                    <p className="mb-2 text-center text-[12px] font-bold uppercase tracking-[0.12em] text-[#1C7F62]">
                       Upgrade de suscripción
                     </p>
                   )}
 
                   <button
                     type="button"
-                    onClick={() => handlePlanAction(plan)}
-                    disabled={(isCurrent && !(needsRenewal && Number(plan.price) > 0)) || isChangingPlan}
-                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-xs font-black transition duration-150 ${isCurrent
-                        ? needsRenewal && Number(plan.price) > 0
+                    onClick={() =>
+                      handlePlanAction(plan)
+                    }
+                    disabled={
+                      (
+                        isCurrent &&
+                        !(
+                          needsRenewal &&
+                          Number(plan.price) > 0
+                        )
+                      ) ||
+                      isChangingPlan
+                    }
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-[15px] font-black transition duration-150 ${
+                      isCurrent
+                        ? needsRenewal &&
+                          Number(plan.price) > 0
                           ? 'bg-[#172838] text-white hover:bg-[#1F3141] btn-tactile cursor-pointer'
                           : 'cursor-default border border-[#e2e8e5] bg-[#f3f6f4] text-[#94A3B8]'
                         : plan.popular
                           ? 'bg-[#28B586] text-white shadow-[0_10px_25px_rgba(40,181,134,0.22)] hover:bg-[#239C76] btn-tactile cursor-pointer'
                           : 'bg-[#172838] text-white shadow-[0_10px_25px_rgba(23,40,56,0.12)] hover:bg-[#1F3141] btn-tactile cursor-pointer'
-                      }`}
+                    }`}
                   >
-                    {changingPlanId === plan.id ? (
+
+                    {changingPlanId ===
+                    plan.id ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin" />
                         Procesando cambio...
                       </>
                     ) : (
                       <>
                         {getPlanActionLabel(plan)}
+
                         {!isCurrent && (
-                          <ArrowRight className="h-4 w-4" />
+                          <ArrowRight className="h-5 w-5" />
                         )}
                       </>
                     )}
+
                   </button>
+
                 </div>
+
               </article>
             );
           })}
+
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-2 text-center text-xs font-medium text-[#94A3B8]">
-          <Sparkles className="h-3.5 w-3.5 text-[#28B586]" />
+        {/* =====================================================
+            FOOTNOTE
+        ====================================================== */}
+        <div className="mt-8 flex items-center justify-center gap-2 text-center text-[14px] font-medium text-[#94A3B8]">
+
+          <Sparkles className="h-4 w-4 text-[#28B586]" />
+
           De tu código a la web, con el plan que mejor se adapte a tu proyecto.
+
         </div>
 
         <CheckoutModal
-          isOpen={Boolean(selectedPlanForCheckout)}
-          onClose={() => setSelectedPlanForCheckout(null)}
-          selectedPlan={selectedPlanForCheckout}
+          isOpen={Boolean(
+            selectedPlanForCheckout
+          )}
+          onClose={() =>
+            setSelectedPlanForCheckout(null)
+          }
+          selectedPlan={
+            selectedPlanForCheckout
+          }
           onSuccess={handleCheckoutSuccess}
         />
 
         <ReceiptModal
           isOpen={isReceiptOpen}
-          onClose={() => setIsReceiptOpen(false)}
+          onClose={() =>
+            setIsReceiptOpen(false)
+          }
           invoice={latestInvoice}
         />
+
       </div>
+
     </div>
   );
 }
