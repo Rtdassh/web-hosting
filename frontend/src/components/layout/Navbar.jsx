@@ -51,7 +51,7 @@ export default function Navbar({ onLogout, onProfile }) {
                 <span className="text-navy-900">drop</span>
               </div>
               <p className="mt-1 text-[10px] text-[#64748b]">
-                Panel de despliegues
+                {user?.role === 'admin' ? 'Consola administrativa' : 'Panel de despliegues'}
               </p>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function Navbar({ onLogout, onProfile }) {
               type="button"
               onClick={() => onProfile ? onProfile() : setShowLogoutModal(true)}
               className="group h-[42px] pl-2 pr-3 rounded-[12px] border border-[#e2e8f0] bg-white hover:bg-[#f8fbfa] flex items-center gap-2.5 transition duration-150 btn-tactile cursor-pointer"
-              aria-label="Abrir perfil y ajustes"
+              aria-label={onProfile ? "Abrir perfil y ajustes" : "Opciones de sesión"}
             >
               <div className="w-8 h-8 rounded-[9px] bg-brand-50 border border-brand-100 flex items-center justify-center text-[12px] font-bold text-brand-700">
                 {getInitial()}

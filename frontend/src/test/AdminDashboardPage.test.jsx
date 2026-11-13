@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AdminDashboardPage from '../pages/AdminDashboardPage';
 import { adminService } from '../services/api';
 
+vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin', full_name: 'Administrador' }, logout: vi.fn() }) }));
 vi.mock('../services/api', () => ({ adminService: { getDashboard: vi.fn(), getInstances: vi.fn(), forceAction: vi.fn() } }));
 const sites = [
   { id: 10, name: 'sitio-activo', owner_id: 7, status: 'running', owner_email: 'privado@example.com', public_url: 'https://privado.example.com' },
@@ -25,6 +26,7 @@ it('muestra solo supervisión sin acceso a datos o navegación de clientes', asy
   expect(screen.queryByText('privado@example.com')).not.toBeInTheDocument();
   expect(screen.queryAllByRole('link')).toHaveLength(0);
   expect(screen.getByRole('button', { name: 'Detener sitio-detenido' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Opciones de sesión' }));
   fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
   expect(logout).toHaveBeenCalledOnce();
 });
