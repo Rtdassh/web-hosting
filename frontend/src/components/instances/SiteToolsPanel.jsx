@@ -68,9 +68,9 @@ export default function SiteToolsPanel({ instance, onChanged, insightsOnly = fal
   return (
     <section className="space-y-6" aria-label={insightsOnly ? 'Disponibilidad y tráfico' : 'Publicaciones y disponibilidad'}>
       {!insightsOnly && <>
-      <div className="rounded-[20px] border border-[#dfe7e4] bg-white p-6 shadow-[0_8px_28px_rgba(23,40,56,0.035)] sm:p-7">
-        <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-brand-100 bg-brand-50 text-brand-600"><UploadCloud className="h-4 w-4" /></div>
+      <div className="site-detail-panel p-6 sm:p-7">
+        <div className="site-detail-section-heading flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-brand-500 bg-brand-500 text-white"><UploadCloud className="h-4 w-4" /></div>
           <div>
             <h2 className="text-sm font-bold tracking-tight text-navy-900">Publicaciones y disponibilidad</h2>
             <p className="mt-0.5 text-[11px] leading-5 text-[#64748b]">Actualiza tu sitio y conserva su dirección. Recupera una versión anterior cuando lo necesites.</p>
@@ -104,7 +104,7 @@ export default function SiteToolsPanel({ instance, onChanged, insightsOnly = fal
               <h3 className="flex items-center gap-2 text-xs font-bold text-navy-900"><History className="h-4 w-4 text-slate-400" />Versiones guardadas</h3>
               {versions.length > 0 && <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-500">{versions.length}</span>}
             </div>
-            {!versions.length ? <div className="flex min-h-[170px] flex-col items-center justify-center rounded-[14px] border border-[#e1ebe6] bg-[#f8fbfa] p-5 text-center">
+            {!versions.length ? <div className="flex min-h-[170px] flex-col items-center justify-center rounded-[14px] border border-brand-100 bg-brand-50/60 p-5 text-center">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-[#dfe7e4] bg-white text-slate-400"><History className="h-5 w-5" /></div>
               <p className="text-xs font-semibold text-[#334e5e]">{loaded ? 'Aún no hay actualizaciones guardadas.' : 'Cargando versiones…'}</p>
               <p className="mt-1.5 max-w-[260px] text-[11px] leading-5 text-[#64748b]">Al publicar por primera vez también guardaremos la versión original.</p>
@@ -123,10 +123,10 @@ export default function SiteToolsPanel({ instance, onChanged, insightsOnly = fal
 
       </>}
 
-      <div className="rounded-[20px] border border-[#dfe7e4] bg-white p-6 shadow-[0_8px_28px_rgba(23,40,56,0.035)] sm:p-7">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-brand-100 bg-brand-50 text-brand-600"><Activity className="h-4 w-4" /></div><div><h2 className="text-sm font-bold tracking-tight text-navy-900">Disponibilidad y tráfico</h2><p className="mt-0.5 text-[11px] leading-5 text-[#64748b]">Estado de tu sitio y actividad reciente</p></div></div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500"><Clock3 className="h-3 w-3" />Comprobación automática</span>
+      <div className="site-detail-panel p-6 sm:p-7">
+        <div className="site-detail-section-heading flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-brand-500 bg-brand-500 text-white"><Activity className="h-4 w-4" /></div><div><h2 className="text-sm font-bold tracking-tight text-navy-900">Disponibilidad y tráfico</h2><p className="mt-0.5 text-[11px] leading-5 text-[#64748b]">Estado de tu sitio y actividad reciente</p></div></div>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-brand-700"><Clock3 className="h-3 w-3" />Comprobación automática</span>
         </div>
         {insightsOnly && error && <p role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700">{error}</p>}
         <div className="grid gap-4 md:grid-cols-3">
@@ -153,8 +153,8 @@ export default function SiteToolsPanel({ instance, onChanged, insightsOnly = fal
 }
 
 function InsightCard({ icon: Icon, label, children }) {
-  return <article className="min-w-0 rounded-[14px] border border-[#e1ebe6] bg-[#f8fbfa] p-4">
-    <h3 className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500"><Icon className="h-3.5 w-3.5 shrink-0 text-brand-600" />{label}</h3>
+  return <article className="min-w-0 rounded-[14px] border border-brand-100 bg-brand-50/60 p-4">
+    <h3 className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-brand-700"><Icon className="h-3.5 w-3.5 shrink-0 text-brand-600" />{label}</h3>
     {children}
   </article>;
 }
