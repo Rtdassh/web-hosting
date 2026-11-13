@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
 import {
-  Container,
-  Activity,
   ArrowRight,
   Check,
   Zap,
   Server,
-  ShieldCheck,
   Layers3,
-  Lock,
   Globe,
   ChevronDown,
-  Rocket,
-  Award,
   Users,
 } from 'lucide-react';
 
@@ -20,7 +14,7 @@ import heroArtwork from '../assets/landing/hosting-hero.png';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import CrocodileMascot from '../components/mascot/CrocodileMascot';
 import PublicationJourney from '../components/marketing/PublicationJourney';
-import HostingOverview from '../components/marketing/HostingOverview';
+import HostingBenefits from '../components/marketing/HostingBenefits';
 
 export default function Landing({ onLogin, onRegister, onNavigateSection }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
@@ -147,54 +141,11 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
       {/* =====================================================
           SECCIÓN: BENEFICIOS CLAVE (VENTAJAS COMERCIALES)
       ====================================================== */}
-      <section id="caracteristicas" className="relative py-24 bg-[#f8fbfc] border-t border-[#edf2f0]">
+      <section id="caracteristicas" className="relative py-16 sm:py-20 bg-white border-t border-brand-50">
         <CrocodileMascot variant="walking" position="edge-top" className="!w-28 sm:!w-36 !right-8 lg:!right-16" />
         <div aria-hidden="true" className="accent-stripes absolute inset-x-0 top-0" />
         <div className="max-w-[1380px] mx-auto px-6 lg:px-12">
-          <div className="grid lg:grid-cols-[1fr_1fr] gap-10 lg:gap-20 items-center">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-bold tracking-[0.16em] uppercase bg-brand-50 text-brand-700 border border-brand-100">
-              <Award className="w-3.5 h-3.5 text-brand-500" />
-              ¿Por qué elegir Codrop?
-            </span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-[-0.03em] text-navy-900">
-              La tranquilidad de que tu sitio siempre cargará rápido y seguro
-            </h2>
-            <p className="mt-4 text-[16px] leading-relaxed text-[#64748b]">
-              Construido para darte la máxima estabilidad. Diseñado para que tú te enfoques en hacer
-              crecer tu proyecto, mientras nuestra plataforma mantiene tu web activa 24/7.
-            </p>
-          </div>
-
-          <HostingOverview />
-          </div>
-
-          <div className="mt-12 grid sm:grid-cols-2 gap-x-12 gap-y-3">
-            <ArchitectureCard
-              icon={Container}
-              title="Recursos Exclusivos"
-              subtitle="Cero Interrupciones"
-              text="Cada proyecto cuenta con su propia memoria RAM y CPU reservadas. Si otros sitios reciben muchas visitas, el tuyo no se verá afectado jamás."
-            />
-            <ArchitectureCard
-              icon={Lock}
-              title="Protección Automática"
-              subtitle="Seguridad Garantizada"
-              text="Tus archivos quedan blindados contra modificaciones externas no autorizadas. Publica con la confianza de que tu sitio estará siempre a salvo."
-            />
-            <ArchitectureCard
-              icon={Rocket}
-              title="Plantillas en 1 Clic"
-              subtitle="Listas para Usar"
-              text="¿No tienes código preparado? Elige una plantilla moderna y comienza hoy mismo tu presencia digital sin escribir una sola línea de código."
-            />
-            <ArchitectureCard
-              icon={Activity}
-              title="Panel Claro y Simple"
-              subtitle="Control Total"
-              text="Visualiza fácilmente el estado de tu web, su velocidad y rendimiento en tiempo real a través de gráficos limpios y comprensibles."
-            />
-          </div>
+          <HostingBenefits />
         </div>
       </section>
 
@@ -457,25 +408,6 @@ export default function Landing({ onLogin, onRegister, onNavigateSection }) {
 /* =========================================================
    COMPONENTES AUXILIARES DE SECCIONES (DISEÑO LIMPIO)
 ========================================================= */
-
-function ArchitectureCard({ icon: Icon, title, subtitle, text }) {
-  return (
-    <div className="relative border-b border-brand-100 py-6 pl-16">
-      <div className="absolute left-0 top-6 w-11 h-11 rounded-[12px] bg-white border border-brand-100 flex items-center justify-center text-brand-600">
-        <Icon className="w-5 h-5" />
-      </div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand-600">
-        {subtitle}
-      </p>
-      <h3 className="mt-1 text-lg font-bold tracking-tight text-navy-900">
-        {title}
-      </h3>
-      <p className="mt-2.5 text-[13px] leading-relaxed text-[#64748b]">
-        {text}
-      </p>
-    </div>
-  );
-}
 
 function PricingCard({
   name,
