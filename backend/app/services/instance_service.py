@@ -209,15 +209,51 @@ class InstanceService:
             )
 
         operation, target_status = operations[action]
+        operation_succeeded = False
         try:
             operation_succeeded = operation(instance.container_id)
         except Exception:
-            db.rollback()
-            audit_fn(current_user.id, instance.id, action, "failed")
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="No se pudo ejecutar la acción en Docker."
-            )
+            operation_succeeded = False
+
+        if not operation_succeeded and action in ("start", "restart"):
+            # Auto-recuperación si el contenedor no existe en Docker pero el almacenamiento del host existe
+            try:
+                container_status = docker_svc.get_container_status(instance.container_id)
+                if container_status == "not_found" and instance.storage_path and Path(instance.storage_path).exists():
+                    logger.info(
+                        "Auto-recuperando contenedor para instancia %s (%s)...",
+                        instance.id,
+                        instance.name
+                    )
+                    port = instance.assigned_port
+                    if not port:
+                        port = port_service.get_and_reserve_available_port(db)
+                        instance.assigned_port = port
+                    else:
+                        from app.models.port import PortAllocation
+                        alloc = db.query(PortAllocation).filter(PortAllocation.port_number == port).first()
+                        if alloc:
+                            alloc.is_allocated = True
+                            alloc.instance_id = instance.id
+
+                    ram_limit_mb = getattr(plan, "ram_limit_mb", 128)
+                    cpu_quota = getattr(plan, "cpu_quota", 0.25)
+                    container_name = f"paas_web_{instance.uuid}"
+
+                    new_container_id = docker_svc.run_nginx_instance(
+                        container_name=container_name,
+                        host_port=port,
+                        host_storage_path=instance.storage_path,
+                        ram_limit_mb=ram_limit_mb,
+                        cpu_quota=cpu_quota,
+                        user_id=instance.user_id,
+                        instance_uuid=instance.uuid
+                    )
+                    instance.container_id = new_container_id
+                    operation_succeeded = True
+            except Exception:
+                logger.exception("Error durante la auto-recuperación del contenedor.")
+                operation_succeeded = False
 
         if not operation_succeeded:
             db.rollback()
