@@ -472,7 +472,12 @@ class PostgreSQLMigrationTests(unittest.TestCase):
                 reset_token = captured_tokens[0][1]
                 from app.models import PasswordResetToken
                 with Session(engine) as db:
-                    saved_token = db.query(PasswordResetToken).one()
+                    # Verification and recovery share the legacy token table.
+                    saved_token = db.query(PasswordResetToken).filter(
+                        PasswordResetToken.user_id == registered_user.id,
+                        ~PasswordResetToken.token_hash.startswith("email-verification:"),
+                    ).one()
+                    saved_token_id = saved_token.id
                     self.assertNotEqual(saved_token.token_hash, reset_token)
                     self.assertEqual(
                         saved_token.token_hash,
@@ -506,7 +511,7 @@ class PostgreSQLMigrationTests(unittest.TestCase):
                     db.add(Invoice(transaction_id=invoice.transaction_id, user_id=user.id,
                                    invoice_number="duplicate-transaction-test", amount=1.0, tax=0.0))
                     db.flush()
-            token = db.query(PasswordResetToken).one()
+            token = db.get(PasswordResetToken, saved_token_id)
             with self.assertRaises(IntegrityError):
                 with db.begin_nested():
                     db.add(PasswordResetToken(user_id=user.id, token_hash=token.token_hash,
