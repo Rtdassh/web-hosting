@@ -27,6 +27,13 @@ class PortService:
         Aplica bloqueo de fila (with_for_update) para concurrencia segura
         y verificación física del socket en el host.
         """
+        # Puertos que ya están asignados a alguna instancia en la tabla instances
+        # (evita violar la restricción UNIQUE 'instances_assigned_port_key')
+        from app.models.instance import Instance
+        assigned_in_instances = {
+            port for (port,) in db.query(Instance.assigned_port).all()
+        }
+
         # 1. Consultar candidatos con bloqueo pesimista
         available_records = (
             db.query(PortAllocation)
@@ -37,6 +44,10 @@ class PortService:
         )
 
         for port_record in available_records:
+            # Si el puerto ya está asociado a una instancia existente, omitirlo
+            if port_record.port_number in assigned_in_instances:
+                continue
+
             # Comprobar que realmente esté libre en el host para evitar colisiones
             if PortService._is_port_free_on_host(port_record.port_number):
                 port_record.is_allocated = True
@@ -51,7 +62,11 @@ class PortService:
         # 2. Si no había registros inicializados o ninguno estaba libre físicamente
         existing_ports = {p.port_number for p in db.query(PortAllocation.port_number).all()}
         for candidate in range(settings.PORT_RANGE_START, settings.PORT_RANGE_END + 1):
-            if candidate not in existing_ports and PortService._is_port_free_on_host(candidate):
+            if (
+                candidate not in existing_ports
+                and candidate not in assigned_in_instances
+                and PortService._is_port_free_on_host(candidate)
+            ):
                 new_port = PortAllocation(
                     port_number=candidate,
                     is_allocated=True,
