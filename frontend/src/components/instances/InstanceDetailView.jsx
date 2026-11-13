@@ -17,6 +17,7 @@ import {
   Layers,
 } from 'lucide-react';
 
+import SiteManagementPanel from './SiteManagementPanel';
 import SiteToolsPanel from './SiteToolsPanel';
 import StatusBadge from '../ui/StatusBadge';
 import CopyButton from '../ui/CopyButton';
@@ -37,6 +38,7 @@ import InstanceMetricsCard from './InstanceMetricsCard';
  */
 export default function InstanceDetailView({
   instance,
+  section = 'all',
   actionLoading = null,
   onBack,
   onAction,
@@ -47,6 +49,8 @@ export default function InstanceDetailView({
   onChanged,
 }) {
   if (!instance) return null;
+
+  const sectionLabel = { overview: 'Resumen del sitio', settings: 'Configuración y respaldo', files: 'Archivos', activity: 'Actividad', releases: 'Publicaciones y disponibilidad', server: 'Servidor y rendimiento', danger: 'Eliminar proyecto' }[section];
 
   const isRunning = instance.status === 'running';
 
@@ -86,17 +90,17 @@ export default function InstanceDetailView({
           <button
             type="button"
             onClick={onBack}
-            className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-navy-900 bg-white hover:bg-slate-50 border border-slate-200 transition duration-150 btn-tactile cursor-pointer"
+            className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-700 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 shadow-sm transition duration-150 btn-tactile cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-slate-400 group-hover:text-navy-900 group-hover:-translate-x-0.5 transition-transform duration-150" />
             <span>Volver a proyectos</span>
           </button>
 
           <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400 font-medium">
-            <span>Workspace</span>
+            <span>Mis sitios</span>
             <span>/</span>
             <span className="text-slate-600 font-semibold truncate max-w-[200px]">
-              {instance.name}
+              {sectionLabel || instance.name}
             </span>
           </div>
         </div>
@@ -150,9 +154,12 @@ export default function InstanceDetailView({
         </div>
       </header>
 
+      {['all', 'settings', 'files', 'activity'].includes(section) && <SiteManagementPanel key={`${instance.id}-${section}`} instance={instance} onChanged={onChanged} section={section === 'all' ? undefined : section} />}
+
       {/* =====================================================
           2. PANEL DE ENLACES Y CONECTIVIDAD
       ====================================================== */}
+      {['all', 'overview'].includes(section) && (
       <section className="bg-white border border-[#dfe7e4] rounded-[20px] p-6 sm:p-7 shadow-[0_8px_28px_rgba(23,40,56,0.035)]">
         <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-5">
           <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
@@ -241,10 +248,12 @@ export default function InstanceDetailView({
           </div>
         </div>
       </section>
+      )}
 
       {/* =====================================================
           3. BARRA DE CONTROL OPERATIVO (ACCIONES PRIMARIAS)
       ====================================================== */}
+      {['all', 'overview', 'server'].includes(section) && (
       <section className="bg-white border border-[#dfe7e4] rounded-[20px] p-6 sm:p-7 shadow-[0_8px_28px_rgba(23,40,56,0.035)]">
         <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-5">
           <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
@@ -342,12 +351,16 @@ export default function InstanceDetailView({
           />
         </div>
       </section>
+      )}
 
-      <SiteToolsPanel key={instance.id} instance={instance} onChanged={onChanged} />
+      {section === 'overview' && <SiteToolsPanel key={`insights-${instance.id}`} instance={instance} insightsOnly />}
+
+      {['all', 'releases'].includes(section) && <SiteToolsPanel key={instance.id} instance={instance} onChanged={onChanged} />}
 
       {/* =====================================================
           5. ZONA DE PELIGRO / ACCIÓN DESTRUCTIVA
       ====================================================== */}
+      {['all', 'danger'].includes(section) && (
       <section className="bg-red-50/50 border border-red-200 rounded-[20px] p-6 sm:p-7">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-start gap-3.5">
@@ -380,6 +393,7 @@ export default function InstanceDetailView({
           </div>
         </div>
       </section>
+      )}
 
     </div>
   );

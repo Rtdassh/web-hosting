@@ -9,6 +9,8 @@ from typing import List
 
 from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse, StreamingResponse
+from app.schemas.site_management_schema import SiteRenameRequest, SiteFilesResponse, SiteActivityResponse
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -199,3 +201,54 @@ def list_site_health(current_user: User = Depends(get_current_user), db: Session
     from app.services.site_monitor_service import site_monitor_service
     return [{"id": instance.id, "name": instance.name, "monitor": site_monitor_service.report(instance)}
             for instance in instance_service.list_instances(current_user, db)]
+
+
+@router.patch("/{instance_id}", response_model=InstanceResponse)
+def rename_site(instance_id: int, data: SiteRenameRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Instance:
+    from app.services.site_management_service import site_management_service
+    return site_management_service.rename(instance_id, data.name, current_user, db)
+
+
+@router.get("/{instance_id}/files", response_model=SiteFilesResponse)
+def list_site_files(instance_id: int, path: str = Query(default='', max_length=1024), offset: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=100), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+    from app.services.site_release_service import site_release_service
+    from app.services.site_management_service import site_management_service
+    instance = site_release_service.owned(instance_id, current_user, db, lock=True)
+    return site_management_service.files(instance, path, offset, limit)
+
+
+@router.get("/{instance_id}/files/download", response_class=FileResponse)
+def download_site_file(instance_id: int, path: str = Query(min_length=1, max_length=1024), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> FileResponse:
+    from fastapi import HTTPException
+    from app.services.site_release_service import site_release_service
+    from app.services.site_management_service import site_management_service
+    instance = site_release_service.owned(instance_id, current_user, db, lock=True)
+    target = site_management_service.resolve(site_management_service.root(instance), path)
+    if not target.is_file():
+        raise HTTPException(400, 'Selecciona un archivo para descargar.')
+    return FileResponse(target, filename=target.name, media_type='application/octet-stream')
+
+
+@router.get("/{instance_id}/backup", response_class=StreamingResponse)
+def download_site_backup(instance_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> StreamingResponse:
+    from app.services.site_release_service import site_release_service
+    from app.services.site_management_service import site_management_service
+    instance = site_release_service.owned(instance_id, current_user, db, lock=True)
+    filename = f'sitio-{instance.id}.zip'
+    archive = site_management_service.backup(instance)
+    db.rollback()  # The archive is now independent of live storage; release the row lock.
+    def chunks():
+        try:
+            while chunk := archive.read(65536):
+                yield chunk
+        finally:
+            archive.close()
+    return StreamingResponse(chunks(), media_type='application/zip', headers={'Content-Disposition': f'attachment; filename="{filename}"'})
+
+
+@router.get("/{instance_id}/activity", response_model=list[SiteActivityResponse])
+def get_site_activity(instance_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> list[InstanceStatusHistory]:
+    from app.services.site_release_service import site_release_service
+    from app.services.site_management_service import site_management_service
+    instance = site_release_service.owned(instance_id, current_user, db)
+    return site_management_service.activity(instance, db)

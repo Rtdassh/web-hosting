@@ -1,16 +1,16 @@
+import ModalLayer from '../ui/ModalLayer';
 import React, { useState } from 'react';
 import {
   LogOut,
   X,
   AlertCircle,
   ChevronDown,
-  Server,
 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 import codropIsotipo from '../../assets/codrop-isotipo.png';
 
-export default function Navbar({ onLogout }) {
+export default function Navbar({ onLogout, onProfile }) {
   const { user, logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -29,18 +29,6 @@ export default function Navbar({ onLogout }) {
     }
     return 'C';
   };
-
-  /* =========================================================
-     INDICADOR PERMANENTE DE CUOTA (PLAN VIGENTE)
-  ========================================================= */
-  const activeInstances = user?.plan?.active_instances ?? 0;
-  const maxInstances = user?.plan?.max_instances ?? 0;
-  const availableSlots = user?.plan?.available_slots ?? 0;
-  const quotaPercentage =
-    maxInstances > 0
-      ? Math.min(100, Math.round((activeInstances / maxInstances) * 100))
-      : 0;
-  const isQuotaFull = maxInstances > 0 && activeInstances >= maxInstances;
 
   return (
     <>
@@ -71,62 +59,6 @@ export default function Navbar({ onLogout }) {
           {/* Acciones de Usuario y Cuota */}
           <div className="flex items-center gap-3">
 
-            {/* Widget Permanente de Cuota de Instancias */}
-            {user?.plan && (
-              <div className="hidden lg:block">
-                <div className="min-w-[205px] rounded-[12px] border border-[#e2e8f0] bg-[#fbfdfc] px-3.5 py-2">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`flex h-7 w-7 items-center justify-center rounded-[8px] border ${
-                          isQuotaFull
-                            ? 'border-amber-200 bg-amber-50 text-amber-600'
-                            : 'border-brand-100 bg-brand-50 text-brand-600'
-                        }`}
-                      >
-                        <Server className="h-3.5 w-3.5" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#94a3b8]">
-                          Cuota {user.plan.name || 'Free'}
-                        </p>
-                        <p className="text-[12px] font-bold text-navy-900">
-                          {activeInstances}{' '}
-                          <span className="text-[#94a3b8]">/</span>{' '}
-                          {maxInstances}{' '}
-                          <span className="text-[11px] font-normal text-[#64748b]">
-                            sitios
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          isQuotaFull
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-brand-50 text-brand-700'
-                        }`}
-                      >
-                        {isQuotaFull
-                          ? 'Límite alcanzado'
-                          : `${availableSlots} libre${availableSlots === 1 ? '' : 's'}`}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Barra de Progreso */}
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#edf2f0]">
-                    <div
-                      className={`h-full transition-all duration-300 ${
-                        isQuotaFull ? 'bg-amber-500' : 'bg-brand-500'
-                      }`}
-                      style={{ width: `${quotaPercentage}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Identidad del Usuario */}
             {user && (
               <div className="hidden md:block text-right">
@@ -142,9 +74,9 @@ export default function Navbar({ onLogout }) {
             {/* Botón de Perfil / Logout */}
             <button
               type="button"
-              onClick={() => setShowLogoutModal(true)}
+              onClick={() => onProfile ? onProfile() : setShowLogoutModal(true)}
               className="group h-[42px] pl-2 pr-3 rounded-[12px] border border-[#e2e8f0] bg-white hover:bg-[#f8fbfa] flex items-center gap-2.5 transition duration-150 btn-tactile cursor-pointer"
-              aria-label="Menú de usuario"
+              aria-label="Abrir perfil y ajustes"
             >
               <div className="w-8 h-8 rounded-[9px] bg-brand-50 border border-brand-100 flex items-center justify-center text-[12px] font-bold text-brand-700">
                 {getInitial()}
@@ -160,9 +92,9 @@ export default function Navbar({ onLogout }) {
           MODAL DE CONFIRMACIÓN DE LOGOUT (ACCESIBLE)
       ====================================================== */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <ModalLayer className="px-4" onClose={() => setShowLogoutModal(false)}>
           <div
-            className="absolute inset-0 bg-navy-900/40 backdrop-blur-[3px] modal-backdrop-animate"
+            className="absolute inset-0 bg-transparent modal-backdrop-animate"
             onClick={() => setShowLogoutModal(false)}
           />
 
@@ -215,7 +147,7 @@ export default function Navbar({ onLogout }) {
               </button>
             </div>
           </div>
-        </div>
+        </ModalLayer>
       )}
     </>
   );

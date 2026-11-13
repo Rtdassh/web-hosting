@@ -77,8 +77,8 @@ describe('Master-Detail Pattern & Progressive Disclosure (Projects View)', () =>
         );
       });
 
-      expect(screen.getByText('portfolio-dan')).toBeInTheDocument();
-      expect(screen.getByText('landing-promo')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /portfolio-dan/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /landing-promo/i })).toBeInTheDocument();
 
       // Estados discretos
       expect(screen.getByText('Running')).toBeInTheDocument();
@@ -128,7 +128,14 @@ describe('Master-Detail Pattern & Progressive Disclosure (Projects View)', () =>
 
       // Debe haber navegado al detalle
       expect(screen.getByRole('button', { name: /volver a proyectos/i })).toBeInTheDocument();
+      expect(screen.getByText('Enlaces y Conectividad')).toBeInTheDocument();
       expect(screen.getByText('Gestión del Proyecto')).toBeInTheDocument();
+      expect(screen.getByText('Disponibilidad y tráfico')).toBeInTheDocument();
+      expect(screen.queryByText('Zona de Peligro')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Servidor y rendimiento' }));
+      expect(screen.getByText('Gestión del Proyecto')).toBeInTheDocument();
+      expect(screen.queryByText('Enlaces y Conectividad')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Eliminar proyecto' }));
       expect(screen.getByText('Zona de Peligro')).toBeInTheDocument();
     });
 
@@ -150,6 +157,25 @@ describe('Master-Detail Pattern & Progressive Disclosure (Projects View)', () =>
       expect(screen.queryByRole('button', { name: /volver a proyectos/i })).not.toBeInTheDocument();
       expect(screen.getByText('Mis proyectos')).toBeInTheDocument();
     });
+  });
+
+  it('cambia de sitio sin mezclar las secciones y conserva navegación de cuenta', async () => {
+    const navigate = vi.fn();
+    render(<DashboardPage onNavigateAccount={navigate} onDeployClick={vi.fn()} />);
+    await screen.findByRole('button', { name: /portfolio-dan/i });
+    expect(screen.queryByLabelText('Administrar sitio')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /portfolio-dan/i }));
+    expect(screen.getByRole('heading', { level: 1, name: 'portfolio-dan' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar proyecto' }));
+    expect(screen.getByText('Zona de Peligro')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Administrar sitio'), { target: { value: 'inst-2' } });
+    expect(screen.getByRole('heading', { level: 1, name: 'landing-promo' })).toBeInTheDocument();
+    expect(screen.queryByText('Zona de Peligro')).not.toBeInTheDocument();
+    expect(screen.getByText('Enlaces y Conectividad')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Planes y suscripción' }));
+    expect(navigate).toHaveBeenCalledWith('pricing');
+    fireEvent.change(screen.getByLabelText('Administrar sitio'), { target: { value: '' } });
+    expect(screen.getByText('Mis proyectos')).toBeInTheDocument();
   });
 
   describe('2. Nueva Vista de Detalle (InstanceDetailView)', () => {

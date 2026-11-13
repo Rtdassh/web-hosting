@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '../services/apiErrors';
 import React, { useState } from 'react';
 import {
   AlertCircle,
@@ -45,8 +46,7 @@ export default function Login({
       await login(email, password);
     } catch (err) {
       setError(
-        err.response?.data?.detail ||
-        'No fue posible iniciar sesión.'
+        getApiErrorMessage(err, 'No fue posible iniciar sesión.')
       );
     } finally {
       setLoading(false);

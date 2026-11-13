@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Globe, Sparkles, FileText, ShieldCheck } from 'lucide-react';
 
 import Navbar from './components/layout/Navbar';
+import ProfilePage from './pages/ProfilePage';
+import AccountQuota from './components/layout/AccountQuota';
+import AccountNavigation from './components/layout/AccountNavigation';
 import DashboardPage from './pages/DashboardPage';
 import SiteHealthNotifications from './components/instances/SiteHealthNotifications';
 import DeployModal from './components/instances/DeployModal';
@@ -22,6 +24,7 @@ import ErrorBoundary from './components/system/ErrorBoundary';
 
 function AuthenticatedApp({ onLogout }) {
   const { user } = useAuth();
+  const [sidebarTarget, setSidebarTarget] = useState(null);
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'pricing' | 'billing' | 'admin'
   const [isDeployOpen, setIsDeployOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -35,79 +38,34 @@ function AuthenticatedApp({ onLogout }) {
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-brand-500 selection:text-white">
       <SiteHealthNotifications />
-      <Navbar onLogout={onLogout} />
+      <Navbar onLogout={onLogout} onProfile={() => setCurrentView('profile')} />
 
-      {/* Sub-navbar de Navegación por Módulos */}
-      <div className="bg-white border-b border-[#e2e8f0] px-6 lg:px-12 py-2 flex items-center justify-between text-xs">
-        <div className="flex items-center space-x-1 sm:space-x-4">
-          <button
-            type="button"
-            onClick={() => setCurrentView('dashboard')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${
-              currentView === 'dashboard'
-                ? 'bg-brand-50 text-brand-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            Mis Sitios
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentView('pricing')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${
-              currentView === 'pricing'
-                ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Planes & Suscripciones
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentView('billing')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${
-              currentView === 'billing'
-                ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            Facturación & Recibos
-          </button>
-          {user?.role === 'admin' && (
-            <button
-              type="button"
-              onClick={() => setCurrentView('admin')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition duration-150 btn-tactile cursor-pointer ${
-                currentView === 'admin'
-                  ? 'bg-amber-50 text-amber-700 shadow-sm'
-                  : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50/50'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Consola Admin
-            </button>
-          )}
-        </div>
-        <div className="hidden sm:block text-[11px] font-mono text-slate-400">
-          Plan Activo: <strong className="text-slate-700">{user?.plan?.name || 'Free'}</strong>
-        </div>
-      </div>
-
-      <div className="flex-1">
-        <div key={currentView} className="view-enter">
+      <div className="flex-1 bg-[#f5f9f7]">
+        <div className="mx-auto flex max-w-[1380px] flex-col lg:flex-row">
+          <aside className="w-full shrink-0 px-5 pt-6 lg:w-[260px] lg:px-6 lg:py-8">
+            <div className="space-y-5 lg:sticky lg:top-[98px] lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
+              <AccountNavigation currentView={currentView} onNavigate={setCurrentView} role={user?.role} />
+              <AccountQuota user={user} />
+              <div ref={setSidebarTarget} />
+            </div>
+          </aside>
+        <div key={currentView} className="view-enter min-w-0 flex-1">
           {currentView === 'dashboard' && (
             <DashboardPage
               onDeployClick={() => {
                 if (deployment?.status !== 'creating') setIsDeployOpen(true);
               }}
+              onNavigateAccount={setCurrentView}
+              accountRole={user?.role}
+              sidebarTarget={sidebarTarget}
+              embedded
               refreshKey={refreshKey}
               deployment={deployment}
               onDismissDeployment={() => setDeployment(null)}
             />
           )}
+
+          {currentView === 'profile' && <ProfilePage onLogout={onLogout} />}
 
           {currentView === 'pricing' && (
             <PricingPage
@@ -130,6 +88,8 @@ function AuthenticatedApp({ onLogout }) {
             />
           )}
         </div>
+      </div>
+
       </div>
 
       <DeployModal

@@ -1,3 +1,6 @@
+import ModalLayer from '../components/ui/ModalLayer';
+import { getApiErrorMessage } from '../services/apiErrors';
+import { createPortal } from 'react-dom';
 import React, { useEffect, useState } from 'react';
 import {
   ExternalLink,
@@ -35,6 +38,7 @@ import { instanceService } from '../services/api';
 
 import InstanceLogsModal from '../components/instances/InstanceLogsModal';
 import InstanceMetricsCard from '../components/instances/InstanceMetricsCard';
+import AccountNavigation from '../components/layout/AccountNavigation';
 import InstanceDetailView from '../components/instances/InstanceDetailView';
 import SystemStatusModal from '../components/system/SystemStatusModal';
 import { toast } from '../components/ui/Toast';
@@ -48,6 +52,10 @@ import ServerMascot, { mascotDestroying } from '../components/mascot/ServerMasco
 
 export default function DashboardPage({
   onDeployClick,
+  onNavigateAccount,
+  accountRole,
+  sidebarTarget,
+  embedded = false,
   refreshKey,
   deployment,
   onDismissDeployment,
@@ -58,16 +66,16 @@ export default function DashboardPage({
   const [actionLoading, setActionLoading] = useState({});
   const [selectedLogInstance, setSelectedLogInstance] = useState(null);
   const [destroyConfirmInstance, setDestroyConfirmInstance] = useState(null);
-  const [activeNav, setActiveNav] = useState('dashboard');
   const [isSystemModalOpen, setIsSystemModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInstanceId, setSelectedInstanceId] = useState(null);
+  const [siteSection, setSiteSection] = useState('overview');
+  useEffect(() => { setSiteSection('overview'); }, [selectedInstanceId]);
 
   useEffect(() => {
     if (deployment?.status === 'creating') {
       setSelectedInstanceId(null);
-      setActiveNav('instances');
       setStatusFilter('all');
       setSearchQuery('');
     }
@@ -98,8 +106,7 @@ export default function DashboardPage({
       console.error('Error al cargar instancias:', err);
 
       setError(
-        err.response?.data?.detail ||
-        'No fue posible cargar tus sitios.'
+        getApiErrorMessage(err, 'No fue posible cargar tus sitios.')
       );
     } finally {
       setLoading(false);
@@ -132,7 +139,7 @@ export default function DashboardPage({
       };
       toast.success(`Proyecto ${labels[action] || 'actualizado'} correctamente.`);
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Error al ejecutar acción';
+      const msg = getApiErrorMessage(err, 'Error al ejecutar acción');
       toast.error(`Error al ejecutar acción: ${msg}`);
     } finally {
       setActionLoading((prev) => ({
@@ -154,7 +161,7 @@ export default function DashboardPage({
       await fetchInstances();
       toast.success('Estado del proyecto actualizado.');
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Error al sincronizar';
+      const msg = getApiErrorMessage(err, 'Error al sincronizar');
       toast.error(`Error al sincronizar estado: ${msg}`);
     } finally {
       setActionLoading((prev) => ({
@@ -183,7 +190,7 @@ export default function DashboardPage({
       await fetchInstances();
       toast.success(`Proyecto ${targetName ? `"${targetName}"` : ''} eliminado definitivamente.`);
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Error al eliminar';
+      const msg = getApiErrorMessage(err, 'Error al eliminar');
       toast.error(`No se pudo eliminar el proyecto: ${msg}`);
     } finally {
       setActionLoading((prev) => ({
@@ -237,206 +244,35 @@ export default function DashboardPage({
      RENDER
   ========================================================= */
 
+  const siteNavigation = (
+        <div className="space-y-5">
+          <div className="space-y-6 pb-3">
+            {selectedInstance && <div className="border-t border-[#dfe7e4] pt-5">
+              <label htmlFor="managed-site" className="mb-2 block px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Administrar sitio</label>
+              <select id="managed-site" value={selectedInstanceId ?? ''} onChange={(event) => setSelectedInstanceId(instances.find((site) => String(site.id) === event.target.value)?.id ?? null)} className="h-11 w-full rounded-xl border border-[#d6dfdb] bg-white px-3 text-xs font-semibold text-navy-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10">
+                <option value="">Todos mis proyectos</option>
+                {instances.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+              </select>
+              {selectedInstance && <nav aria-label={`Administración de ${selectedInstance.name}`} className="mt-3 grid grid-cols-2 gap-1 lg:grid-cols-1">
+                {[['overview', 'Resumen del sitio'], ['settings', 'Configuración y respaldo'], ['files', 'Archivos'], ['activity', 'Actividad'], ['releases', 'Publicaciones y disponibilidad'], ['server', 'Servidor y rendimiento'], ['danger', 'Eliminar proyecto']].map(([id, label]) => <button key={id} type="button" onClick={() => setSiteSection(id)} aria-current={siteSection === id ? 'page' : undefined} className={`min-h-10 rounded-[10px] border px-3 py-2 text-left text-xs font-semibold transition btn-tactile focus-visible:ring-2 focus-visible:ring-brand-500 ${id === 'danger' ? (siteSection === id ? 'border-red-300 bg-red-50 text-red-800' : 'border-red-200 text-red-700 hover:bg-red-50') : siteSection === id ? 'border-brand-100 bg-brand-50 text-brand-700' : 'border-transparent text-slate-500 hover:bg-white hover:text-navy-900'}`}>{label}</button>)}
+              </nav>}
+            </div>}
+            <button type="button" onClick={() => setIsSystemModalOpen(true)} className="flex w-full items-center gap-3 rounded-xl border border-[#dfe7e4] bg-white p-3 text-left text-xs font-semibold text-slate-600 hover:border-brand-200"><Activity className="h-4 w-4 text-brand-600" />Estado de la plataforma</button>
+          </div>
+        </div>
+
+  );
+
   return (
-    <main className="flex-1 bg-[#f5f9f7] relative overflow-hidden">
+    <main className="min-w-0 flex-1 relative">
 
-      {/* Fondo sutil */}
-      <div className="absolute inset-0 pointer-events-none">
-
-        <div className="absolute top-[40px] right-[-120px] w-[360px] h-[360px] rounded-full bg-brand-100/30 blur-[110px]" />
-
-        <div className="absolute bottom-[-140px] left-[20%] w-[420px] h-[420px] rounded-full bg-brand-50 blur-[120px]" />
-
-      </div>
-
-
-      <div className="relative z-10 max-w-[1380px] mx-auto flex">
+      <div className="relative z-10 max-w-[1380px] mx-auto flex flex-col lg:flex-row">
 
 
         {/* =====================================================
             SIDEBAR
         ====================================================== */}
-        <aside className="hidden lg:block w-[235px] flex-shrink-0 px-6 py-8">
-
-          <div className="sticky top-[106px]">
-
-            <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#94a3b8]">
-              Workspace
-            </p>
-
-
-            <nav className="mt-3 space-y-1.5">
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedInstanceId(null);
-                  setActiveNav('dashboard');
-                  setStatusFilter('all');
-                  setSearchQuery('');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${activeNav === 'dashboard'
-                    ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
-                    : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
-                  }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
-              </button>
-
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveNav('deployments');
-                  onDeployClick();
-                }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${activeNav === 'deployments'
-                    ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
-                    : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
-                  }`}
-              >
-                <Rocket className="w-4 h-4" />
-                Despliegues
-                <span className="ml-auto text-[10px] font-mono bg-brand-50 text-brand-700 border border-brand-200 px-1.5 py-0.5 rounded font-bold">
-                  +ZIP
-                </span>
-              </button>
-
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedInstanceId(null);
-                  setActiveNav('instances');
-                  document.getElementById('projects-section')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-3 text-[13px] font-semibold transition duration-150 btn-tactile text-left cursor-pointer ${activeNav === 'instances'
-                    ? 'bg-brand-50 border border-brand-100 text-brand-700 shadow-[0_4px_14px_rgba(40,181,134,0.05)]'
-                    : 'text-[#64748b] hover:bg-white hover:text-navy-900 border border-transparent'
-                  }`}
-              >
-                <Server className="w-4 h-4" />
-                Proyectos
-                {instances.length > 0 && (
-                  <span className="ml-auto text-[10px] text-slate-600 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                    {instances.length}
-                  </span>
-                )}
-              </button>
-
-            </nav>
-
-
-            {/* Plataforma */}
-            <div className="mt-8 pt-6 border-t border-[#dfe7e4]">
-
-              <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#94a3b8]">
-                Plataforma
-              </p>
-
-
-              <button
-                type="button"
-                onClick={() => setIsSystemModalOpen(true)}
-                className="mt-4 w-full p-3 rounded-[13px] bg-white hover:bg-brand-50/40 border border-[#e2e8f0] hover:border-brand-200 shadow-[0_5px_20px_rgba(23,40,56,0.025)] transition duration-150 btn-tactile group text-left cursor-pointer"
-              >
-
-                <div className="flex items-center gap-3">
-
-                  <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 group-hover:scale-105 transition-transform duration-150">
-                    <Activity className="w-4 h-4" />
-                  </div>
-
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] font-semibold text-navy-900">
-                        Sistema
-                      </p>
-                      <span className="text-[9px] font-mono text-slate-400 group-hover:text-brand-600 font-medium">Ver &rarr;</span>
-                    </div>
-
-                    <div className="mt-0.5 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-
-                      <p className="text-[10px] text-brand-700 font-medium">
-                        Operativo
-                      </p>
-                    </div>
-                  </div>
-
-                </div>
-
-              </button>
-
-            </div>
-
-
-            {/* Codrop flow */}
-            <div className="mt-5 p-4 rounded-[15px] border border-brand-100 bg-gradient-to-br from-white to-brand-50/70 relative overflow-hidden">
-
-              <div className="absolute -right-5 -bottom-4 opacity-[0.08]">
-                <img
-                  src={codropIsotipo}
-                  alt=""
-                  aria-hidden="true"
-                  className="w-[110px]"
-                />
-              </div>
-
-
-              <div className="relative z-10">
-
-                <div className="flex items-center gap-2">
-
-                  <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-
-                  <p className="text-[9px] uppercase tracking-[0.14em] font-bold text-brand-700">
-                    Codrop flow
-                  </p>
-
-                </div>
-
-
-                <div className="mt-4 space-y-2.5">
-
-                  <FlowItem
-                    icon={FileArchive}
-                    label=".zip"
-                  />
-
-                  <div className="ml-[13px] h-3 border-l border-dashed border-brand-200" />
-
-                  <FlowItem
-                    icon={Rocket}
-                    label="Deploy"
-                  />
-
-                  <div className="ml-[13px] h-3 border-l border-dashed border-brand-200" />
-
-                  <FlowItem
-                    icon={Link2}
-                    label="URL pública"
-                  />
-
-                </div>
-
-
-                <p className="mt-4 text-[9px] leading-4 text-[#789087]">
-                  De tu código a la web, sin complicaciones.
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </aside>
-
-
+        {sidebarTarget ? createPortal(siteNavigation, sidebarTarget) : !embedded && <aside className="w-full shrink-0 px-5 pt-6 lg:w-[260px] lg:px-6 lg:py-8"><AccountNavigation role={accountRole} onNavigate={onNavigateAccount} />{siteNavigation}</aside>}
         {/* =====================================================
             CONTENT
         ====================================================== */}
@@ -444,6 +280,7 @@ export default function DashboardPage({
 
           {selectedInstance ? (
             <InstanceDetailView
+              section={siteSection}
               instance={selectedInstance}
               onChanged={fetchInstances}
               actionLoading={actionLoading[selectedInstance.id]}
@@ -834,7 +671,7 @@ export default function DashboardPage({
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}
-                      className="group px-5 sm:px-6 py-4 hover:bg-[#fbfdfc] transition-colors duration-150 relative cursor-pointer btn-tactile focus:outline-none focus:bg-brand-50/20 select-none"
+                      className={`group px-5 sm:px-6 ${localStorage.getItem('codrop_compact_projects') === 'true' ? 'py-2' : 'py-4'} hover:bg-[#fbfdfc] transition-colors duration-150 relative cursor-pointer btn-tactile focus:outline-none focus:bg-brand-50/20 select-none`}
                     >
 
                       <div className="absolute inset-y-3 left-0 w-[2.5px] rounded-r-full bg-transparent group-hover:bg-brand-500 transition-colors duration-150" />
@@ -945,10 +782,10 @@ export default function DashboardPage({
       ====================================================== */}
       {destroyConfirmInstance && (
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <ModalLayer className="p-4">
 
           <div
-            className="absolute inset-0 bg-navy-900/50 backdrop-blur-[3px] modal-backdrop-animate"
+            className="absolute inset-0 bg-transparent modal-backdrop-animate"
             onClick={() => setDestroyConfirmInstance(null)}
           />
 
@@ -1033,7 +870,7 @@ export default function DashboardPage({
 
           </div>
 
-        </div>
+        </ModalLayer>
       )}
 
       {/* Modal de Telemetría e Infraestructura de Sistema */}
@@ -1150,29 +987,5 @@ function EnhancedStatCard({
       </div>
 
     </article>
-  );
-}
-
-
-/* =========================================================
-   FLOW ITEM
-========================================================= */
-
-function FlowItem({
-  icon: Icon,
-  label,
-}) {
-  return (
-    <div className="flex items-center gap-2.5">
-
-      <div className="w-7 h-7 rounded-[8px] bg-white border border-brand-100 flex items-center justify-center">
-        <Icon className="w-3.5 h-3.5 text-brand-600" />
-      </div>
-
-      <span className="text-[10px] font-semibold text-navy-900">
-        {label}
-      </span>
-
-    </div>
   );
 }

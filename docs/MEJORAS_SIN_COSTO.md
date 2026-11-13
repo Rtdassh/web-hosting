@@ -2,6 +2,18 @@
 
 ## Funciones incluidas
 
+### Administración para el propietario
+
+En el detalle del sitio, **Administración del sitio** reúne tres secciones con el mismo diseño del dashboard:
+
+- **Configuración:** cambiar el nombre del proyecto y descargar un ZIP de la publicación activa. Cambiar el nombre conserva la URL, el puerto y los archivos; el título HTML se actualiza publicando una nueva versión del sitio.
+- **Archivos:** explorar carpetas, consultar tamaños y descargar archivos individuales como adjuntos. Es un explorador de lectura; las modificaciones de contenido se publican mediante ZIP para conservar el versionado.
+- **Actividad:** últimos 50 eventos registrados, incluidos nuevos cambios de nombre, publicaciones, rollback, inicio, parada y reinicio. No reconstruye acciones antiguas que no se registraron.
+
+El almacenamiento mostrado corresponde a archivos de la publicación activa, sin sumar versiones privadas. El respaldo no incluye la base de datos de Codrop, sesiones, credenciales de la plataforma ni historial de versiones. El cliente puede volver a publicar ese ZIP si cumple los límites de carga.
+
+Las rutas requieren JWT y propiedad del sitio (o rol administrador). La exportación rechaza enlaces simbólicos y rutas que escapen del document root. Se inspeccionan hasta SITE_FILE_SCAN_LIMIT=10000 archivos/carpetas y SITE_EXPORT_MAX_MB=100 MB; ambos son configurables por entorno. Los listados se paginan y las descargas tienen límite de peticiones. No requiere cambios de esquema ni servicios externos.
+
 El detalle de cada proyecto permite publicar un ZIP y restaurar una versión anterior, conservando puerto y URL. Se validan autorización, suscripción y ZIP antes de detener el original. Se comprueba HTTP del candidato y se conserva el contenedor anterior hasta confirmar PostgreSQL. Puede haber unos segundos de indisponibilidad. Un journal privado permite al worker recuperar un proceso interrumpido. No cambia el esquema de base de datos.
 
 Versiones y monitor: `HOSTING_STORAGE_PATH/.site-data/<id>/`, fuera de los document roots. Nunca servir HOSTING_STORAGE_PATH directamente. RELEASES_RETAINED=5 conserva la activa y hasta cuatro adicionales. Se mantienen límites de 25 MB comprimido y 100 MB descomprimido. Durante una carga puede haber una versión adicional y se conserva el directorio legado para recuperación. Reservar espacio: no es backup externo ni protección ante pérdida del host. Eliminar la instancia limpia esos datos.

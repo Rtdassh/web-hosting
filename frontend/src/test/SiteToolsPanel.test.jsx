@@ -17,6 +17,15 @@ beforeEach(() => {
 });
 
 describe('Publicaciones de sitios', () => {
+  it('muestra tráfico en el resumen sin consultar versiones ni ofrecer publicaciones', async () => {
+    instanceService.getInsights.mockResolvedValue({ monitor: { stale: true, samples: 0 }, traffic: { available: true, requests: 42, response_body_bytes: 1024, errors: 2 } });
+    render(<SiteToolsPanel instance={instance} insightsOnly />);
+    await screen.findByText('42');
+    expect(instanceService.getVersions).not.toHaveBeenCalled();
+    expect(screen.getByText('2 errores HTTP')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publicar actualización' })).not.toBeInTheDocument();
+  });
+
   it('publica el ZIP y solicita refrescar el estado', async () => {
     const changed = vi.fn();
     instanceService.publishVersion.mockResolvedValue([]);

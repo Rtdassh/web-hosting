@@ -1,3 +1,4 @@
+import { getApiErrorMessage, getNewPasswordError } from '../services/apiErrors';
 import React, { useState } from 'react';
 import {
   AlertCircle,
@@ -40,8 +41,9 @@ export default function Register({
       return;
     }
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
+    const passwordError = getNewPasswordError(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -69,8 +71,7 @@ export default function Register({
       }
     } catch (err) {
       setError(
-        err.response?.data?.detail ||
-        'No fue posible crear la cuenta.'
+        getApiErrorMessage(err, 'No fue posible crear la cuenta.')
       );
     } finally {
       setLoading(false);

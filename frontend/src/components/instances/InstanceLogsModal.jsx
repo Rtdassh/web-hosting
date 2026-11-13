@@ -1,3 +1,4 @@
+import ModalLayer from '../ui/ModalLayer';
 import React, {
   useEffect,
   useRef,
@@ -17,6 +18,7 @@ import {
   Activity,
 } from 'lucide-react';
 
+import { getApiErrorMessage } from '../../services/apiErrors';
 import { instanceService } from '../../services/api';
 
 
@@ -55,8 +57,7 @@ export default function InstanceLogsModal({
       console.error('Error al obtener logs:', err);
 
       setError(
-        err.response?.data?.detail ||
-        'No se pudieron recuperar los registros de actividad.'
+        getApiErrorMessage(err, 'No se pudieron recuperar los registros de actividad.')
       );
     } finally {
       setLoading(false);
@@ -136,23 +137,23 @@ export default function InstanceLogsModal({
   ========================================================= */
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <ModalLayer className="p-4" onClose={onClose}>
 
       {/* Fondo */}
       <div
-        className="absolute inset-0 bg-navy-900/60 backdrop-blur-[4px] modal-backdrop-animate"
+        className="absolute inset-0 bg-transparent modal-backdrop-animate"
         onClick={onClose}
       />
 
 
       {/* Modal */}
-      <div className="relative w-full max-w-[980px] h-[650px] max-h-[88vh] rounded-[22px] border border-[#263d49] bg-[#101d27] shadow-[0_35px_100px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col modal-dialog-animate">
+      <div className="relative w-full max-w-[980px] h-[650px] max-h-[88vh] rounded-[22px] border border-[#dfe7e4] bg-white shadow-[0_20px_60px_rgba(23,40,56,0.18)] overflow-hidden flex flex-col modal-dialog-animate">
 
 
         {/* =====================================================
             HEADER
         ====================================================== */}
-        <div className="px-5 sm:px-6 py-4 bg-[#172838] border-b border-white/10 flex items-center justify-between gap-4">
+        <div className="px-5 sm:px-6 py-4 bg-white border-b border-[#e1ebe6] flex items-center justify-between gap-4">
 
 
           <div className="flex items-center gap-3 min-w-0">
@@ -168,7 +169,7 @@ export default function InstanceLogsModal({
 
               <div className="flex items-center gap-2 flex-wrap">
 
-                <h3 className="text-[13px] sm:text-[14px] font-semibold text-white truncate">
+                <h3 className="text-[13px] sm:text-[14px] font-bold text-navy-900 truncate">
                   Registros de actividad · {instance?.name}
                 </h3>
 
@@ -231,7 +232,7 @@ export default function InstanceLogsModal({
               type="button"
               onClick={onClose}
               aria-label="Cerrar"
-              className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#78909c] hover:text-white hover:bg-white/10 transition duration-150 btn-tactile cursor-pointer"
+              className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[#78909c] hover:text-navy-900 hover:bg-white/10 transition duration-150 btn-tactile cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -244,11 +245,11 @@ export default function InstanceLogsModal({
         {/* =====================================================
             TOOLBAR
         ====================================================== */}
-        <div className="px-5 sm:px-6 py-3 bg-[#13222e] border-b border-white/[0.07] flex flex-wrap items-center justify-between gap-3">
+        <div className="px-5 sm:px-6 py-3 bg-[#f8fbfa] border-b border-[#e1ebe6] flex flex-wrap items-center justify-between gap-3">
 
 
           {/* Filtros */}
-          <div className="flex items-center gap-1 p-1 rounded-[9px] bg-[#0c1821] border border-white/[0.08]">
+          <div className="flex items-center gap-1 p-1 rounded-[9px] bg-white border border-[#dfe7e4]">
 
             <FilterButton
               active={filterStream === 'all'}
@@ -280,7 +281,7 @@ export default function InstanceLogsModal({
                 cursor-pointer
                 ${filterStream === 'error'
                   ? 'bg-rose-500 text-white'
-                  : 'text-[#78909c] hover:text-white hover:bg-white/5'
+                  : 'text-slate-500 hover:text-navy-900 hover:bg-brand-50'
                 }
               `}
             >
@@ -311,7 +312,7 @@ export default function InstanceLogsModal({
                 cursor-pointer
                 ${autoScroll
                   ? 'bg-brand-500/10 border-brand-500/25 text-brand-500'
-                  : 'bg-white/5 border-white/10 text-[#78909c] hover:text-white'
+                  : 'bg-white/5 border-white/10 text-[#78909c] hover:text-navy-900'
                 }
               `}
             >
@@ -329,7 +330,7 @@ export default function InstanceLogsModal({
               type="button"
               onClick={handleCopy}
               disabled={logs.length === 0}
-              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-40"
+              className="h-8 px-3 rounded-[8px] bg-white hover:bg-brand-50 border border-[#dfe7e4] text-slate-600 hover:text-navy-900 text-[10px] font-semibold flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-40"
             >
 
               {copied ? (
@@ -349,7 +350,7 @@ export default function InstanceLogsModal({
               type="button"
               onClick={fetchLogs}
               disabled={loading}
-              className="h-8 px-3 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-[#a8bbc4] hover:text-white text-[10px] font-semibold flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-40"
+              className="h-8 px-3 rounded-[8px] bg-white hover:bg-brand-50 border border-[#dfe7e4] text-slate-600 hover:text-navy-900 text-[10px] font-semibold flex items-center gap-1.5 transition duration-150 btn-tactile cursor-pointer disabled:opacity-40"
             >
 
               <RefreshCw
@@ -488,7 +489,7 @@ export default function InstanceLogsModal({
 
       </div>
 
-    </div>
+    </ModalLayer>
   );
 }
 
@@ -517,7 +518,7 @@ function FilterButton({
         cursor-pointer
         ${active
           ? 'bg-brand-500 text-white'
-          : 'text-[#78909c] hover:text-white hover:bg-white/5'
+          : 'text-slate-500 hover:text-navy-900 hover:bg-brand-50'
         }
       `}
     >

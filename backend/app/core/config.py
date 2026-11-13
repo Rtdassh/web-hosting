@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     PORT_RANGE_START: int = 30001
     PORT_RANGE_END: int = 30100
     SUBDOMAIN_ENABLED: bool = False
+    SITE_FILE_SCAN_LIMIT: int = Field(default=10000, ge=100, le=100000)
+    SITE_EXPORT_MAX_MB: int = Field(default=100, ge=1, le=1000)
     RELEASES_RETAINED: int = Field(default=5, ge=2, le=20)
     MONITOR_HOST: str = "127.0.0.1"
     MONITOR_TIMEOUT_SECONDS: float = Field(default=2.0, gt=0, le=10)

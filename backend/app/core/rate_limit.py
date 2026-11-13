@@ -16,6 +16,9 @@ _PRUNE_EVERY = 128
 _requests_since_prune = 0
 
 _RATE_LIMITS = (
+    ("PATCH", re.compile(r"/instances/\d+$"), "instance-rename", 30, 60),
+    ("GET", re.compile(r"/instances/\d+/(?:backup|files/download)$"), "instance-download", 10, 60),
+    ("GET", re.compile(r"/instances/\d+/files$"), "instance-files", 60, 60),
     ("POST", re.compile(r"/instances/\d+/versions(?:/[a-f0-9]+/restore)?$"), "instance-publish", 10, 60),
     ("POST", re.compile(r"/auth/login$"), "login", 5, 60),
     ("POST", re.compile(r"/auth/register$"), "register", 5, 60),

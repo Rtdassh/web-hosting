@@ -141,6 +141,8 @@ class InstanceService:
             )
             db.add(db_instance)
             db.flush()
+            db.add(InstanceStatusHistory(instance_id=db_instance.id, previous_status='pending',
+                new_status='running', reason='Sitio publicado desde ZIP'))
             port_service.link_instance_to_port(db, assigned_port, db_instance.id, commit=False)
             db.commit()
         except Exception as exc:
@@ -265,7 +267,12 @@ class InstanceService:
             )
 
         try:
+            previous_status = instance.status
             instance.status = target_status
+            db.add(InstanceStatusHistory(instance_id=instance.id,
+                previous_status=getattr(previous_status, 'value', previous_status),
+                new_status=target_status.value,
+                reason={'start': 'Proyecto iniciado', 'stop': 'Proyecto detenido', 'restart': 'Proyecto reiniciado'}[action]))
             db.commit()
             db.refresh(instance)
         except Exception:

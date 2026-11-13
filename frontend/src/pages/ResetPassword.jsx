@@ -1,3 +1,4 @@
+import { getApiErrorMessage, getNewPasswordError } from '../services/apiErrors';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
@@ -44,7 +45,7 @@ export default function ResetPassword({
 
   const passwordChecks = useMemo(
     () => ({
-      minLength: newPassword.length >= 6,
+      minLength: Array.from(newPassword).length >= 8,
       matches:
         confirmPassword.length > 0 &&
         newPassword === confirmPassword,
@@ -61,10 +62,9 @@ export default function ResetPassword({
       return;
     }
 
-    if (!passwordChecks.minLength) {
-      setError(
-        'La contraseña debe tener al menos 6 caracteres.'
-      );
+    const passwordError = getNewPasswordError(newPassword);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -84,8 +84,7 @@ export default function ResetPassword({
       setSuccess(true);
     } catch (requestError) {
       setError(
-        requestError.response?.data?.detail ||
-        'El token es inválido o ha expirado.'
+        getApiErrorMessage(requestError, 'El token es inválido o ha expirado.')
       );
     } finally {
       setLoading(false);
@@ -194,7 +193,7 @@ export default function ResetPassword({
               </div>
 
               {error && (
-                <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold leading-5 text-red-700 fade-slide-down">
+                <div role="alert" className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold leading-5 text-red-700 fade-slide-down">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -285,7 +284,7 @@ export default function ResetPassword({
 
                     <PasswordCheck
                       valid={passwordChecks.minLength}
-                      label="Al menos 6 caracteres"
+                      label="Al menos 8 caracteres"
                     />
 
                     <PasswordCheck

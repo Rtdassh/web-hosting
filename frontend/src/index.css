@@ -268,3 +268,5 @@ select {
     transform: none !important;
   }
 }
+/* Preserve dashboard alignment when a section needs vertical scrolling. */
+html { scrollbar-gutter: stable; }

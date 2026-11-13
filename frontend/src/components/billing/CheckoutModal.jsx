@@ -1,3 +1,4 @@
+import ModalLayer from '../ui/ModalLayer';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
@@ -215,7 +216,7 @@ export default function CheckoutModal({
       : 'MM/AA';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/60 p-4 backdrop-blur-md modal-backdrop-animate">
+    <ModalLayer className="overflow-y-auto p-4 modal-backdrop-animate" onClose={onClose}>
       <div className="relative my-auto w-full max-w-[920px] overflow-hidden rounded-[28px] border border-[#dce8e1] bg-white shadow-[0_35px_90px_rgba(9,24,34,0.18)] modal-dialog-animate">
         {/* Close */}
         <button
@@ -645,6 +646,6 @@ export default function CheckoutModal({
           </section>
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
 }

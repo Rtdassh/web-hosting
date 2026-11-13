@@ -77,22 +77,7 @@ export default function BillingHistoryPage({ onBack, onGoToPricing }) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f5f9f7] px-5 py-8 text-[#172838] sm:px-6 lg:px-10">
-      {/* Background */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-28 top-24 h-80 w-80 rounded-full bg-[#28B586]/[0.07] blur-3xl" />
-        <div className="absolute -right-20 top-20 h-72 w-72 rounded-full bg-[#172838]/[0.04] blur-3xl" />
-
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage:
-              'linear-gradient(#172838 1px, transparent 1px), linear-gradient(90deg, #172838 1px, transparent 1px)',
-            backgroundSize: '34px 34px',
-          }}
-        />
-      </div>
-
+    <div className="relative px-5 py-8 text-[#172838] sm:px-6 lg:px-8 xl:px-10">
       <div className="relative mx-auto max-w-[1280px]">
         {/* Navigation */}
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

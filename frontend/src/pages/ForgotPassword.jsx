@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '../services/apiErrors';
 import React, { useState } from 'react';
 import {
   AlertCircle,
@@ -47,8 +48,7 @@ export default function ForgotPassword({
       setConfirmation(response?.message || 'Solicitud recibida. Revisa las instrucciones en tu correo.');
     } catch (requestError) {
       setError(
-        requestError.response?.data?.detail ||
-        'No se pudo generar la solicitud de recuperación.'
+        getApiErrorMessage(requestError, 'No se pudo generar la solicitud de recuperación.')
       );
     } finally {
       setLoading(false);

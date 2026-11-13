@@ -8,6 +8,7 @@ from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.instance import Instance, InstanceStatus
+from app.models.instance_status_history import InstanceStatusHistory
 from app.models.plan import Subscription
 from app.services.artifact_service import artifact_service
 from app.services.docker_service import docker_service
@@ -99,7 +100,7 @@ class SiteReleaseService:
                 target = directory / 'site'
             if str(target) == instance.storage_path:
                 return self.versions(instance)
-            self._switch(instance, target, plan, db)
+            self._switch(instance, target, plan, db, reason="Nueva versión publicada" if file else "Versión anterior restaurada")
         except Exception:
             if staged and str(staged / 'site') != instance.storage_path and not (site_data_dir(instance) / 'handover.json').exists():
                 shutil.rmtree(staged, ignore_errors=True)
@@ -115,7 +116,7 @@ class SiteReleaseService:
         audit_action(user.id, instance.id, 'publish' if file else 'rollback', 'success')
         return self.versions(instance)
 
-    def _switch(self, instance, target, plan, db: Session) -> None:
+    def _switch(self, instance, target, plan, db: Session, reason: str = "Nueva versión publicada") -> None:
         old_container, old_path = instance.container_id, instance.storage_path
         was_running = instance.status == InstanceStatus.RUNNING
         new_name = f"paas_release_{instance.uuid}_{uuid.uuid4().hex[:8]}"
@@ -137,6 +138,8 @@ class SiteReleaseService:
             if not was_running and not docker_service.stop_instance(candidate):
                 raise RuntimeError('Could not preserve stopped state')
             instance.container_id, instance.storage_path = candidate, str(target)
+            current = getattr(instance.status, "value", instance.status)
+            db.add(InstanceStatusHistory(instance_id=instance.id, previous_status=current, new_status=current, reason=reason))
             db.commit()
             committed = True
         except Exception:

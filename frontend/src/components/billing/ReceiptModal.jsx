@@ -1,3 +1,4 @@
+import ModalLayer from '../ui/ModalLayer';
 import React from 'react';
 import {
   CheckCircle2,
@@ -50,7 +51,7 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/60 p-4 backdrop-blur-md modal-backdrop-animate">
+    <ModalLayer className="overflow-y-auto p-4 modal-backdrop-animate" onClose={onClose}>
       <div className="my-auto w-full max-w-[560px] overflow-hidden rounded-[28px] border border-[#dce8e1] bg-white shadow-[0_35px_90px_rgba(9,24,34,0.16)] modal-dialog-animate">
         {/* Header */}
         <div className="relative overflow-hidden bg-gradient-to-b from-[#f2f8f5] via-[#eaf5ef] to-white border-b border-[#dce8e1] px-6 py-6 sm:px-7">
@@ -87,7 +88,7 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between rounded-2xl border border-[#d6e6dc] bg-white/90 backdrop-blur-sm px-4 py-3 shadow-sm">
+            <div className="mt-5 flex items-center justify-between rounded-2xl border border-[#d6e6dc] bg-white/90 px-4 py-3 shadow-sm">
               <div>
                 <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#71887e]">
                   Factura
@@ -224,7 +225,7 @@ export default function ReceiptModal({ isOpen, onClose, invoice }) {
           </p>
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
 }
 

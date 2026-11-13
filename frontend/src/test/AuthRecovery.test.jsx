@@ -87,6 +87,29 @@ describe('Auth Password Recovery Flow (RF-05)', () => {
   });
 
   describe('ResetPassword Component', () => {
+    it('muestra validaciones 422 como texto sin romper la pantalla ni exponer input', async () => {
+      authService.resetPassword.mockRejectedValueOnce({ response: { data: { detail: [
+        { type: 'string_too_short', loc: ['body', 'new_password'], msg: 'String should have at least 8 characters', ctx: { min_length: 8 }, input: 'private-password' },
+      ] } } });
+      render(<ResetPassword initialToken="private-token" />);
+      const inputs = screen.getAllByPlaceholderText('••••••••');
+      inputs.forEach((input) => fireEvent.change(input, { target: { value: 'valid-password' } }));
+      fireEvent.click(screen.getByRole('button', { name: /Restablecer contraseña/i }));
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Contraseña debe tener al menos 8 caracteres.');
+      expect(alert).not.toHaveTextContent('private-password');
+      expect(alert).not.toHaveTextContent('private-token');
+      expect(screen.getByRole('button', { name: /Restablecer contraseña/i })).toBeEnabled();
+    });
+
+    it.each(['1234567', '🔒'.repeat(19)])('rechaza contraseñas fuera de los límites antes de enviar', (password) => {
+      render(<ResetPassword initialToken="valid-token" />);
+      screen.getAllByPlaceholderText('••••••••').forEach((input) => fireEvent.change(input, { target: { value: password } }));
+      fireEvent.click(screen.getByRole('button', { name: /Restablecer contraseña/i }));
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(authService.resetPassword).not.toHaveBeenCalled();
+    });
+
     it('debe exigir token y longitud mínima de contraseña', async () => {
       render(
         <ResetPassword

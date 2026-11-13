@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from './apiErrors';
 import axios from 'axios';
 import { toast } from '../components/ui/Toast';
 
@@ -43,7 +44,7 @@ apiClient.interceptors.response.use((response) => {
   const url = error.config?.url || '';
   if (notifications[url] || ['/auth/register', '/instances/deploy', '/instances/deploy-template'].includes(url)) {
     const detail = error.response?.data?.detail;
-    const message = typeof detail === 'string' ? detail : error.response
+    const message = detail ? getApiErrorMessage(error) : error.response
       ? 'Revisa los datos e inténtalo nuevamente.'
       : 'No pudimos confirmar la operación. Comprueba tu conexión y revisa el resultado antes de repetirla.';
     toast.error(message, { title: 'No se pudo completar la solicitud', duration: 7000 });
@@ -180,6 +181,11 @@ export const adminService = {
 };
 
 export const instanceService = {
+  rename: async (id, name) => (await apiClient.patch(`/instances/${id}`, { name })).data,
+  getFiles: async (id, path = '', offset = 0) => (await apiClient.get(`/instances/${id}/files`, { params: { path, offset, limit: 50 } })).data,
+  getActivity: async (id) => (await apiClient.get(`/instances/${id}/activity`)).data,
+  downloadFile: async (id, path) => (await apiClient.get(`/instances/${id}/files/download`, { params: { path }, responseType: 'blob' })).data,
+  downloadBackup: async (id) => (await apiClient.get(`/instances/${id}/backup`, { responseType: 'blob' })).data,
   getHealth: async () => (await apiClient.get('/instances/health')).data,
   getVersions: async (id) => (await apiClient.get(`/instances/${id}/versions`)).data,
   getInsights: async (id) => (await apiClient.get(`/instances/${id}/insights`)).data,

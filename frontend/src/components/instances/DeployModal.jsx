@@ -1,9 +1,11 @@
+import ModalLayer from '../ui/ModalLayer';
 import React, { useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
   Check,
   CheckCircle2,
+  ChevronDown,
   Code2,
   Eye,
   FileArchive,
@@ -269,7 +271,7 @@ export default function DeployModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#10202d]/60 p-3 backdrop-blur-md sm:p-4 modal-backdrop-animate">
+      <ModalLayer className="overflow-y-auto p-3 sm:p-4 modal-backdrop-animate" onClose={handleClose}>
         <div className="relative my-auto flex max-h-[92vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[28px] border border-[#dce7e2] bg-white shadow-[0_35px_90px_rgba(9,24,34,0.18)] modal-dialog-animate">
           {/* Header */}
           <div className="relative shrink-0 overflow-hidden border-b border-[#dce7e2] bg-gradient-to-r from-brand-50/90 via-[#f4faf7] to-white px-6 py-5">
@@ -517,21 +519,44 @@ export default function DeployModal({
               </div>
             ) : (
               <div>
-                <div className="mb-4 rounded-2xl border border-brand-100 bg-brand-50/60 p-4 text-xs text-slate-700">
-                  <label htmlFor="site-technology" className="block font-bold text-navy-900">¿Con qué creaste tu sitio?</label>
-                  <select id="site-technology" value={technology} onChange={(event) => setTechnology(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-200 bg-white p-2">
-                    <option value="html">HTML, CSS y JavaScript</option>
-                    <option value="vite">React / Vue / Svelte con Vite</option>
-                    <option value="build">React con salida build</option>
-                    <option value="static">Otro generador de sitios estáticos</option>
-                  </select>
-                  <p className="mt-3 leading-5">
+                <div className="mb-5 overflow-hidden rounded-2xl border border-[#dce7e2] bg-white shadow-sm">
+                  <div className="flex items-center gap-3 border-b border-[#edf1ef] px-4 py-3.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-brand-100 bg-brand-50 text-brand-600"><Code2 className="h-4 w-4" /></div>
+                    <div>
+                      <h3 className="text-xs font-black text-navy-900">Prepara tu proyecto</h3>
+                      <p className="mt-0.5 text-[11px] font-medium text-[#64748B]">Elige tu tecnología para ver cómo empaquetarlo.</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3.5 p-4">
+                    <div>
+                      <label htmlFor="site-technology" className="mb-1.5 block text-xs font-black text-[#334e5e]">¿Con qué creaste tu sitio?</label>
+                      <div className="relative">
+                        <select id="site-technology" value={technology} disabled={loading} onChange={(event) => setTechnology(event.target.value)} aria-describedby="site-packaging-guide site-packaging-limits" className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-[#d6dfdb] bg-white pl-3.5 pr-10 text-xs font-semibold text-navy-900 outline-none transition duration-150 hover:border-[#b9d8ca] focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 disabled:cursor-not-allowed disabled:opacity-50">
+                          <option value="html">HTML, CSS y JavaScript</option>
+                          <option value="vite">React / Vue / Svelte con Vite</option>
+                          <option value="build">React con salida build</option>
+                          <option value="static">Otro generador de sitios estáticos</option>
+                        </select>
+                        <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
+                      </div>
+                    </div>
+                    <div id="site-packaging-guide" className="flex items-start gap-2.5 rounded-xl border border-[#e1ebe6] bg-[#f8fbfa] p-3.5">
+                      <PackageOpen aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                      <div>
+                        <p className="mb-1 text-[9px] font-black uppercase tracking-[0.12em] text-brand-700">Tu paquete de publicación</p>
+                        <p className="text-[11px] font-medium leading-6 text-[#64748B] [&_code]:rounded [&_code]:border [&_code]:border-[#e1ebe6] [&_code]:bg-white [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[10px] [&_code]:font-bold [&_code]:text-navy-900">
                     {technology === 'vite' ? <>Ejecuta <code>npm run build</code> y comprime el contenido de <code>dist/</code> en un ZIP.</> :
                       technology === 'build' ? <>Genera la versión de producción y comprime el contenido de <code>build/</code> en un ZIP.</> :
                       technology === 'static' ? 'Exporta tu sitio como HTML, CSS y JavaScript y comprime la carpeta de salida en un ZIP.' :
                       'Comprime los archivos de tu sitio en un ZIP con index.html en la raíz.'}
-                  </p>
-                  <p className="mt-2 leading-5">Incluye index.html y todos sus recursos. Publica solo la salida final, sin .env, node_modules ni archivos privados. Las rutas de SPA están admitidas; los proyectos que necesitan un servidor o compilación en Codrop todavía no.</p>
+                        </p>
+                      </div>
+                    </div>
+                    <div id="site-packaging-limits" className="space-y-2 text-[10px] font-medium leading-5 text-[#64748B]">
+                      <p className="flex items-start gap-2"><CheckCircle2 aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600" /><span>Incluye index.html y sus recursos. Excluye .env, node_modules y archivos privados.</span></p>
+                      <p className="flex items-start gap-2"><AlertCircle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" /><span>Las rutas de SPA están admitidas; los proyectos que necesitan un servidor o compilación en Codrop todavía no.</span></p>
+                    </div>
+                  </div>
                 </div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="text-xs font-black text-[#334e5e]">
@@ -694,7 +719,7 @@ export default function DeployModal({
             </div>
           </div>
         </div>
-      </div>
+      </ModalLayer>
 
       {/* Template Preview */}
       {previewTemplate && (
@@ -715,7 +740,7 @@ function TemplatePreviewModal({ template, onClose, onSelect }) {
   const Icon = template.icon;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md modal-backdrop-animate">
+    <ModalLayer className="p-4 modal-backdrop-animate" onClose={onClose}>
       <div className="w-full max-w-[720px] overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.38)] modal-dialog-animate">
         <div className="flex items-center justify-between border-b border-[#e5ece8] px-6 py-4">
           <div>
@@ -803,6 +828,6 @@ function TemplatePreviewModal({ template, onClose, onSelect }) {
           </button>
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
 }
