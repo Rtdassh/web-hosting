@@ -42,6 +42,7 @@ export default function Register({
     }
 
     const passwordError = getNewPasswordError(password);
+
     if (passwordError) {
       setError(passwordError);
       return;
@@ -62,7 +63,10 @@ export default function Register({
       });
 
       setSuccess(true);
-      toast.success('Cuenta creada exitosamente. Redirigiendo a verificación...');
+
+      toast.success(
+        'Cuenta creada exitosamente. Redirigiendo a verificación...'
+      );
 
       if (onVerification) {
         setTimeout(() => {
@@ -88,21 +92,19 @@ export default function Register({
         onNavigateSection={onNavigateSection}
       />
 
-
       <section className="px-4 py-10 sm:py-14">
 
-        <div className="w-full max-w-[1180px] mx-auto grid lg:grid-cols-[430px_1fr] gap-8 lg:gap-10 items-stretch">
-
+        <div className="mx-auto grid w-full max-w-[1180px] items-stretch gap-8 lg:grid-cols-[430px_1fr] lg:gap-10">
 
           {/* =================================================
               ONBOARDING
           ================================================== */}
-          <div className="relative hidden lg:block overflow-hidden rounded-[24px] bg-brand-50 border border-brand-100 p-8 lg:p-9">
+          <div className="relative hidden overflow-hidden rounded-[24px] border border-brand-100 bg-brand-50 p-8 lg:block lg:p-9">
 
-            <div className="absolute -top-20 -left-20 w-[220px] h-[220px] rounded-full bg-brand-100/70 blur-3xl" />
+            <div className="absolute -left-20 -top-20 h-[220px] w-[220px] rounded-full bg-brand-100/70 blur-3xl" />
 
             <div
-              className="absolute right-0 bottom-0 w-[220px] h-[220px] opacity-[0.045]"
+              className="absolute bottom-0 right-0 h-[220px] w-[220px] opacity-[0.045]"
               style={{
                 backgroundImage:
                   'linear-gradient(#172838 1px, transparent 1px), linear-gradient(90deg, #172838 1px, transparent 1px)',
@@ -110,27 +112,23 @@ export default function Register({
               }}
             />
 
-
             <div className="relative z-10">
 
-              <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-brand-600">
+              <p className="text-[13px] font-bold uppercase tracking-[0.16em] text-brand-600">
                 Empieza con Codrop
               </p>
 
-
-              <h2 className="mt-4 text-[34px] leading-[1.1] font-bold tracking-[-0.03em] text-navy-900">
+              <h2 className="mt-4 text-[36px] font-bold leading-[1.1] tracking-[-0.03em] text-navy-900">
                 Publica tu primer proyecto en
                 <span className="text-brand-500"> 3 pasos</span>
               </h2>
 
-
-              <p className="mt-4 text-[14px] leading-6 text-[#64748b]">
+              <p className="mt-4 text-[16px] leading-7 text-[#64748b]">
                 Sin configuraciones complicadas. Solo sube tu proyecto y deja
                 que Codrop haga el resto.
               </p>
 
-
-              <div className="mt-8 space-y-5">
+              <div className="mt-8 space-y-6">
 
                 <Step
                   number="01"
@@ -155,80 +153,86 @@ export default function Register({
 
               </div>
 
-
-              <div className="mt-9 relative">
+              <div className="relative mt-9">
 
                 <div className="h-px bg-brand-100" />
 
                 <div className="mt-6 flex items-end justify-between gap-4">
 
                   <div>
-                    <p className="text-[12px] font-semibold text-navy-900">
+
+                    <p className="text-[14px] font-semibold text-navy-900">
                       Code + Drop
                     </p>
 
-                    <p className="mt-1 text-[11px] leading-5 text-[#64748b]">
+                    <p className="mt-1 text-[14px] leading-6 text-[#64748b]">
                       De tu código a la web,
                       <br />
                       sin complicaciones.
                     </p>
+
                   </div>
 
-
-
                 </div>
+
               </div>
 
             </div>
           </div>
 
-
           {/* =================================================
               FORMULARIO
           ================================================== */}
           <div className="card-tactile relative mt-14 rounded-[24px] p-8 sm:p-[44px]">
+
             <AuthBrandAccent />
 
-            <div className="max-w-[570px] mx-auto">
+            <div className="mx-auto max-w-[570px]">
 
               <div className="flex items-start justify-between gap-6">
 
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.16em] font-bold text-brand-600">
+
+                  <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-brand-600">
                     Nueva cuenta
                   </p>
 
-                  <h2 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.025em] text-navy-900">
+                  <h2 className="mt-2 text-[34px] font-bold leading-tight tracking-[-0.025em] text-navy-900">
                     Crea tu cuenta
                   </h2>
 
-                  <p className="mt-2 text-[14px] leading-6 text-[#64748b]">
+                  <p className="mt-2 text-[16px] leading-7 text-[#64748b]">
                     Completa tus datos para comenzar a publicar tus proyectos.
                   </p>
+
                 </div>
 
+                <div className="hidden h-12 w-12 items-center justify-center rounded-xl bg-brand-50 sm:flex">
 
-                <div className="hidden sm:flex w-12 h-12 rounded-xl bg-brand-50 items-center justify-center">
-                  <Check className="w-5 h-5 text-brand-600" />
+                  <Check className="h-6 w-6 text-brand-600" />
+
                 </div>
 
               </div>
 
-
               <div className="mt-8">
 
                 {error && (
-                  <div className="flex items-start gap-2.5 p-3 mb-5 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm fade-slide-down">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{error}</span>
+                  <div className="fade-slide-down mb-5 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3.5 text-[15px] text-red-600">
+
+                    <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+
+                    <span>
+                      {error}
+                    </span>
+
                   </div>
                 )}
 
-
                 {success && (
-                  <div className="flex items-start gap-2.5 p-3 mb-5 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm fade-slide-down">
+                  <div className="fade-slide-down mb-5 flex items-start gap-2.5 rounded-lg border border-green-200 bg-green-50 p-3.5 text-[15px] text-green-600">
 
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0" />
 
                     <span>
                       Cuenta creada correctamente. Verifica tu correo para continuar.
@@ -237,14 +241,14 @@ export default function Register({
                   </div>
                 )}
 
-
                 <form
                   onSubmit={handleSubmit}
                   className="space-y-5"
                 >
 
                   <div>
-                    <label className="block text-[13px] font-semibold text-navy-900 mb-2">
+
+                    <label className="mb-2 block text-[15px] font-semibold text-navy-900">
                       Nombre completo
                     </label>
 
@@ -254,13 +258,14 @@ export default function Register({
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Fernando Espinoza"
-                      className="w-full h-[46px] bg-white border border-[#d9e2e8] rounded-[9px] px-3.5 text-[14px] text-navy-900 placeholder-[#94a3b8] focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+                      className="h-[50px] w-full rounded-[9px] border border-[#d9e2e8] bg-white px-4 text-[16px] text-navy-900 placeholder-[#94a3b8] transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
+
                   </div>
 
-
                   <div>
-                    <label className="block text-[13px] font-semibold text-navy-900 mb-2">
+
+                    <label className="mb-2 block text-[15px] font-semibold text-navy-900">
                       Correo electrónico
                     </label>
 
@@ -270,13 +275,14 @@ export default function Register({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="correo@ejemplo.com"
-                      className="w-full h-[46px] bg-white border border-[#d9e2e8] rounded-[9px] px-3.5 text-[14px] text-navy-900 placeholder-[#94a3b8] focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+                      className="h-[50px] w-full rounded-[9px] border border-[#d9e2e8] bg-white px-4 text-[16px] text-navy-900 placeholder-[#94a3b8] transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
+
                   </div>
 
-
                   <div>
-                    <label className="block text-[13px] font-semibold text-navy-900 mb-2">
+
+                    <label className="mb-2 block text-[15px] font-semibold text-navy-900">
                       Contraseña
                     </label>
 
@@ -286,13 +292,14 @@ export default function Register({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••"
-                      className="w-full h-[46px] bg-white border border-[#d9e2e8] rounded-[9px] px-3.5 text-[14px] text-navy-900 placeholder-[#94a3b8] focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+                      className="h-[50px] w-full rounded-[9px] border border-[#d9e2e8] bg-white px-4 text-[16px] text-navy-900 placeholder-[#94a3b8] transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
+
                   </div>
 
-
                   <div>
-                    <label className="block text-[13px] font-semibold text-navy-900 mb-2">
+
+                    <label className="mb-2 block text-[15px] font-semibold text-navy-900">
                       Confirmar contraseña
                     </label>
 
@@ -302,20 +309,20 @@ export default function Register({
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••"
-                      className="w-full h-[46px] bg-white border border-[#d9e2e8] rounded-[9px] px-3.5 text-[14px] text-navy-900 placeholder-[#94a3b8] focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+                      className="h-[50px] w-full rounded-[9px] border border-[#d9e2e8] bg-white px-4 text-[16px] text-navy-900 placeholder-[#94a3b8] transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
-                  </div>
 
+                  </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.18)] transition duration-150 btn-tactile brand-focus cursor-pointer"
+                    className="btn-tactile brand-focus flex h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-[9px] bg-brand-500 text-[16px] font-semibold text-white shadow-[0_10px_24px_rgba(40,181,134,0.18)] transition duration-150 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
 
                     {loading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin" />
                         Creando cuenta...
                       </>
                     ) : (
@@ -326,33 +333,42 @@ export default function Register({
 
                 </form>
 
+                <div className="mt-6 border-t border-[#eef2f1] pt-6 text-center">
 
-                <div className="mt-6 pt-6 border-t border-[#eef2f1] text-center">
+                  <p className="text-[15px] leading-6 text-[#64748b]">
 
-                  <p className="text-[13px] text-[#64748b]">
                     ¿Ya tienes una cuenta?{' '}
 
                     <button
                       type="button"
                       onClick={onLogin}
-                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile brand-focus cursor-pointer"
+                      className="btn-tactile brand-focus cursor-pointer font-semibold text-brand-600 transition duration-150 hover:text-brand-700"
                     >
                       Iniciar sesión
                     </button>
+
                   </p>
 
                 </div>
 
               </div>
+
             </div>
+
           </div>
 
         </div>
+
       </section>
+
     </main>
   );
 }
 
+
+/* =========================================================
+   PASO
+========================================================= */
 
 function Step({
   number,
@@ -365,29 +381,29 @@ function Step({
 
       <div className="flex flex-col items-center">
 
-        <div className="w-10 h-10 rounded-xl bg-white border border-brand-100 flex items-center justify-center shadow-sm">
-          <Icon className="w-4 h-4 text-brand-600" />
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-brand-100 bg-white shadow-sm">
+
+          <Icon className="h-5 w-5 text-brand-600" />
+
         </div>
 
       </div>
 
-
       <div className="flex-1 pt-0.5">
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
 
-          <span className="text-[10px] font-bold tracking-[0.12em] text-brand-500">
+          <span className="text-[12px] font-bold tracking-[0.12em] text-brand-500">
             {number}
           </span>
 
-          <h3 className="text-[13px] font-semibold text-navy-900">
+          <h3 className="text-[15px] font-semibold text-navy-900">
             {title}
           </h3>
 
         </div>
 
-
-        <p className="mt-1 text-[12px] leading-5 text-[#64748b]">
+        <p className="mt-1.5 text-[14px] leading-6 text-[#64748b]">
           {text}
         </p>
 

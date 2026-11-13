@@ -57,23 +57,25 @@ export default function Login({
     setEmail('dev@cloudpaas.local');
     setPassword('admin123');
     setError('');
-    toast.info('Credenciales de prueba dev@cloudpaas.local autocompletadas.');
+    toast.info(
+      'Credenciales de prueba dev@cloudpaas.local autocompletadas.'
+    );
   };
 
   return (
-    <main className="min-h-screen bg-[#f6faf8] bg-brand-stripes-subtle text-navy-900 relative overflow-hidden">
+    <main className="relative min-h-screen overflow-hidden bg-[#f6faf8] bg-brand-stripes-subtle text-navy-900">
 
       {/* =====================================================
           FONDO
       ====================================================== */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="pointer-events-none absolute inset-0">
 
-        <div className="absolute top-[-170px] left-1/2 -translate-x-1/2 w-[620px] h-[420px] rounded-full bg-brand-100/50 blur-[100px]" />
+        <div className="absolute left-1/2 top-[-170px] h-[420px] w-[620px] -translate-x-1/2 rounded-full bg-brand-100/50 blur-[100px]" />
 
-        <div className="absolute bottom-[-180px] right-[-150px] w-[430px] h-[430px] rounded-full bg-brand-50 blur-[90px]" />
+        <div className="absolute bottom-[-180px] right-[-150px] h-[430px] w-[430px] rounded-full bg-brand-50 blur-[90px]" />
 
         <div
-          className="absolute left-0 bottom-0 w-[300px] h-[280px] opacity-[0.035]"
+          className="absolute bottom-0 left-0 h-[280px] w-[300px] opacity-[0.035]"
           style={{
             backgroundImage:
               'linear-gradient(#172838 1px, transparent 1px), linear-gradient(90deg, #172838 1px, transparent 1px)',
@@ -82,7 +84,6 @@ export default function Login({
         />
 
       </div>
-
 
       {/* =====================================================
           NAVBAR COMPARTIDO
@@ -94,32 +95,29 @@ export default function Login({
         onNavigateSection={onNavigateSection}
       />
 
-
       {/* =====================================================
           CONTENIDO
       ====================================================== */}
       <section className="relative z-10 px-4 py-12 sm:py-14">
 
-        <div className="w-full max-w-[980px] mx-auto">
-
+        <div className="mx-auto w-full max-w-[980px]">
 
           {/* =================================================
               INTRO
           ================================================== */}
-          <div className="text-center max-w-[620px] mx-auto">
+          <div className="mx-auto max-w-[680px] text-center">
 
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3.5 py-2">
 
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+              <span className="h-2 w-2 rounded-full bg-brand-500" />
 
-              <span className="text-[11px] font-bold tracking-[0.04em] text-brand-700">
+              <span className="text-[13px] font-bold tracking-[0.08em] text-brand-700">
                 TU WORKSPACE TE ESPERA
               </span>
 
             </div>
 
-
-            <h1 className="mt-5 text-[38px] sm:text-[42px] leading-[1.08] font-bold tracking-[-0.035em] text-navy-900">
+            <h1 className="mt-5 text-[40px] font-bold leading-[1.08] tracking-[-0.035em] text-navy-900 sm:text-[46px]">
 
               Bienvenido de nuevo a{' '}
 
@@ -137,47 +135,40 @@ export default function Login({
 
             </h1>
 
-
-            <p className="mt-4 text-[15px] leading-6 text-[#64748b]">
+            <p className="mt-4 text-[17px] leading-7 text-[#64748b] sm:text-[18px]">
               Ingresa a tu cuenta para continuar administrando tus
               despliegues y sitios publicados.
             </p>
 
           </div>
 
-
           {/* =================================================
               ZONA LOGIN
           ================================================== */}
-          <div className="mt-10 grid lg:grid-cols-[1fr_430px] gap-8 items-stretch">
-
+          <div className="mt-10 grid items-stretch gap-8 lg:grid-cols-[1fr_430px]">
 
             {/* =================================================
                 PANEL INFORMATIVO
             ================================================== */}
-            <div className="hidden lg:block relative overflow-hidden rounded-[22px] bg-[#eef8f3] border border-brand-100 p-8">
+            <div className="relative hidden overflow-hidden rounded-[22px] border border-brand-100 bg-[#eef8f3] p-8 lg:block">
 
-              <div className="absolute -top-16 -left-16 w-[180px] h-[180px] rounded-full bg-brand-100/80 blur-3xl" />
-
+              <div className="absolute -left-16 -top-16 h-[180px] w-[180px] rounded-full bg-brand-100/80 blur-3xl" />
 
               <div className="relative z-10">
 
-                <p className="text-[11px] uppercase tracking-[0.16em] font-bold text-brand-600">
+                <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-brand-600">
                   Todo sigue donde lo dejaste
                 </p>
 
-
-                <h2 className="mt-3 text-[26px] leading-[1.15] font-bold tracking-[-0.025em] text-navy-900">
+                <h2 className="mt-3 text-[29px] font-bold leading-[1.15] tracking-[-0.025em] text-navy-900">
                   Tu espacio de trabajo está listo
                 </h2>
 
-
-                <p className="mt-3 text-[13px] leading-6 text-[#64748b]">
+                <p className="mt-3 text-[15px] leading-7 text-[#64748b]">
                   Regresa a tus proyectos sin volver a configurar nada.
                 </p>
 
-
-                <div className="mt-7 space-y-4">
+                <div className="mt-7 space-y-5">
 
                   <LoginBenefit
                     icon={Server}
@@ -199,26 +190,23 @@ export default function Login({
 
                 </div>
 
-
-                <div className="mt-9 pt-6 border-t border-brand-100">
+                <div className="mt-9 border-t border-brand-100 pt-6">
 
                   <div className="flex items-end justify-between gap-4">
 
                     <div>
 
-                      <p className="text-[12px] font-semibold text-navy-900">
+                      <p className="text-[14px] font-semibold text-navy-900">
                         Code + Drop
                       </p>
 
-                      <p className="mt-1 text-[11px] leading-5 text-[#64748b]">
+                      <p className="mt-1 text-[14px] leading-6 text-[#64748b]">
                         Tu proyecto,
                         <br />
                         siempre a un clic.
                       </p>
 
                     </div>
-
-
 
                   </div>
 
@@ -227,36 +215,32 @@ export default function Login({
               </div>
             </div>
 
-
             {/* =================================================
                 FORMULARIO
             ================================================== */}
             <div className="relative">
 
-              <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-brand-100/60 blur-2xl pointer-events-none" />
-
+              <div className="pointer-events-none absolute -right-3 -top-3 h-20 w-20 rounded-full bg-brand-100/60 blur-2xl" />
 
               <div className="card-tactile relative mt-14 rounded-[22px] p-8">
                 <AuthBrandAccent />
 
-
                 {/* Acceso seguro */}
                 <div className="flex items-center gap-3">
 
-                  <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
 
-                    <LockKeyhole className="w-5 h-5 text-brand-600" />
+                    <LockKeyhole className="h-6 w-6 text-brand-600" />
 
                   </div>
 
-
                   <div>
 
-                    <p className="text-[11px] uppercase tracking-[0.15em] font-bold text-brand-600">
+                    <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-brand-600">
                       Acceso seguro
                     </p>
 
-                    <p className="mt-0.5 text-[12px] text-[#64748b]">
+                    <p className="mt-0.5 text-[14px] text-[#64748b]">
                       Ingresa tus credenciales
                     </p>
 
@@ -264,22 +248,19 @@ export default function Login({
 
                 </div>
 
-
-                <h2 className="mt-6 text-[28px] font-bold tracking-[-0.025em] text-navy-900">
+                <h2 className="mt-6 text-[31px] font-bold tracking-[-0.025em] text-navy-900">
                   Iniciar sesión
                 </h2>
 
-
-                <p className="mt-2 text-[13px] leading-6 text-[#64748b]">
+                <p className="mt-2 text-[15px] leading-7 text-[#64748b]">
                   Accede a tu panel de Codrop.
                 </p>
 
-
                 {/* Error */}
                 {error && (
-                  <div className="mt-6 flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 text-red-600 rounded-[9px] text-sm fade-slide-down">
+                  <div className="fade-slide-down mt-6 flex items-start gap-2.5 rounded-[9px] border border-red-200 bg-red-50 p-3.5 text-[15px] text-red-600">
 
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
 
                     <span>
                       {error}
@@ -287,7 +268,6 @@ export default function Login({
 
                   </div>
                 )}
-
 
                 {/* Formulario */}
                 <form
@@ -300,7 +280,7 @@ export default function Login({
 
                     <label
                       htmlFor="email"
-                      className="block text-[13px] font-semibold text-navy-900 mb-2"
+                      className="mb-2 block text-[15px] font-semibold text-navy-900"
                     >
                       Correo electrónico
                     </label>
@@ -313,31 +293,33 @@ export default function Login({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="correo@ejemplo.com"
-                      className="w-full h-[46px] bg-white border border-[#d9e2e8] rounded-[9px] px-3.5 text-[14px] text-navy-900 placeholder-[#94a3b8] focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+                      className="h-[50px] w-full rounded-[9px] border border-[#d9e2e8] bg-white px-4 text-[16px] text-navy-900 placeholder-[#94a3b8] transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
 
                   </div>
 
-
                   {/* Contraseña */}
                   <div>
 
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2 flex items-center justify-between gap-4">
+
                       <label
                         htmlFor="password"
-                        className="block text-[13px] font-semibold text-navy-900"
+                        className="block text-[15px] font-semibold text-navy-900"
                       >
                         Contraseña
                       </label>
+
                       {onForgotPassword && (
                         <button
                           type="button"
                           onClick={onForgotPassword}
-                          className="text-[12px] font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                          className="text-[14px] font-medium text-brand-600 hover:text-brand-700 hover:underline"
                         >
                           ¿Olvidaste tu contraseña?
                         </button>
                       )}
+
                     </div>
 
                     <input
@@ -348,61 +330,58 @@ export default function Login({
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••"
-                      className="w-full h-[46px] bg-white border border-[#d9e2e8] rounded-[9px] px-3.5 text-[14px] text-navy-900 placeholder-[#94a3b8] focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"
+                      className="h-[50px] w-full rounded-[9px] border border-[#d9e2e8] bg-white px-4 text-[16px] text-navy-900 placeholder-[#94a3b8] transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
 
                   </div>
-
 
                   {/* Botón login */}
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-[46px] rounded-[9px] bg-brand-500 hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-[14px] font-semibold flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(40,181,134,0.20)] transition duration-150 btn-tactile brand-focus cursor-pointer"
+                    className="btn-tactile brand-focus flex h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-[9px] bg-brand-500 text-[16px] font-semibold text-white shadow-[0_10px_24px_rgba(40,181,134,0.20)] transition duration-150 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
 
                     {loading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin" />
                         Iniciando sesión...
                       </>
                     ) : (
                       <>
                         Iniciar sesión
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="h-5 w-5" />
                       </>
                     )}
 
                   </button>
 
-
                   {/* ===========================================
-                      CUENTA DE PRUEBA - VIENE DE DEVELOPMENT
+                      CUENTA DE PRUEBA
                   ============================================ */}
                   <button
                     type="button"
                     onClick={handleTestAccount}
-                    className="w-full h-[40px] rounded-[9px] border border-brand-100 bg-brand-50/80 hover:bg-brand-100 text-brand-700 text-[12px] font-semibold flex items-center justify-center gap-2 transition duration-150 btn-tactile brand-focus cursor-pointer"
+                    className="btn-tactile brand-focus flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[9px] border border-brand-100 bg-brand-50/80 text-[14px] font-semibold text-brand-700 transition duration-150 hover:bg-brand-100"
                   >
-                    <Zap className="w-3.5 h-3.5" />
+                    <Zap className="h-4 w-4" />
 
                     Usar cuenta de prueba
                   </button>
 
                 </form>
 
-
                 {/* Registro */}
-                <div className="mt-6 pt-6 border-t border-[#eef2f1] text-center">
+                <div className="mt-6 border-t border-[#eef2f1] pt-6 text-center">
 
-                  <p className="text-[13px] text-[#64748b]">
+                  <p className="text-[15px] leading-6 text-[#64748b]">
 
                     ¿Todavía no tienes una cuenta?{' '}
 
                     <button
                       type="button"
                       onClick={onRegister}
-                      className="font-semibold text-brand-600 hover:text-brand-700 transition duration-150 btn-tactile brand-focus cursor-pointer"
+                      className="btn-tactile brand-focus cursor-pointer font-semibold text-brand-600 transition duration-150 hover:text-brand-700"
                     >
                       Crear cuenta
                     </button>
@@ -434,22 +413,21 @@ function LoginBenefit({
   text,
 }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3.5">
 
-      <div className="w-9 h-9 rounded-[10px] bg-white border border-brand-100 flex items-center justify-center flex-shrink-0">
+      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[10px] border border-brand-100 bg-white">
 
-        <Icon className="w-4 h-4 text-brand-600" />
+        <Icon className="h-[18px] w-[18px] text-brand-600" />
 
       </div>
 
-
       <div>
 
-        <p className="text-[12px] font-semibold text-navy-900">
+        <p className="text-[14px] font-semibold text-navy-900">
           {title}
         </p>
 
-        <p className="mt-1 text-[11px] leading-5 text-[#64748b]">
+        <p className="mt-1 text-[13px] leading-6 text-[#64748b]">
           {text}
         </p>
 
