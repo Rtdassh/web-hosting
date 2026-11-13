@@ -1,3 +1,4 @@
+import ModalLayer from '../ui/ModalLayer';
 import React, { useState, useEffect } from 'react';
 import {
   X,
@@ -65,19 +66,19 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
     .map((i) => i.assigned_port);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-navy-900/60 backdrop-blur-sm modal-backdrop-animate">
-      <div className="relative w-full max-w-lg bg-white border border-[#dfe7e4] rounded-2xl shadow-[0_20px_60px_rgba(23,40,56,0.18)] flex flex-col overflow-hidden text-slate-900 modal-dialog-animate">
+    <ModalLayer className="p-3 sm:p-4 modal-backdrop-animate" onClose={onClose}>
+      <div className="relative w-full max-w-lg bg-white border border-[#dfe7e4] rounded-[20px] max-h-[90dvh] shadow-[0_20px_60px_rgba(23,40,56,0.18)] flex flex-col overflow-hidden text-slate-900 modal-dialog-animate">
 
         {/* Header */}
-        <div className="relative px-6 py-4 bg-gradient-to-r from-brand-50/90 to-white border-b border-brand-100 flex items-center justify-between">
+        <div className="relative px-6 py-4 bg-white border-b border-brand-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-200 flex items-center justify-center text-brand-600">
               <Activity className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand-700">
                   Infraestructura Operativa
                 </span>
               </div>
@@ -100,10 +101,10 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
         <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
           {/* Métricas Principales */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="p-3.5 rounded-xl bg-[#f8fbfa] border border-[#e1ebe6]">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">FastAPI Core</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-700 bg-brand-100/70 px-2 py-0.5 rounded-full">
                   <Check className="w-3 h-3" /> Online
                 </span>
               </div>
@@ -115,10 +116,10 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="p-3.5 rounded-xl bg-[#f8fbfa] border border-[#e1ebe6]">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">PostgreSQL 16</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-700 bg-brand-100/70 px-2 py-0.5 rounded-full">
                   <Check className="w-3 h-3" /> Conectado
                 </span>
               </div>
@@ -162,7 +163,7 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
                 <Server className="w-4 h-4 text-brand-600" />
                 <h3 className="text-xs font-bold text-slate-900">Servidor de Aplicaciones</h3>
               </div>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              <span className="text-[10px] font-bold text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200">
                 Entornos Aislados
               </span>
             </div>
@@ -198,7 +199,7 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
 
           {/* Prueba de Latencia en Vivo */}
           {pingResult && (
-            <div className={`p-3 rounded-xl border text-xs flex items-center justify-between fade-slide-down ${pingResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'
+            <div className={`p-3 rounded-xl border text-xs flex items-center justify-between fade-slide-down ${pingResult.success ? 'bg-brand-50 border-brand-200 text-brand-800' : 'bg-red-50 border-red-200 text-red-800'
               }`}>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -239,7 +240,7 @@ export default function SystemStatusModal({ isOpen, onClose, instances = [] }) {
         </div>
 
       </div>
-    </div>
+    </ModalLayer>
   );
 }
 

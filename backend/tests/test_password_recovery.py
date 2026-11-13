@@ -213,7 +213,7 @@ def test_smtp_delivery_builds_link_and_uses_configured_starttls_without_network(
     )
 
     assert smtp.message["To"] == "user@example.invalid"
-    assert "#reset_token=test-reset-token-never-log-this" in smtp.message.get_content()
+    assert "?reset_token=test-reset-token-never-log-this" in smtp.message.get_content()
     assert smtp.message["From"] == "no-reply@example.invalid"
 
 

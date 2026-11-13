@@ -40,7 +40,7 @@ const DEFAULT_PLANS = [
     features: [
       '1 sitio activo',
       '128 MB RAM por sitio',
-      '0.25 vCPU dedicada',
+      '0.25 vCPU de límite',
       'Despliegue mediante .zip',
       'Telemetría básica',
     ],
@@ -50,7 +50,7 @@ const DEFAULT_PLANS = [
     name: 'Developer',
     description:
       'El equilibrio ideal para desarrollar, probar y mantener varios proyectos en línea.',
-    price: 9.99,
+    price: 4.99,
     max_instances: 3,
     max_ram_mb: 256,
     cpu_quota: 0.5,
@@ -58,7 +58,7 @@ const DEFAULT_PLANS = [
     features: [
       'Hasta 3 sitios simultáneos',
       '256 MB RAM por sitio',
-      '0.50 vCPU dedicada',
+      '0.50 vCPU de límite',
       'Plantillas en 1 clic',
       'Telemetría y logs',
       'Mayor capacidad de despliegue',
@@ -69,14 +69,14 @@ const DEFAULT_PLANS = [
     name: 'Pro',
     description:
       'Más capacidad para equipos, portafolios grandes y proyectos con mayores exigencias.',
-    price: 24.99,
+    price: 9.99,
     max_instances: 10,
     max_ram_mb: 512,
     cpu_quota: 1,
     features: [
       'Hasta 10 sitios simultáneos',
       '512 MB RAM por sitio',
-      '1.00 vCPU dedicada',
+      '1.00 vCPU de límite',
       'Plantillas en 1 clic',
       'Telemetría completa',
       'Máxima capacidad Codrop',
@@ -245,22 +245,7 @@ export default function PricingPage({
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f5f9f7] px-5 py-8 text-[#172838] sm:px-6 lg:px-10">
-      {/* Ambient background */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-28 top-24 h-80 w-80 rounded-full bg-[#28B586]/[0.07] blur-3xl" />
-        <div className="absolute -right-24 top-0 h-96 w-96 rounded-full bg-[#1F3141]/[0.05] blur-3xl" />
-
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage:
-              'linear-gradient(#172838 1px, transparent 1px), linear-gradient(90deg, #172838 1px, transparent 1px)',
-            backgroundSize: '34px 34px',
-          }}
-        />
-      </div>
-
+    <div className="relative px-5 py-8 text-[#172838] sm:px-6 lg:px-8 xl:px-10">
       <div className="relative mx-auto max-w-[1280px]">
         {/* Top actions */}
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

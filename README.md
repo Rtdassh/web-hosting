@@ -513,6 +513,20 @@ La API sigue los estándares RESTful con serialización JSON estricta y códigos
 
 ## Usage
 
+### Preparar y cargar un sitio estático
+
+Codrop aloja HTML, CSS y JavaScript, así como aplicaciones React, Vue y Svelte **compiladas para publicación estática**. En un proyecto con herramientas de compilación, genera primero los archivos de producción en tu equipo:
+
+```bash
+npm run build
+```
+
+Comprime **el contenido** de la carpeta de salida (`dist/` o `build/`, según el proyecto), de modo que `index.html` quede en la raíz del ZIP junto con sus recursos. Para un sitio HTML tradicional, empaqueta directamente sus archivos con esa misma estructura. El límite es **25 MB por ZIP y 100 MB descomprimidos**.
+
+Carga únicamente los archivos publicados: excluye el código fuente, `node_modules/` y archivos `.env`. Codrop no compila automáticamente los proyectos ni ejecuta SSR o servidores backend; el resultado debe funcionar como sitio estático servido por Nginx.
+
+Al enviar el formulario de despliegue, este se cierra y **Mis proyectos** muestra un indicador indeterminado mientras se procesa la petición. Mantén la pestaña abierta hasta que termine. Si ocurre un error, podrás revisar los datos del formulario y volver a intentarlo.
+
 ### 1. Despliegue de un Sitio de Muestra con cURL
 
 Puedes probar el flujo completo de la plataforma mediante la terminal utilizando el sitio de muestra incluido en `samples/test-site.zip`:
@@ -620,3 +634,8 @@ Este proyecto es desarrollado con fines académicos y de investigación en ingen
 <div align="center">
   <sub>Construido con altos estándares de ingeniería y calidad ISO/IEC 25010 • Codrop Team 2026</sub>
 </div>
+
+
+### Actualizaciones, rollback y monitoreo
+
+El detalle de cada sitio incluye publicación de versiones, restauración, disponibilidad HTTP y estadísticas de logs recientes. Consulta [la guía sin costo](docs/MEJORAS_SIN_COSTO.md) para límites, operación, HTTPS local y demostraciones gratuitas.

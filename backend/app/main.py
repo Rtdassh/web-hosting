@@ -1,4 +1,6 @@
 import logging
+import asyncio
+from app.services.sync_worker import SyncWorker
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -15,13 +17,42 @@ logger = logging.getLogger("paas-core")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Schema and seed are explicit deployment steps; API startup never writes them.
+    # El esquema y las semillas se gestionan fuera del arranque.
     logger.info("Esquema gestionado con Alembic; semillas mediante app.seed.")
-    yield
+
+    worker = SyncWorker(interval_seconds=30)
+    app.state.sync_worker = worker
+    task = asyncio.create_task(worker.start_periodic_sync())
+    await asyncio.sleep(0)
+
+    try:
+        yield
+    finally:
+        worker.stop()
+        await task
+        logger.info("SyncWorker detenido correctamente.")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+    version="1.0.0",
+    description=(
+        "API REST de Codrop CloudPaaS para registro, autenticación, verificación de correo, "
+        "administración de instancias y suscripciones. "
+        "Los endpoints protegidos requieren un JWT Bearer válido."
+    ),
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "Autenticación",
+            "description": "Registro, activación de correo, inicio de sesión y recuperación.",
+        },
+        {
+            "name": "Health Check",
+            "description": "Comprobación de disponibilidad de la API.",
+        },
+    ],
     lifespan=lifespan
 )
 

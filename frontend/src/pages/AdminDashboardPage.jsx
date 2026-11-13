@@ -1,3 +1,4 @@
+import ModalLayer from '../components/ui/ModalLayer';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
@@ -612,7 +613,7 @@ export default function AdminDashboardPage({ onBack }) {
 
         {/* Force action modal */}
         {selectedInstanceForAction && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#10202d]/80 p-4 backdrop-blur-md modal-backdrop-animate">
+          <ModalLayer className="p-4 modal-backdrop-animate">
             <div className="w-full max-w-[500px] overflow-hidden rounded-[26px] border border-white/10 bg-white shadow-[0_35px_90px_rgba(9,24,34,0.4)] modal-dialog-animate">
               <div className="relative bg-[#172838] px-6 py-5 text-white">
                 <button
@@ -727,7 +728,7 @@ export default function AdminDashboardPage({ onBack }) {
                 </div>
               </div>
             </div>
-          </div>
+          </ModalLayer>
         )}
       </div>
     </div>

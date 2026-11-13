@@ -331,17 +331,30 @@ class PostgreSQLMigrationTests(unittest.TestCase):
         with patch.object(docker, "from_env", side_effect=DockerException("Test isolation")):
             from app.main import app
         from app.core.database import get_db
+        from app.core.rate_limit import RateLimitMiddleware
+        from app.services.auth_service import auth_service
         from fastapi.testclient import TestClient
         def test_db():
             with Session(engine) as db:
                 yield db
         app.dependency_overrides[get_db] = test_db
+        class CapturingDelivery:
+            def __init__(self):
+                self.tokens = []
+
+            def send_email_verification(self, email, token):
+                self.tokens.append((email, token))
+
+        delivery = CapturingDelivery()
+        RateLimitMiddleware.reset_limits()
         try:
-            with TestClient(app) as client:
+            with patch.object(auth_service, "password_reset_delivery", delivery), TestClient(app) as client:
                 payload = {"email": "migration@example.com", "password": "LocalTest123!", "full_name": "Migration Test"}
                 self.assertEqual(client.post("/api/v1/auth/register", json=payload).status_code, 201)
+                self.assertEqual(delivery.tokens[0][0], payload["email"])
                 with Session(engine) as db:
                     registered_user = db.query(User).filter_by(email=payload["email"]).one()
+                    self.assertFalse(registered_user.is_verified)
                     registered_subscription = db.query(Subscription).filter_by(
                         user_id=registered_user.id,
                         status="active",
@@ -349,6 +362,11 @@ class PostgreSQLMigrationTests(unittest.TestCase):
                     self.assertEqual(registered_subscription.plan.name, "Free")
                     self.assertIsNotNone(registered_subscription.start_date)
                     self.assertFalse(registered_subscription.auto_renew)
+                verification = client.get(
+                    "/api/v1/auth/verify-email",
+                    params={"token": delivery.tokens[0][1]},
+                )
+                self.assertEqual(verification.status_code, 200)
                 login = client.post("/api/v1/auth/login", json={"email": payload["email"], "password": payload["password"]})
                 self.assertEqual(login.status_code, 200)
                 headers = {"Authorization": "Bearer " + login.json()["access_token"]}
@@ -470,6 +488,7 @@ class PostgreSQLMigrationTests(unittest.TestCase):
                 self.assertEqual(reused.status_code, 400)
         finally:
             app.dependency_overrides.pop(get_db, None)
+            RateLimitMiddleware.reset_limits()
         with Session(engine) as db:
             from app.models import PasswordResetToken
             user = db.query(User).first()

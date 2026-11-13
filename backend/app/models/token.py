@@ -1,6 +1,6 @@
 """
-Modelo de Tokens de Seguridad para Recuperación de Contraseña (RF-05 - Hito 80%).
-Entidad: PasswordResetToken.
+Legacy one-time-token table used for password recovery and email verification.
+Verification hashes are purpose-prefixed to prevent cross-use.
 """
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey

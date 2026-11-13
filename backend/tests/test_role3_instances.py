@@ -54,6 +54,7 @@ def make_instance(status=InstanceStatus.RUNNING):
 
 def make_db(*first_results):
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.side_effect = first_results
     return db
 

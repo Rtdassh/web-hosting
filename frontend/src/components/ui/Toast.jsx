@@ -57,7 +57,7 @@ export function ToastProvider({ children }) {
   const addToast = useCallback((toastData) => {
     setToasts((prev) => {
       // Keep maximum 4 toasts visible at a time
-      const filtered = prev.slice(-3);
+      const filtered = prev.filter((item) => item.id !== toastData.id).slice(-3);
       return [...filtered, toastData];
     });
   }, []);
@@ -88,7 +88,7 @@ export function Toaster({ toasts = [], exitingIds = new Set(), onDismiss }) {
     <aside
       aria-live="polite"
       aria-label="Notificaciones del sistema"
-      className="fixed bottom-5 right-5 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"
+      className="fixed top-5 right-0 sm:right-5 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"
     >
       {toasts.map((item) => (
         <ToastItem
@@ -107,6 +107,8 @@ function ToastItem({ item, isExiting, onDismiss }) {
   const remainingTimeRef = useRef(item.duration);
   const startTimeRef = useRef(Date.now());
   const timerRef = useRef(null);
+  const dismissRef = useRef(onDismiss);
+  dismissRef.current = onDismiss;
 
   useEffect(() => {
     if (item.duration === Infinity) return;
@@ -114,14 +116,14 @@ function ToastItem({ item, isExiting, onDismiss }) {
     if (!isPaused) {
       startTimeRef.current = Date.now();
       timerRef.current = setTimeout(() => {
-        onDismiss();
+        dismissRef.current();
       }, remainingTimeRef.current);
     }
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isPaused, item.duration, onDismiss]);
+  }, [isPaused, item.duration]);
 
   const handleMouseEnter = () => {
     setIsPaused(true);
@@ -177,6 +179,8 @@ function ToastItem({ item, isExiting, onDismiss }) {
       role="status"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onFocus={handleMouseEnter}
+      onBlur={handleMouseLeave}
       className={`pointer-events-auto relative flex items-start gap-3 p-3.5 sm:p-4 rounded-2xl border ${config.bg} ${
         isExiting ? 'toast-exit' : 'toast-enter'
       } cursor-pointer group select-none transition-transform active:scale-[0.98]`}

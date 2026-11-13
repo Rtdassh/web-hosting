@@ -519,7 +519,8 @@ class DebianPostgreSQLTests(unittest.TestCase):
             free = db.query(Plan).filter_by(name="Free").one()
             for identifier in range(1, 8):
                 db.add(User(id=identifier, email=f"debian{identifier}@example.com", hashed_password="synthetic",
-                            full_name="Synthetic Debian", role=UserRole.CLIENT, is_active=True))
+                            full_name="Synthetic Debian", role=UserRole.CLIENT, is_active=True,
+                            is_verified=True))
             db.flush()
             for identifier in range(1, 8):
                 db.execute(sa.text("""
@@ -800,8 +801,21 @@ class DebianPostgreSQLTests(unittest.TestCase):
         from app.services.billing_service import billing_service
         from app.schemas.user_schema import UserCreate
         from app.schemas.billing_schema import CheckoutRequest
+        class CapturingDelivery:
+            def __init__(self):
+                self.tokens = []
+
+            def send_email_verification(self, email, token):
+                self.tokens.append((email, token))
+
+        delivery = CapturingDelivery()
         with Session(engine) as db:
-            user = auth_service.register_user(UserCreate(email="after@example.com", full_name="After adoption", password="TestOnly123!"), db)
+            with patch.object(auth_service, "password_reset_delivery", delivery):
+                user = auth_service.register_user(UserCreate(
+                    email="after@example.com",
+                    full_name="After adoption",
+                    password="TestOnly123!",
+                ), db)
             self.assertEqual(user.id, 8)
             self.assertEqual(user.role, UserRole.CLIENT)
             self.assertEqual(user.created_at.tzinfo, timezone.utc)
@@ -831,13 +845,20 @@ class DebianPostgreSQLTests(unittest.TestCase):
             from app.main import app
         from fastapi.testclient import TestClient
         from app.core.database import get_db
+        from app.core.rate_limit import RateLimitMiddleware
         from app.core.security import create_access_token
+        RateLimitMiddleware.reset_limits()
         def test_db():
             with Session(engine) as db:
                 yield db
         app.dependency_overrides[get_db] = test_db
         try:
             with TestClient(app) as client:
+                verification = client.get(
+                    "/api/v1/auth/verify-email",
+                    params={"token": delivery.tokens[0][1]},
+                )
+                self.assertEqual(verification.status_code, 200)
                 login = client.post("/api/v1/auth/login", json={"email": "after@example.com", "password": "TestOnly123!"})
                 self.assertEqual(login.status_code, 200)
                 headers = {"Authorization": "Bearer " + login.json()["access_token"]}
@@ -858,6 +879,7 @@ class DebianPostgreSQLTests(unittest.TestCase):
                                              json={"target_plan_id": free_id}).status_code, 400)
         finally:
             app.dependency_overrides.pop(get_db, None)
+            RateLimitMiddleware.reset_limits()
         # A paid transaction makes the adoption route inapplicable; never backfill fake data.
         with connection.begin():
             session_settings(connection)

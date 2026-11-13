@@ -63,6 +63,7 @@ def test_missing_template_does_not_allocate_resources():
     from app.services import template_service as module
 
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     plan = SimpleNamespace(name="Free", max_instances=1)
     subscription = SimpleNamespace(plan=plan)
     db.query.return_value.filter.return_value.first.return_value = subscription
@@ -107,6 +108,7 @@ def test_plan_change_quota(active_sites, limit, blocked):
     from app.services.quota_service import validate_quota_downgrade
 
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.count.return_value = active_sites
     plan = SimpleNamespace(name="Destino", max_instances=limit)
 
@@ -128,6 +130,7 @@ def test_checkout_blocks_excess_quota_before_payment():
     from fastapi import HTTPException
 
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     plan = SimpleNamespace(id=1, name="Free", max_instances=1)
     db.query.return_value.filter.return_value.first.return_value = plan
     db.query.return_value.filter.return_value.count.return_value = 3
@@ -160,6 +163,7 @@ def test_client_cannot_execute_admin_actions(action):
 
     user = SimpleNamespace(id=1, role=UserRole.CLIENT)
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
 
     with patch.object(module, "docker_service") as docker_mock, \
          patch.object(module, "port_service") as port_mock:
@@ -204,6 +208,7 @@ def test_admin_docker_failure_preserves_resources(action, tmp_path):
     )
     admin = SimpleNamespace(id=1, role=UserRole.ADMIN)
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = instance
 
     with patch.object(module, "settings",
@@ -244,6 +249,7 @@ def test_admin_force_stop_records_audit():
     )
     admin = SimpleNamespace(id=1, role=UserRole.ADMIN)
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = instance
 
     with patch.object(module, "docker_service") as docker_mock, \
@@ -293,6 +299,7 @@ def test_admin_force_destroy_cleans_resources(tmp_path):
     )
     admin = SimpleNamespace(id=1, role=UserRole.ADMIN)
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = instance
 
     with patch.object(module, "settings",
@@ -347,6 +354,7 @@ def test_admin_destroy_rejects_unsafe_paths(location, tmp_path):
     )
     admin = SimpleNamespace(id=1, role=UserRole.ADMIN)
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = instance
 
     with patch.object(module, "settings",
@@ -412,6 +420,7 @@ def test_template_docker_failure_cleans_resources(tmp_path):
         name="Free", max_instances=1, max_ram_mb=128, cpu_quota=0.25
     )
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = (
         SimpleNamespace(plan=plan)
     )
@@ -457,6 +466,7 @@ def test_template_success_copies_files_and_links_port(tmp_path):
         name="Free", max_instances=1, max_ram_mb=128, cpu_quota=0.25
     )
     db = Mock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = (
         SimpleNamespace(plan=plan)
     )

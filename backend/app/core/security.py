@@ -3,7 +3,6 @@ M贸dulo de seguridad: autenticaci贸n JWT y dependencias de autorizaci贸n para Fa
 Las funciones puras de hashing est谩n en app.core.hashing.
 """
 from datetime import datetime, timedelta, timezone
-from typing import Any, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -16,19 +15,32 @@ from app.core.hashing import verify_password, get_password_hash  # noqa: F401 鈥
 from app.models.user import User, UserRole
 
 
-security_scheme = HTTPBearer(auto_error=True)
+security_scheme = HTTPBearer(auto_error=False)
 
 
-def create_access_token(subject: Union[str, Any], role: str, expires_delta: timedelta = None) -> str:
+def create_access_token(
+    subject: int | str,
+    role: str,
+    expires_delta: timedelta | None = None,
+) -> str:
     """Crea un token JWT firmado con subject (user id), role y expiraci贸n."""
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    subject_value = str(subject)
+    if not subject_value.isdecimal() or int(subject_value) < 1:
+        raise ValueError("JWT subject must be a positive user identifier.")
+    if role not in {user_role.value for user_role in UserRole}:
+        raise ValueError("JWT role is invalid.")
+
+    max_lifetime = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    lifetime = max_lifetime if expires_delta is None else expires_delta
+    if lifetime <= timedelta(0) or lifetime > max_lifetime:
+        raise ValueError("JWT lifetime must be positive and within the configured maximum.")
+
+    expire = datetime.now(timezone.utc) + lifetime
 
     to_encode = {
-        "sub": str(subject),
+        "sub": subject_value,
         "role": role,
+        "iat": datetime.now(timezone.utc),
         "exp": expire
     }
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
@@ -36,20 +48,33 @@ def create_access_token(subject: Union[str, Any], role: str, expires_delta: time
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme),
     db: Session = Depends(get_db)
 ) -> User:
     """Valida el token JWT del encabezado Authorization: Bearer <token> y retorna el usuario."""
-    token = credentials.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token de acceso inv谩lido o expirado.",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if credentials is None:
+        raise credentials_exception
+
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id_str: str = payload.get("sub")
-        if user_id_str is None:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        user_id_str = payload.get("sub")
+        role_claim = payload.get("role")
+        if (
+            not isinstance(user_id_str, str)
+            or not user_id_str.isdecimal()
+            or int(user_id_str) < 1
+            or not isinstance(role_claim, str)
+            or role_claim not in {role.value for role in UserRole}
+        ):
             raise credentials_exception
         user_id = int(user_id_str)
     except (JWTError, ValueError):
@@ -58,8 +83,8 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario inactivo.")
+    if not user.is_active or not user.is_verified or user.role.value != role_claim:
+        raise credentials_exception
     return user
 
 

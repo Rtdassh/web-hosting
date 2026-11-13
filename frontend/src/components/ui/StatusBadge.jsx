@@ -24,8 +24,8 @@ export default function StatusBadge({
   };
 
   const getDotStyle = () => {
-    if (isRunning) return 'bg-brand-500 animate-pulse';
-    if (isCreating) return 'bg-amber-500 animate-ping';
+    if (isRunning) return 'bg-brand-500 status-dot-live';
+    if (isCreating) return 'bg-amber-500 status-dot-live';
     if (isFailed) return 'bg-rose-500';
     return 'bg-slate-400';
   };
@@ -44,9 +44,10 @@ export default function StatusBadge({
 
   return (
     <span
+      aria-label={!showLabel ? getStatusText() : undefined}
       className={`inline-flex items-center rounded-full font-semibold border select-none transition-colors duration-150 ${getBadgeStyle()} ${sizeClasses} ${className}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${getDotStyle()}`} />
+      <span aria-hidden="true" className={`w-1.5 h-1.5 rounded-full ${getDotStyle()}`} />
       {showLabel && <span>{getStatusText()}</span>}
     </span>
   );

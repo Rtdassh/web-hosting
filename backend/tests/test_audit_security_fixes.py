@@ -107,6 +107,7 @@ def test_instance_destroy_path_confinement_blocks_prefix_attack(tmp_path):
     )
     user = SimpleNamespace(id=10, role=UserRole.CLIENT)
     db = MagicMock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = instance
 
     mock_docker = MagicMock()
@@ -174,6 +175,7 @@ def test_template_deploy_blocks_expired_subscription():
     )
 
     db = MagicMock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = expired_sub
     user = SimpleNamespace(id=99)
 
@@ -214,6 +216,7 @@ def test_sync_worker_reconciles_missing_container_to_failed():
         status=InstanceStatus.RUNNING
     )
     db = MagicMock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.all.return_value = [inst]
 
     mock_docker = MagicMock()
@@ -256,6 +259,7 @@ def test_sync_worker_reconciles_stopped_container():
         status=InstanceStatus.RUNNING
     )
     db = MagicMock()
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.all.return_value = [inst]
 
     mock_docker = MagicMock()
@@ -292,6 +296,7 @@ def test_security_headers_injected_on_responses():
     assert response.headers.get("X-Content-Type-Options") == "nosniff"
     assert response.headers.get("X-Frame-Options") == "DENY"
     assert response.headers.get("X-XSS-Protection") == "1; mode=block"
+    assert "default-src 'self'" in response.headers.get("Content-Security-Policy", "")
 
 
 def test_rate_limit_middleware_blocks_login_abuse():
@@ -320,3 +325,11 @@ def test_rate_limit_middleware_blocks_login_abuse():
     finally:
         app.dependency_overrides.pop(get_db, None)
         RateLimitMiddleware.reset_limits()
+
+
+@pytest.fixture(autouse=True)
+def isolate_site_operational_io(monkeypatch):
+    from app.services.site_monitor_service import site_monitor_service
+    from app.services.site_release_service import site_release_service
+    monkeypatch.setattr(site_monitor_service, 'capture', lambda instance: None)
+    monkeypatch.setattr(site_release_service, 'recover', lambda instance: None)

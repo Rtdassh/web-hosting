@@ -64,6 +64,7 @@ def test_domain_exceptions_hierarchy_and_status_codes():
 # ==============================================================================
 def test_auth_service_register_success():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     # No existing user
     db.query.return_value.filter.return_value.first.side_effect = [
         None,  # User check
@@ -76,10 +77,17 @@ def test_auth_service_register_success():
         full_name="Test User"
     )
 
-    created_user = AuthService.register_user(user_in, db)
+    class CapturingDelivery:
+        def send_email_verification(self, email, token):
+            self.delivery = (email, token)
+
+    delivery = CapturingDelivery()
+    created_user = AuthService(password_reset_delivery=delivery).register_user(user_in, db)
     assert created_user.email == "test@example.com"
     assert created_user.full_name == "Test User"
     assert created_user.role == UserRole.CLIENT
+    assert created_user.is_verified is False
+    assert delivery.delivery[0] == created_user.email
     assert verify_password("password123", created_user.hashed_password) is True
     assert db.add.call_count >= 1
     assert db.commit.call_count >= 1
@@ -87,6 +95,7 @@ def test_auth_service_register_success():
 
 def test_auth_service_register_duplicate_email_raises_400():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = SimpleNamespace(id=1)
 
     user_in = UserCreate(
@@ -96,19 +105,21 @@ def test_auth_service_register_duplicate_email_raises_400():
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        AuthService.register_user(user_in, db)
+        AuthService(password_reset_delivery=object()).register_user(user_in, db)
     assert exc_info.value.status_code == 400
     assert "ya existe un usuario" in exc_info.value.detail.lower()
 
 
 def test_auth_service_authenticate_user_success():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     hashed = get_password_hash("mysecretpass")
     mock_user = SimpleNamespace(
         id=42,
         email="login@test.com",
         hashed_password=hashed,
         is_active=True,
+        is_verified=True,
         role=UserRole.CLIENT
     )
     db.query.return_value.filter.return_value.first.return_value = mock_user
@@ -123,12 +134,14 @@ def test_auth_service_authenticate_user_success():
 
 def test_auth_service_authenticate_user_invalid_password_raises_401():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     hashed = get_password_hash("correctpass")
     mock_user = SimpleNamespace(
         id=42,
         email="login@test.com",
         hashed_password=hashed,
         is_active=True,
+        is_verified=True,
         role=UserRole.CLIENT
     )
     db.query.return_value.filter.return_value.first.return_value = mock_user
@@ -139,14 +152,16 @@ def test_auth_service_authenticate_user_invalid_password_raises_401():
     assert exc_info.value.status_code == 401
 
 
-def test_auth_service_authenticate_inactive_user_raises_400():
+def test_auth_service_authenticate_inactive_user_raises_401():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     hashed = get_password_hash("correctpass")
     mock_user = SimpleNamespace(
         id=42,
         email="inactive@test.com",
         hashed_password=hashed,
         is_active=False,
+        is_verified=True,
         role=UserRole.CLIENT
     )
     db.query.return_value.filter.return_value.first.return_value = mock_user
@@ -154,17 +169,19 @@ def test_auth_service_authenticate_inactive_user_raises_400():
     login_data = UserLogin(email="inactive@test.com", password="correctpass")
     with pytest.raises(HTTPException) as exc_info:
         AuthService.authenticate_user(login_data, db)
-    assert exc_info.value.status_code == 400
+    assert exc_info.value.status_code == 401
 
 
 def test_auth_service_get_user_profile():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     user = SimpleNamespace(
         id=10,
         email="profile@test.com",
         full_name="Profile User",
         role=UserRole.CLIENT,
         is_active=True,
+        is_verified=True,
         created_at="2026-10-12T00:00:00Z"
     )
     plan = SimpleNamespace(
@@ -189,6 +206,7 @@ def test_auth_service_get_user_profile():
 # ==============================================================================
 def test_instance_service_get_or_404():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     db.query.return_value.filter.return_value.first.return_value = None
 
     with pytest.raises(HTTPException) as exc_info:
@@ -216,6 +234,7 @@ def test_instance_service_enforce_ownership():
 
 def test_instance_service_execute_action_unsupported():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     instance = SimpleNamespace(id=1, user_id=5, container_id="c1", status=InstanceStatus.RUNNING)
     db.query.return_value.filter.return_value.first.return_value = instance
 
@@ -232,6 +251,7 @@ def test_instance_service_execute_action_unsupported():
 
 def test_instance_service_execute_action_success_with_injected_docker():
     db = MagicMock(name="db_session")
+    db.query.return_value.filter.return_value.with_for_update.return_value = db.query.return_value.filter.return_value
     instance = SimpleNamespace(id=1, user_id=5, container_id="c1", status=InstanceStatus.STOPPED)
     subscription = SimpleNamespace(status="active", plan=SimpleNamespace(name="Free", max_instances=1))
     db.query.return_value.filter.return_value.first.side_effect = [instance, subscription]

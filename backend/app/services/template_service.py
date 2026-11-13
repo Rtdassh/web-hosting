@@ -62,16 +62,21 @@ class TemplateService:
                 detail=f"Identificador de plantilla '{template_id}' inválido."
             )
 
-        # Ruta 1: /srv/hosting/plantillas/<id>
-        srv_candidate = Path(f"/srv/hosting/plantillas/{template_id}")
-        if srv_candidate.exists() and srv_candidate.is_dir():
-            return srv_candidate
+        candidate_paths = [
+            Path(f"/srv/hosting/plantillas/{template_id}"),
+            Path(f"/srv/hosting/templates/{template_id}"),
+            (settings.RESOLVED_STORAGE_PATH.parent / "templates" / template_id).resolve(),
+            (settings.RESOLVED_STORAGE_PATH.parent / "plantillas" / template_id).resolve(),
+            (Path(__file__).resolve().parents[3] / "infra" / "host-storage" / "templates" / template_id).resolve(),
+            (Path(__file__).resolve().parents[3] / "infra" / "host-storage" / "plantillas" / template_id).resolve(),
+        ]
 
-        # Ruta 2: infra/host-storage/templates/<id>
-        templates_base = (settings.RESOLVED_STORAGE_PATH.parent / "templates").resolve()
-        repo_candidate = (templates_base / template_id).resolve()
-        if repo_candidate.is_relative_to(templates_base) and repo_candidate.exists() and repo_candidate.is_dir():
-            return repo_candidate
+        for candidate in candidate_paths:
+            try:
+                if candidate.exists() and candidate.is_dir():
+                    return candidate
+            except (OSError, ValueError):
+                continue
 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

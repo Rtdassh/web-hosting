@@ -11,13 +11,25 @@ PLANS = (
     dict(name="Free", description="1 Sitio Web, 128MB RAM, 0.25 vCPU", price=0.0,
          max_instances=1, max_ram_mb=128, cpu_quota=0.25,
          billing_period="monthly", is_active=True),
-    dict(name="Developer", description="3 Sitios Web, 256MB RAM, 0.50 vCPU", price=9.99,
+    dict(name="Developer", description="3 Sitios Web, 256MB RAM, 0.50 vCPU", price=4.99,
          max_instances=3, max_ram_mb=256, cpu_quota=0.50,
          billing_period="monthly", is_active=True),
-    dict(name="Pro", description="10 Sitios Web, 512MB RAM, 1.0 vCPU", price=24.99,
+    dict(name="Pro", description="10 Sitios Web, 512MB RAM, 1.0 vCPU", price=9.99,
          max_instances=10, max_ram_mb=512, cpu_quota=1.0,
          billing_period="monthly", is_active=True),
 )
+
+
+def update_plan_prices(db) -> dict[str, float]:
+    """Explicit catalog repricing; never modifies subscriptions or financial history."""
+    expected = {values['name']: values['price'] for values in PLANS}
+    plans = db.execute(select(Plan).where(Plan.name.in_(expected)).with_for_update()).scalars().all()
+    if {plan.name for plan in plans} != set(expected):
+        raise RuntimeError('Incomplete plan catalog; no prices changed.')
+    for plan in plans:
+        plan.price = expected[plan.name]
+    db.flush()
+    return expected
 
 
 def seed_db(db=None):
@@ -57,11 +69,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Explicit additive seed after Alembic upgrade")
     parser.add_argument("--use-project-database", action="store_true")
+    parser.add_argument("--update-prices", action="store_true", help="Explicitly update current catalog prices only")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     seed_engine = create_engine(migration_url(args.use_project_database), hide_parameters=True)
     try:
         with Session(seed_engine) as seed_session:
-            seed_db(seed_session)
+            if args.update_prices:
+                with seed_session.begin():
+                    logger.info("Updated catalog: %s", update_plan_prices(seed_session))
+            else:
+                seed_db(seed_session)
     finally:
         seed_engine.dispose()

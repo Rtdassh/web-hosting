@@ -1,9 +1,31 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import Landing from '../pages/Landing';
 
 describe('Landing Page UI Component', () => {
+  it('reserva el protagonismo al producto y limita la mascota a dos apariciones', () => {
+    const { container } = render(<Landing />);
+    expect(container.querySelectorAll('img[src*="codrop-isotipo"], .mascot-brand img')).toHaveLength(2);
+    expect(screen.getByRole('img', { name: /Ilustración de una web publicada/ })).toBeInTheDocument();
+    expect(screen.queryByText('HOSTING MODERNO')).not.toBeInTheDocument();
+  });
+
+  it('explora el proceso de publicación sin crear una cuenta ni publicar datos', () => {
+    const onRegister = vi.fn();
+    render(<Landing onRegister={onRegister} />);
+    const preview = screen.getByRole('status');
+    expect(within(preview).getByText('Todo empieza con tus archivos')).toBeInTheDocument();
+    const prepare = screen.getByRole('button', { name: /2\. Codrop lo Prepara/ });
+    fireEvent.click(prepare);
+    expect(prepare).toHaveAttribute('aria-pressed', 'true');
+    expect(within(preview).getByText('Tu espacio, preparado para ti')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /3\. Comparte tu Enlace/ }));
+    expect(within(preview).getByText('Listo para compartir')).toBeInTheDocument();
+    expect(onRegister).not.toHaveBeenCalled();
+    expect(screen.queryByText('Encuentra tu punto de partida')).not.toBeInTheDocument();
+  });
+
   it('debe renderizar el encabezado principal y propuesta de valor', () => {
     render(<Landing onLogin={vi.fn()} onRegister={vi.fn()} />);
 
@@ -34,7 +56,7 @@ describe('Landing Page UI Component', () => {
 
     expect(screen.getByText('$0')).toBeInTheDocument();
     expect(screen.getByText('$9.99')).toBeInTheDocument();
-    expect(screen.getByText('$24.99')).toBeInTheDocument();
+    expect(screen.getByText('$4.99')).toBeInTheDocument();
 
     expect(screen.getByText(/128 MB de memoria rápida exclusiva/i)).toBeInTheDocument();
     expect(screen.getByText(/256 MB RAM por sitio/i)).toBeInTheDocument();

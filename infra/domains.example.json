@@ -1,0 +1,4 @@
+[
+  {"domain": "codrop.test", "port": 5173, "local": true},
+  {"domain": "mi-sitio.test", "port": 30001, "local": true}
+]

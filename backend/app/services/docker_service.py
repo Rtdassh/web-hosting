@@ -131,7 +131,11 @@ class DockerService:
         extra_kwargs["cap_drop"] = ["ALL"]
         extra_kwargs["security_opt"] = ["no-new-privileges:true"]
         extra_kwargs["sysctls"] = {"net.ipv4.ip_unprivileged_port_start": "0"}
-        extra_kwargs["tmpfs"] = {"/tmp": "rw,noexec,nosuid,size=16m"}
+        extra_kwargs["tmpfs"] = {
+            "/tmp": "rw,noexec,nosuid,size=16m",
+            "/var/cache/nginx": "rw,noexec,nosuid,size=16m",
+            "/var/run": "rw,noexec,nosuid,size=4m",
+        }
 
         container = self.client.containers.run(
             image=image_name,

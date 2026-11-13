@@ -63,6 +63,24 @@ def inspect_orphans(dry_run: bool = True):
         # 2. Detectar huérfanos en Docker (existen en Docker pero no en BD)
         orphans_in_docker = []
         for cid, container in docker_map.items():
+            # A release temporarily owns two containers. Recheck under the same
+            # row lock used by publishing instead of deleting from a stale snapshot.
+            instance_uuid = container.labels.get("instance_uuid")
+            owner = next((inst for inst in db_instances if inst.uuid == instance_uuid), None)
+            if owner:
+                locked_owner = db.query(Instance).filter(
+                    Instance.id == owner.id
+                ).populate_existing().with_for_update(skip_locked=True).first()
+                if locked_owner is None:
+                    continue
+                from app.services.site_storage_service import read_json, site_data_dir
+                pending = read_json(site_data_dir(locked_owner) / "handover.json", {})
+                if (
+                    locked_owner.container_id in (cid, container.short_id)
+                    or pending.get("old_container") in (cid, container.short_id)
+                    or pending.get("new_name") == container.name
+                ):
+                    continue
             if cid not in db_container_ids and container.short_id not in db_container_ids:
                 orphans_in_docker.append(container)
 

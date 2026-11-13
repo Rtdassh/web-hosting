@@ -17,6 +17,8 @@ import {
   Layers,
 } from 'lucide-react';
 
+import SiteManagementPanel from './SiteManagementPanel';
+import SiteToolsPanel from './SiteToolsPanel';
 import StatusBadge from '../ui/StatusBadge';
 import CopyButton from '../ui/CopyButton';
 import LoadingButton from '../ui/LoadingButton';
@@ -36,6 +38,7 @@ import InstanceMetricsCard from './InstanceMetricsCard';
  */
 export default function InstanceDetailView({
   instance,
+  section = 'all',
   actionLoading = null,
   onBack,
   onAction,
@@ -43,8 +46,11 @@ export default function InstanceDetailView({
   onOpenLogs,
   onDestroy,
   formatDate,
+  onChanged,
 }) {
   if (!instance) return null;
+
+  const sectionLabel = { overview: 'Resumen del sitio', settings: 'Configuración y respaldo', files: 'Archivos', activity: 'Actividad', releases: 'Publicaciones y disponibilidad', server: 'Servidor y rendimiento', danger: 'Eliminar proyecto' }[section];
 
   const isRunning = instance.status === 'running';
 
@@ -71,7 +77,7 @@ export default function InstanceDetailView({
       {/* =====================================================
           1. CABECERA DE NAVEGACIÓN Y CONTEXTO
       ====================================================== */}
-      <header className="bg-white border border-[#dfe7e4] rounded-[22px] p-6 sm:p-7 shadow-[0_10px_32px_rgba(23,40,56,0.035)] relative overflow-hidden">
+      <header className="site-detail-hero border border-brand-100 rounded-[22px] p-6 sm:p-7 shadow-[0_12px_40px_rgba(23,40,56,0.04)] relative overflow-hidden bg-gradient-to-br from-white via-white to-brand-50">
         {/* Acento lateral de marca */}
         <div
           className={`absolute left-0 top-0 bottom-0 w-[4px] ${
@@ -80,27 +86,27 @@ export default function InstanceDetailView({
         />
 
         {/* Botón de retorno a la vista principal y Breadcrumb */}
-        <div className="flex items-center justify-between gap-4 mb-5">
+        <div className="relative z-10 flex items-center justify-between gap-4 mb-5">
           <button
             type="button"
             onClick={onBack}
-            className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-navy-900 bg-white hover:bg-slate-50 border border-slate-200 transition duration-150 btn-tactile cursor-pointer"
+            className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-700 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-100 shadow-sm transition duration-150 btn-tactile brand-focus cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-slate-400 group-hover:text-navy-900 group-hover:-translate-x-0.5 transition-transform duration-150" />
             <span>Volver a proyectos</span>
           </button>
 
           <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400 font-medium">
-            <span>Workspace</span>
+            <span>Mis sitios</span>
             <span>/</span>
             <span className="text-slate-600 font-semibold truncate max-w-[200px]">
-              {instance.name}
+              {sectionLabel || instance.name}
             </span>
           </div>
         </div>
 
         {/* Fila principal: Mascota, Nombre, Estado y Metadatos secundarios */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4 min-w-0">
             <ServerMascot
               status={instance.status}
@@ -119,14 +125,14 @@ export default function InstanceDetailView({
               {/* Metadatos secundarios de despliegue */}
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                 <span className="inline-flex items-center gap-1.5 font-medium">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <Calendar className="w-3.5 h-3.5 text-brand-600 shrink-0" />
                   Desplegado el {formattedDate}
                 </span>
 
                 <span className="hidden sm:inline text-slate-300">•</span>
 
                 <span className="inline-flex items-center gap-1.5 font-medium">
-                  <Box className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <Box className="w-3.5 h-3.5 text-brand-600 shrink-0" />
                   Entorno: <span className="font-semibold text-slate-700">Web Estática</span>
                 </span>
               </div>
@@ -139,7 +145,7 @@ export default function InstanceDetailView({
               href={instance.public_url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-[10px] bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 text-xs font-bold transition duration-150 btn-tactile shrink-0"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-[10px] bg-brand-500 hover:bg-brand-600 border border-brand-500 text-white shadow-[0_12px_28px_rgba(40,181,134,0.22)] text-xs font-bold transition duration-150 btn-tactile brand-focus shrink-0"
             >
               <span>Abrir sitio web</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -148,12 +154,15 @@ export default function InstanceDetailView({
         </div>
       </header>
 
+      {['all', 'settings', 'files', 'activity'].includes(section) && <SiteManagementPanel key={`${instance.id}-${section}`} instance={instance} onChanged={onChanged} section={section === 'all' ? undefined : section} />}
+
       {/* =====================================================
           2. PANEL DE ENLACES Y CONECTIVIDAD
       ====================================================== */}
-      <section className="bg-white border border-[#dfe7e4] rounded-[20px] p-6 sm:p-7 shadow-[0_8px_28px_rgba(23,40,56,0.035)]">
-        <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-5">
-          <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
+      {['all', 'overview'].includes(section) && (
+      <section className="site-detail-panel p-6 sm:p-7">
+        <div className="site-detail-section-heading flex items-center gap-3">
+          <div className="w-9 h-9 rounded-[10px] bg-brand-500 border border-brand-500 flex items-center justify-center text-white shadow-[0_6px_14px_rgba(40,181,134,0.15)]">
             <Globe className="w-4 h-4" />
           </div>
           <div>
@@ -168,10 +177,10 @@ export default function InstanceDetailView({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Bloque URL Pública */}
-          <div className="p-4 rounded-[14px] bg-[#f8fbfa] border border-[#e1ebe6] flex flex-col justify-between">
+          <div className="p-4 rounded-[14px] bg-brand-50/60 border border-brand-100 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase font-bold tracking-[0.14em] text-[#94a3b8]">
+                <span className="text-[10px] uppercase font-bold tracking-[0.14em] text-brand-700">
                   URL Pública
                 </span>
                 {instance.public_url && (
@@ -208,10 +217,10 @@ export default function InstanceDetailView({
           </div>
 
           {/* Bloque Puerto TCP */}
-          <div className="p-4 rounded-[14px] bg-[#f8fbfa] border border-[#e1ebe6] flex flex-col justify-between">
+          <div className="p-4 rounded-[14px] bg-brand-50/60 border border-brand-100 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase font-bold tracking-[0.14em] text-[#94a3b8]">
+                <span className="text-[10px] uppercase font-bold tracking-[0.14em] text-brand-700">
                   Puerto Asignado
                 </span>
                 {instance.assigned_port && (
@@ -239,13 +248,15 @@ export default function InstanceDetailView({
           </div>
         </div>
       </section>
+      )}
 
       {/* =====================================================
           3. BARRA DE CONTROL OPERATIVO (ACCIONES PRIMARIAS)
       ====================================================== */}
-      <section className="bg-white border border-[#dfe7e4] rounded-[20px] p-6 sm:p-7 shadow-[0_8px_28px_rgba(23,40,56,0.035)]">
-        <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-5">
-          <div className="w-9 h-9 rounded-[10px] bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600">
+      {['all', 'overview', 'server'].includes(section) && (
+      <section className="site-detail-panel p-6 sm:p-7">
+        <div className="site-detail-section-heading flex items-center gap-3">
+          <div className="w-9 h-9 rounded-[10px] bg-brand-500 border border-brand-500 flex items-center justify-center text-white shadow-[0_6px_14px_rgba(40,181,134,0.15)]">
             <Sliders className="w-4 h-4" />
           </div>
           <div>
@@ -314,7 +325,8 @@ export default function InstanceDetailView({
 
           {/* Botón Ver Registros (Logs) */}
           <LoadingButton
-            variant="navy"
+            variant="secondary"
+            className="!bg-brand-50 !border-brand-100 !text-brand-700 hover:!bg-brand-100"
             icon={Terminal}
             disabled={Boolean(actionLoading)}
             onClick={() => onOpenLogs(instance)}
@@ -327,10 +339,10 @@ export default function InstanceDetailView({
         {/* =====================================================
             4. TELEMETRÍA EN VIVO (MÉTRICAS)
         ====================================================== */}
-        <div className="mt-6 pt-5 border-t border-slate-100">
+        <div className="mt-6 pt-5 border-t border-brand-100">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-700">
               Métricas de Rendimiento
             </h3>
           </div>
@@ -340,10 +352,16 @@ export default function InstanceDetailView({
           />
         </div>
       </section>
+      )}
+
+      {section === 'overview' && <SiteToolsPanel key={`insights-${instance.id}`} instance={instance} insightsOnly />}
+
+      {['all', 'releases'].includes(section) && <SiteToolsPanel key={instance.id} instance={instance} onChanged={onChanged} />}
 
       {/* =====================================================
           5. ZONA DE PELIGRO / ACCIÓN DESTRUCTIVA
       ====================================================== */}
+      {['all', 'danger'].includes(section) && (
       <section className="bg-red-50/50 border border-red-200 rounded-[20px] p-6 sm:p-7">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-start gap-3.5">
@@ -376,6 +394,7 @@ export default function InstanceDetailView({
           </div>
         </div>
       </section>
+      )}
 
     </div>
   );

@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     
     # Seguridad JWT
     SECRET_KEY: str = "clave_secreta_super_segura_desarrollo_cambiar_luego"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 horas (RNF-06)
+    ALGORITHM: Literal["HS256"] = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60 * 24, ge=1, le=60 * 24)
     
     # Base de Datos PostgreSQL
     POSTGRES_SERVER: str = "localhost"
@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     PORT_RANGE_START: int = 30001
     PORT_RANGE_END: int = 30100
     SUBDOMAIN_ENABLED: bool = False
+    SITE_FILE_SCAN_LIMIT: int = Field(default=10000, ge=100, le=100000)
+    SITE_EXPORT_MAX_MB: int = Field(default=100, ge=1, le=1000)
+    RELEASES_RETAINED: int = Field(default=5, ge=2, le=20)
+    MONITOR_HOST: str = "127.0.0.1"
+    MONITOR_TIMEOUT_SECONDS: float = Field(default=2.0, gt=0, le=10)
+    MONITOR_SAMPLES: int = Field(default=2880, ge=10, le=10000)
     
     # CORS
     FRONTEND_URL: str = "http://localhost:5173"
@@ -145,6 +151,7 @@ class Settings(BaseSettings):
         postgres_password_default = defaults["POSTGRES_PASSWORD"].default
         if (
             not self.SECRET_KEY.strip()
+            or len(self.SECRET_KEY.encode("utf-8")) < 32
             or not self.POSTGRES_PASSWORD.strip()
             or self.SECRET_KEY in {
                 secret_key_default,
@@ -154,8 +161,8 @@ class Settings(BaseSettings):
             or self.POSTGRES_PASSWORD in {postgres_password_default, "paas_prod_secret"}
         ):
             raise RuntimeError(
-                "Production requires non-empty SECRET_KEY and POSTGRES_PASSWORD "
-                "values that differ from the development defaults."
+                "Production requires a SECRET_KEY of at least 32 bytes and a "
+                "POSTGRES_PASSWORD; both must differ from the development defaults."
             )
 
     @property

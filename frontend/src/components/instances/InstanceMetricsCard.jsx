@@ -71,7 +71,7 @@ export default function InstanceMetricsCard({
 
 
   return (
-    <div className="mt-4 rounded-[14px] border border-[#e1ebe6] bg-[#f8fbfa] px-4 py-3.5">
+    <div className="mt-4 rounded-[14px] border border-brand-100 bg-brand-50/60 px-4 py-3.5">
 
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
 
@@ -98,7 +98,7 @@ export default function InstanceMetricsCard({
 
 
         {/* Separador */}
-        <div className="hidden lg:block w-px h-10 bg-[#dfe7e4]" />
+        <div className="hidden lg:block w-px h-10 bg-brand-100" />
 
 
         {/* =====================================================
@@ -216,7 +216,7 @@ function MetricItem({
           </div>
 
 
-          <span className="text-[10px] font-semibold text-[#47675b]">
+          <span className="text-[10px] font-semibold text-brand-700">
             {label}
           </span>
 
@@ -242,7 +242,7 @@ function MetricItem({
       </div>
 
 
-      <div className="mt-2.5 w-full h-[5px] rounded-full bg-[#dfe7e4] overflow-hidden">
+      <div className="mt-2.5 w-full h-[5px] rounded-full bg-brand-100 overflow-hidden">
 
         <div
           className={`
