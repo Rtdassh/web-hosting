@@ -24,8 +24,10 @@ function AuthenticatedApp({ onLogout }) {
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'pricing' | 'billing' | 'admin'
   const [isDeployOpen, setIsDeployOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deployment, setDeployment] = useState(null);
 
   const handleInstanceDeployed = () => {
+    setDeployment(null);
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -96,8 +98,12 @@ function AuthenticatedApp({ onLogout }) {
         <div key={currentView} className="view-enter">
           {currentView === 'dashboard' && (
             <DashboardPage
-              onDeployClick={() => setIsDeployOpen(true)}
+              onDeployClick={() => {
+                if (deployment?.status !== 'creating') setIsDeployOpen(true);
+              }}
               refreshKey={refreshKey}
+              deployment={deployment}
+              onDismissDeployment={() => setDeployment(null)}
             />
           )}
 
@@ -128,6 +134,15 @@ function AuthenticatedApp({ onLogout }) {
         isOpen={isDeployOpen}
         onClose={() => setIsDeployOpen(false)}
         onInstanceDeployed={handleInstanceDeployed}
+        onDeploymentStarted={(name) => {
+          setDeployment({ name, status: 'creating' });
+          setIsDeployOpen(false);
+          setCurrentView('dashboard');
+        }}
+        onDeploymentFailed={(message) => {
+          setDeployment((previous) => ({ ...previous, status: 'failed', message }));
+          setRefreshKey((previous) => previous + 1);
+        }}
       />
 
       <footer className="border-t border-[#e2e8f0] bg-white py-6 text-center text-xs text-[#64748b]">

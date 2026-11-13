@@ -49,6 +49,8 @@ import ServerMascot, { mascotDestroying } from '../components/mascot/ServerMasco
 export default function DashboardPage({
   onDeployClick,
   refreshKey,
+  deployment,
+  onDismissDeployment,
 }) {
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,15 @@ export default function DashboardPage({
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInstanceId, setSelectedInstanceId] = useState(null);
+
+  useEffect(() => {
+    if (deployment?.status === 'creating') {
+      setSelectedInstanceId(null);
+      setActiveNav('instances');
+      setStatusFilter('all');
+      setSearchQuery('');
+    }
+  }, [deployment?.status]);
 
   const selectedInstance =
     instances.find((inst) => inst.id === selectedInstanceId) || null;
@@ -715,12 +726,36 @@ export default function DashboardPage({
 
 
             {/* CONTENT STATES */}
+            {deployment && (
+              <div role="status" aria-live="polite" className="m-5 rounded-2xl border border-brand-100 bg-brand-50/60 p-5">
+                <div className="flex items-center gap-3">
+                  {deployment.status === 'creating' && <Loader2 className="h-5 w-5 shrink-0 animate-spin text-brand-600" />}
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-bold text-navy-900">{deployment.name}</h3>
+                    <p className="mt-1 text-xs text-slate-600">
+                      {deployment.status === 'creating' ? 'Creando tu sitio. Estamos enviando y validando los archivos y preparando el servidor.' : deployment.message}
+                    </p>
+                  </div>
+                </div>
+                {deployment.status === 'creating' ? (
+                  <div role="progressbar" aria-label="Creación del sitio en curso" className="mt-4 h-2 overflow-hidden rounded-full bg-brand-100">
+                    <div className="h-full w-full animate-pulse rounded-full bg-brand-500 motion-reduce:animate-none" />
+                  </div>
+                ) : (
+                  <div className="mt-3 flex gap-4 text-xs font-bold">
+                    <button type="button" onClick={onDeployClick} className="text-brand-700">Revisar y volver a intentar</button>
+                    <button type="button" onClick={onDismissDeployment} className="text-slate-600">Descartar aviso</button>
+                  </div>
+                )}
+                {deployment.status === 'creating' && <p className="mt-2 text-xs text-slate-500">Puedes explorar el dashboard. Mantén esta pestaña abierta hasta recibir la confirmación.</p>}
+              </div>
+            )}
             {loading ? (
               <div className="divide-y divide-[#edf1ef]">
                 <SkeletonInstanceCard />
                 <SkeletonInstanceCard />
               </div>
-            ) : instances.length === 0 ? (
+            ) : instances.length === 0 && deployment?.status === 'creating' ? null : instances.length === 0 ? (
 
               <div className="px-6 py-14 text-center scale-pop-in">
 

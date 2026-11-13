@@ -19,6 +19,23 @@ vi.mock('../services/api', () => ({
 }));
 
 describe('Master-Detail Pattern & Progressive Disclosure (Projects View)', () => {
+  it('muestra creación indeterminada incluso sin servidores y permite revisar un error', async () => {
+    instanceService.getInstances.mockResolvedValue([]);
+    const retry = vi.fn();
+    const dismiss = vi.fn();
+    const { rerender } = render(<DashboardPage deployment={{ name: 'Mi SPA', status: 'creating' }} onDeployClick={retry} />);
+    await screen.findByRole('progressbar', { name: 'Creación del sitio en curso' });
+    expect(screen.getByText('Mi SPA')).toBeInTheDocument();
+    expect(screen.queryByText('Tu primer proyecto empieza aquí')).not.toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).not.toHaveAttribute('aria-valuenow');
+    rerender(<DashboardPage deployment={{ name: 'Mi SPA', status: 'failed', message: 'ZIP no válido' }} onDeployClick={retry} onDismissDeployment={dismiss} />);
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.getByText('ZIP no válido')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Revisar y volver a intentar'));
+    expect(retry).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByText('Descartar aviso'));
+    expect(dismiss).toHaveBeenCalledOnce();
+  });
   const mockInstances = [
     {
       id: 'inst-1',

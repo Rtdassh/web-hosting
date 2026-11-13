@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
@@ -74,7 +74,11 @@ export default function DeployModal({
   isOpen,
   onClose,
   onInstanceDeployed,
+  onDeploymentStarted,
+  onDeploymentFailed,
 }) {
+  const submitting = useRef(false);
+  const [technology, setTechnology] = useState('html');
   const [activeTab, setActiveTab] = useState('zip');
   const [name, setName] = useState('');
   const [file, setFile] = useState(null);
@@ -191,6 +195,7 @@ export default function DeployModal({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitting.current) return;
     setError('');
 
     if (!name.trim()) {
@@ -203,7 +208,13 @@ export default function DeployModal({
       return;
     }
 
+    if (name.trim().length > 100) {
+      setError('El nombre no puede superar los 100 caracteres.');
+      return;
+    }
+    submitting.current = true;
     setLoading(true);
+    onDeploymentStarted?.(name.trim());
 
     try {
       let newInstance;
@@ -232,10 +243,13 @@ export default function DeployModal({
       setError('');
       setPreviewTemplate(null);
 
-      onClose();
+      if (!onDeploymentStarted) onClose();
     } catch (requestError) {
-      setError(extractErrorMessage(requestError));
+      const message = extractErrorMessage(requestError);
+      setError(message);
+      onDeploymentFailed?.(message);
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   };
@@ -342,6 +356,7 @@ export default function DeployModal({
                 }}
                 placeholder="Ej. Mi portafolio"
                 required
+                maxLength={100}
                 className={`h-11 w-full rounded-xl border bg-white px-4 text-sm font-semibold text-[#172838] outline-none transition placeholder:text-[#94A3B8] disabled:bg-slate-50 ${error && !name.trim()
                     ? 'border-red-300 ring-2 ring-red-100'
                     : 'border-[#d6dfdb] focus:border-[#28B586] focus:ring-2 focus:ring-[#28B586]/10'
@@ -501,6 +516,22 @@ export default function DeployModal({
               </div>
             ) : (
               <div>
+                <div className="mb-4 rounded-2xl border border-brand-100 bg-brand-50/60 p-4 text-xs text-slate-700">
+                  <label htmlFor="site-technology" className="block font-bold text-navy-900">¿Con qué creaste tu sitio?</label>
+                  <select id="site-technology" value={technology} onChange={(event) => setTechnology(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-200 bg-white p-2">
+                    <option value="html">HTML, CSS y JavaScript</option>
+                    <option value="vite">React / Vue / Svelte con Vite</option>
+                    <option value="build">React con salida build</option>
+                    <option value="static">Otro generador de sitios estáticos</option>
+                  </select>
+                  <p className="mt-3 leading-5">
+                    {technology === 'vite' ? <>Ejecuta <code>npm run build</code> y comprime el contenido de <code>dist/</code> en un ZIP.</> :
+                      technology === 'build' ? <>Genera la versión de producción y comprime el contenido de <code>build/</code> en un ZIP.</> :
+                      technology === 'static' ? 'Exporta tu sitio como HTML, CSS y JavaScript y comprime la carpeta de salida en un ZIP.' :
+                      'Comprime los archivos de tu sitio en un ZIP con index.html en la raíz.'}
+                  </p>
+                  <p className="mt-2 leading-5">Incluye index.html y todos sus recursos. Publica solo la salida final, sin .env, node_modules ni archivos privados. Las rutas de SPA están admitidas; los proyectos que necesitan un servidor o compilación en Codrop todavía no.</p>
+                </div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="text-xs font-black text-[#334e5e]">
                     Archivo del proyecto
@@ -569,7 +600,7 @@ export default function DeployModal({
                       </div>
 
                       <p className="mt-1 text-[10px] font-semibold text-[#64748B]">
-                        {formatFileSize(file.size)} · Listo para desplegar
+                        {formatFileSize(file.size)} · Se validará al publicar
                       </p>
                     </div>
 

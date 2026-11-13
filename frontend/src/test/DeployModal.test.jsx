@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DeployModal from '../components/instances/DeployModal';
-import { templateService } from '../services/api';
+import { instanceService, templateService } from '../services/api';
 
 vi.mock('../services/api', () => ({
   templateService: {
@@ -16,6 +16,40 @@ vi.mock('../services/api', () => ({
 describe('DeployModal UI Component (RF-14 Plantillas 1-Clic y Subida ZIP)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('cierra el formulario mientras se crea y conserva los datos si falla', async () => {
+    let rejectDeployment;
+    instanceService.deployInstance.mockImplementationOnce(() => new Promise((resolve, reject) => { rejectDeployment = reject; }));
+    const failed = vi.fn();
+    function Flow() {
+      const [open, setOpen] = useState(true);
+      return <>
+        <button onClick={() => setOpen(true)}>Revisar solicitud</button>
+        <DeployModal isOpen={open} onClose={() => setOpen(false)} onDeploymentStarted={() => setOpen(false)} onDeploymentFailed={failed} />
+      </>;
+    }
+    render(<Flow />);
+    fireEvent.change(screen.getByLabelText('Nombre del proyecto'), { target: { value: 'React demo' } });
+    const file = new File(['zip'], 'dist.zip', { type: 'application/zip' });
+    fireEvent.change(document.querySelector('input[type="file"]'), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Desplegar sitio' }));
+    expect(screen.queryByText('Publica con Codrop')).not.toBeInTheDocument();
+    expect(instanceService.deployInstance).toHaveBeenCalledWith('React demo', file);
+    rejectDeployment({ response: { data: { detail: 'Falta index.html' } } });
+    await waitFor(() => expect(failed).toHaveBeenCalledWith('Falta index.html'));
+    fireEvent.click(screen.getByText('Revisar solicitud'));
+    expect(screen.getByLabelText('Nombre del proyecto')).toHaveValue('React demo');
+    expect(screen.getByText('dist.zip')).toBeInTheDocument();
+    expect(screen.getByText('Falta index.html')).toBeInTheDocument();
+  });
+
+  it('explica cómo publicar React compilado sin prometer compilación automática', () => {
+    render(<DeployModal isOpen onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('¿Con qué creaste tu sitio?'), { target: { value: 'vite' } });
+    expect(screen.getByText('npm run build')).toBeInTheDocument();
+    expect(screen.getByText('dist/')).toBeInTheDocument();
+    expect(screen.getByText(/compilación en Codrop todavía no/)).toBeInTheDocument();
   });
 
   it('no debe renderizar nada cuando isOpen es falso', () => {
