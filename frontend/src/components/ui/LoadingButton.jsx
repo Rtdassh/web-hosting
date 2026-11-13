@@ -70,8 +70,9 @@ export default function LoadingButton({
     <button
       type={type}
       disabled={isActionDisabled}
+      aria-busy={loading || undefined}
       onClick={handleClick}
-      className={`inline-flex items-center justify-center font-bold tracking-tight transition duration-150 btn-tactile select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${getVariantStyles()} ${getSizeStyles()} ${className}`}
+      className={`inline-flex items-center justify-center font-bold tracking-tight transition duration-150 btn-tactile brand-focus select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${getVariantStyles()} ${getSizeStyles()} ${className}`}
       {...props}
     >
       {loading ? (
